@@ -33,6 +33,7 @@ COURSES.range={...COURSES.royal,name:'DRIVING RANGE',wind:0,holes:[{
 }]};
 const clamp=THREE.MathUtils.clamp;
 const rand=(n)=>{const x=Math.sin(n*178.126+78.77)*42375.935;return x-Math.floor(x)};
+const FRINGE_WIDTH=1.25,FRINGE_LIFT=.046,GREEN_LIFT=.055;
 export class World{
  constructor(scene){this.waterClock={value:0};this.scene=scene;this.root=new THREE.Group();scene.add(this.root);this.tmp=new THREE.Vector3();this.current='royal';this.holeIndex=0;this.hole={yards:278,par:4,curve:0};this.length=158;this.holePosition=new THREE.Vector3(0,0,0);this.teePosition=new THREE.Vector3(0,0,0);this.fairways=[];this.bunkers=[];this.water=[];this.green=null;this.flag=null;this.grassTexture=this.makeGrassTexture(false);this.fairwayTexture=this.makeGrassTexture(true);this.create('royal',0)}
  makeGrassTexture(fairway=false){const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');x.fillStyle=fairway?'#6f9857':'#3e6840';x.fillRect(0,0,512,512);let seed=fairway?91:27;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<12500;i++){const a= fairway?`rgba(${80+Math.floor(rnd()*55)},${112+Math.floor(rnd()*60)},${48+Math.floor(rnd()*34)},${.08+rnd()*.2})`:`rgba(${20+Math.floor(rnd()*50)},${55+Math.floor(rnd()*55)},${24+Math.floor(rnd()*30)},${.08+rnd()*.24})`;x.fillStyle=a;const w=1+rnd()*3;x.fillRect(rnd()*512,rnd()*512,w,.7+rnd()*2)}const tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(fairway?2:22,fairway?3:22);tex.anisotropy=8;return tex}
@@ -146,8 +147,8 @@ export class World{
  }
  this.surfaceEllipse(0,70,8,6,teeMat,.05);
  this.green={x:this.holePosition.x,z:this.holePosition.z,rx:h.green[0],rz:h.green[1]};
- this.surfaceEllipse(this.green.x,this.green.z,h.green[0]+1.25,h.green[1]+1.25,fringe,.046,'green');
- this.surfaceEllipse(this.green.x,this.green.z,...h.green,greenMat,.055,'green');
+ this.surfaceEllipse(this.green.x,this.green.z,h.green[0]+FRINGE_WIDTH,h.green[1]+FRINGE_WIDTH,fringe,FRINGE_LIFT,'green');
+ this.surfaceEllipse(this.green.x,this.green.z,...h.green,greenMat,GREEN_LIFT,'green');
  this.holePosition.y=this.groundHeight(this.green.x,this.green.z)+.06;
  const holeRing=this.mesh(new THREE.RingGeometry(.12,.29,28),this.mat(0xe5e5de));holeRing.rotation.x=-Math.PI/2;holeRing.position.copy(this.holePosition).add(new THREE.Vector3(0,.016,0));const cup=this.mesh(new THREE.CircleGeometry(.12,24),this.mat(0x101715));cup.rotation.x=-Math.PI/2;cup.position.copy(this.holePosition).add(new THREE.Vector3(0,.02,0));
  for(const [features,collection,material] of [[h.sand,this.bunkers,sand],[h.water,this.water,null]]){
@@ -205,10 +206,15 @@ export class World{
   const inside=area=>((x-area.x)/area.rx)**2+((z-area.z)/area.rz)**2<1;
   if((this.current==='ocean'&&x>=shoreX(z))||this.water.some(inside))return 'WATER';
   if(this.bunkers.some(b=>{const u=(x-b.x)/b.rx,v=(z-b.z)/b.rz;return Math.hypot(u,v)<this.bunkerEdge(Math.atan2(v,u))}))return 'BUNKER';
-  const u=(x-this.green.x)/this.green.rx,v=(z-this.green.z)/this.green.rz;
-  if(Math.hypot(u,v)<this.greenEdge(Math.atan2(v,u)))return 'GREEN';
+  if(this.insideGreen(x,z,0))return 'GREEN';
+  if(this.insideGreen(x,z,FRINGE_WIDTH))return 'FRINGE';
   if(z<=76&&z>=this.getGreenZ()&&Math.abs(x-this.fairwayX(z))<=this.station(z,2))return 'FAIRWAY';
   return 'ROUGH';
  }
- ground(x,z){if((x/8)**2+((z-70)/6)**2<=1)return this.groundHeight(x,z)+.05;const lie=this.lie(x,z);return this.groundHeight(x,z)+(lie==='ROUGH'?0:lie==='GREEN'?.055:lie==='BUNKER'?.10:lie==='WATER'?.08:.045)}
+ insideGreen(x,z,margin){
+  const {x:gx,z:gz,rx,rz}=this.green;
+  const u=(x-gx)/(rx+margin),v=(z-gz)/(rz+margin);
+  return Math.hypot(u,v)<this.greenEdge(Math.atan2(v,u));
+ }
+ ground(x,z){if((x/8)**2+((z-70)/6)**2<=1)return this.groundHeight(x,z)+.05;const lie=this.lie(x,z);return this.groundHeight(x,z)+(lie==='ROUGH'?0:lie==='GREEN'?GREEN_LIFT:lie==='FRINGE'?FRINGE_LIFT:lie==='BUNKER'?.10:lie==='WATER'?.08:.045)}
 }

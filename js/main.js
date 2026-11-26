@@ -1,13 +1,13 @@
 import {setHatFinish} from './gear-logos.js';
 import {gearImage} from './gear-preview.js?v=clubs1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=clubs1';
+import {Match} from './match.js?v=greens1';
 import {Clubhouse} from './clubhouse.js?v=clubs1';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=clubs1';
+import {GolfGame} from './game.js?v=greens1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom} from './online.js?v=vote1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';

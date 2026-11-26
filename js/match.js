@@ -42,7 +42,7 @@ export class Match {
  }
  snapshot(){
   const g=this.game,a=g.golfer;
-  return {kind:'frame',camera:pose(g.camera),root:pose(a.root),model:pose(a.model),
+  return {kind:'frame',camera:pose(g.camera),fov:g.camera.fov,root:pose(a.root),model:pose(a.model),
    bones:Array.from(a.basePose.keys(),b=>b.quaternion.toArray()),club:g.club,
    stick:pose(a.club),head:pose(a.clubHead),held:a.club.visible,
    bag:g.bag.visible?{pose:pose(g.bag),style:g.equipment?.bag,clubs:g.equipment?.clubs,clubStyles:clubLoadout(g.equipment)}:null,
@@ -70,6 +70,7 @@ export class Match {
    applyPose(actor.club,f.stick);applyPose(actor.clubHead,f.head);actor.fitShaft();actor.club.visible=f.held;
   }
   const blend=1-Math.exp(-dt*28);
+  g.setCameraFov(Number.isFinite(f.fov)&&f.fov>=54&&f.fov<=125?f.fov:g.baseCameraFov);
   if(this.snap){applyPose(g.camera,f.camera);g.ball.position.fromArray(f.ball);this.snap=false}
   else{
    const target=g.camera.position.clone().fromArray(f.camera);
@@ -146,7 +147,7 @@ export class Match {
   this.hole++;this.card={};this.result=false;this.turn='host';this.playTurn(true);
  }
  stop(){
-  clearTimeout(this.timer);this.ready=false;this.game.spectating=false;this.game.ball.material.color.setHex(this.ballColor);
+  clearTimeout(this.timer);this.ready=false;this.game.spectating=false;this.game.setCameraFov(this.game.baseCameraFov);this.game.ball.material.color.setHex(this.ballColor);
   const gear=this.game.equipment;
   if(gear){
    setBallFinish(this.game.ball,itemById(gear.ball));

@@ -3,7 +3,7 @@
 <pre id="result">Checking all course layouts…</pre>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 <script type="module">
-import {COURSES,World} from '../js/world.js?v=tour72';
+import {COURSES,World} from '../js/world.js?v=greens1';
 const result=document.getElementById('result');
 try{
  let holes=0,checks=0;
@@ -12,11 +12,19 @@ try{
   for(const [index,hole] of layout.holes.entries()){
    const world=Object.create(World.prototype),[distance,x]=hole.route.at(-1),z=70-distance;
    const areas=features=>features.map(([x,d,rx,rz])=>({x,z:70-d,rx,rz}));
-   Object.assign(world,{current:course,holeIndex:index,hole,green:{x,z,rx:hole.green[0],rz:hole.green[1]},bunkers:areas(hole.sand),water:areas(hole.water)});
+   Object.assign(world,{current:course,holeIndex:index,hole,length:distance,green:{x,z,rx:hole.green[0],rz:hole.green[1]},bunkers:areas(hole.sand),water:areas(hole.water)});
    for(let deg=0;deg<360;deg++)for(const r of [0,.5,.96,.999,1.04]){
     const a=deg*Math.PI/180,edge=r*world.greenEdge(a);
     const lie=world.lie(x+edge*hole.green[0]*Math.cos(a),z+edge*hole.green[1]*Math.sin(a));
     if(r<1?lie!=='GREEN':['WATER','BUNKER'].includes(lie))throw Error(course+' hole '+(index+1)+' at '+deg+'°: '+lie);
+    checks++;
+   }
+   for(let deg=0;deg<360;deg+=5){
+    const angle=deg*Math.PI/180,edge=world.greenEdge(angle);
+    const px=x+(hole.green[0]+.65)*edge*Math.cos(angle),pz=z+(hole.green[1]+.65)*edge*Math.sin(angle);
+    if(world.lie(px,pz)!=='FRINGE'||Math.abs(world.ground(px,pz)-world.groundHeight(px,pz)-.046)>1e-8){
+     throw Error(course+' hole '+(index+1)+' fringe collision height at '+deg+'°');
+    }
     checks++;
    }
    holes++;

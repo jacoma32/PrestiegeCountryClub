@@ -7,7 +7,7 @@ import {buildBag} from './golf-bag.js?v=clubs1';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
-import {World,COURSES} from './world.js?v=tour72';
+import {World,COURSES} from './world.js?v=greens1';
 import {Golfer} from './actors.js?v=clubs1';
 const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
@@ -16,7 +16,7 @@ const BALL_RADIUS = .02135;
 const CLUBS={driver:{name:'DRIVER',speed:43,loft:.395,range:255},wood:{name:'3 WOOD',speed:39.8,loft:.42,range:228},hybrid:{name:'4 HYBRID',speed:42.2,loft:.315,range:191},...CLUB_IRONS,
  ...WEDGES,putter:{name:'PUTTER',speed:11,loft:.015,range:35}};
 export class GolfGame{
- constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
+ constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.baseCameraFov=camera.fov;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
  this.bagPhase=null;this.listeners();this.enterMenu()}
  makeContactShadow() {
   const material=new THREE.ShaderMaterial({
@@ -137,9 +137,9 @@ export class GolfGame{
   if(range)$('holeLabel').textContent='PRACTICE TEE';
   this.notify(this.tutorial&&index===0?'COACH TIMMY: LET’S SET UP YOUR FIRST SHOT':hole.hint.toUpperCase());this.refresh()}
  shotName(){return this.club==='putter'?'putt':(WEDGES[this.club]||CLUBS[this.club]?.isIron)?'chip':'drive'}
- shotDirection(){
+ shotDirection(aim=this.aim){
   const pin=this.world.holePosition.clone().sub(this.position);
-  const angle=Math.atan2(pin.x,-pin.z)+this.aim*Math.PI/180;
+  const angle=Math.atan2(pin.x,-pin.z)+aim*Math.PI/180;
   return new THREE.Vector3(Math.sin(angle),0,-Math.cos(angle));
  }
  placeGolfer(name=this.shotName()){
@@ -152,6 +152,8 @@ export class GolfGame{
   this.waterWait=0;this.impactPending=false;this.whooshPending=false;this.splash.group.visible=false;
   this.golfer.carrying=false;this.resetBagLift();this.bagPhase=null;this.bagLie=null;
   if(this.bag)this.bag.visible=false;
+  this.bagFieldOfView=null;
+  if(this.baseCameraFov)this.setCameraFov(this.baseCameraFov);
   const panel=$('bagPanel');if(panel)panel.hidden=true;
   document.body?.classList.remove('at-bag');
  }
@@ -163,14 +165,46 @@ export class GolfGame{
   this.bag.visible=true;this.showBagClubs(this.club);
   if(this.bagLie?.x===this.position.x&&this.bagLie.z===this.position.z)return;
   this.bagLie=this.position.clone();
+  this.bagFieldOfView=null;
   const line=this.shotDirection(),side=new THREE.Vector3(line.z,0,-line.x);
   const spot=this.bag.position;
+  if(this.world.lie(this.position.x,this.position.z)==='GREEN'&&this.parkBagOffGreen(spot))return;
   // Prefer the golfer's side of the line and keep the bag on dry ground.
   for(const distance of [2.4,-2.4,1.5,-1.5,.8]){
    spot.copy(this.position).addScaledVector(side,distance).addScaledVector(line,-1.15);
    if(this.world.lie(spot.x,spot.z)!=='WATER')break;
   }
   spot.y=this.world.ground(spot.x,spot.z);
+ }
+ parkBagOffGreen(spot){
+  const {world}=this,{x,z,rx,rz}=world.green;
+  const camera=this.camera.clone(),line=this.shotDirection(0);
+  const baseFov=this.baseCameraFov??camera.fov;
+  camera.fov=baseFov;camera.updateProjectionMatrix();
+  const target=new THREE.Vector3();
+  this.addressCamera(line,0,camera.position,target);
+  camera.lookAt(target);camera.updateMatrixWorld(true);
+  const point=new THREE.Vector3(),screen=new THREE.Vector3();
+  let best=Infinity,bestFov=baseFov;
+  for(const margin of [1.95,2.65,3.5,4.5,6]){
+   for(let i=0;i<72;i++){
+    const angle=i*Math.PI/36,edge=world.greenEdge(angle);
+    const px=x+Math.cos(angle)*(rx+margin)*edge,pz=z+Math.sin(angle)*(rz+margin)*edge;
+    if(world.lie(px,pz)!=='ROUGH')continue;
+    point.set(px,world.ground(px,pz),pz);
+    screen.copy(point);screen.y+=.65;screen.project(camera);
+    if(screen.z<0||screen.z>1)continue;
+    const scale=Math.max(1,Math.abs(screen.x)/.84,Math.abs(screen.y)/.76);
+    const fov=2*Math.atan(Math.tan(baseFov*Math.PI/360)*scale)*180/Math.PI;
+    if(fov>125)continue;
+    // Keep the bag away from the putt line and favor the nearest visible rough.
+    const score=point.distanceTo(this.position)+margin*3+(fov-baseFov)*2+Math.max(0,.25-Math.abs(screen.x))*12;
+    if(score<best){best=score;bestFov=fov;spot.copy(point)}
+   }
+   if(bestFov===baseFov&&best<Infinity)break;
+  }
+  this.bagFieldOfView=bestFov;
+  return best<Infinity;
  }
  openBag(){
   if(this.placing||this.spectating)return;
@@ -341,30 +375,30 @@ export class GolfGame{
  groundContact(lie,dt){
   const first=this.carryYards===null;
   if(first)this.carryYards=this.travelYards();
-  const sand=lie==='BUNKER',green=lie==='GREEN',club=CLUBS[this.club];
+  const sand=lie==='BUNKER',green=lie==='GREEN',fairway=lie==='FAIRWAY',club=CLUBS[this.club];
   const descent=Math.max(0,-this.vel.y);
-  if(descent>1.7&&this.club!=='putter'){
+  if(descent>(fairway?.85:1.7)&&this.club!=='putter'){
    this.onSfx('land');
    const turfRetention=club.stop??(this.club==='driver'?.64:.75);
-   const retention=turfRetention*(sand?.23:green?.70:1);
+   const retention=fairway&&!first?.87:turfRetention*(sand?.23:green?.70:1);
    this.vel.x*=retention;this.vel.z*=retention;
-   this.vel.y=descent*(sand?.045:green?.14:.24);
-   if(this.vel.y<.45)this.vel.y=0;
+   this.vel.y=descent*(sand?.045:green?.14:fairway?(first?.34:.30):.24);
+   if(this.vel.y<(fairway?.22:.45))this.vel.y=0;
    if(club.isIron)this.biteTimer=.65;
    return;
   }
   // Catch shallow arrivals too, without applying the impact loss on every roll step.
   const shallowRetention=WEDGES[this.club]?.stop??.78;
   const skid=first&&this.club!=='putter'?(sand?.24:green?shallowRetention:1):1;
-  const friction=sand?10:green?2.25:lie==='FAIRWAY'?2.8:5.5;
+  const friction=sand?10:green?2.04:fairway?2.8:lie==='FRINGE'?3.65:5.5;
   const bite=club.isIron&&this.biteTimer>0?this.impactSpin/1700:0;
   this.biteTimer=Math.max(0,this.biteTimer-dt);
   const drag=skid*Math.exp(-(friction+bite)*dt);
   this.vel.x*=drag;this.vel.z*=drag;this.vel.y=0;
  }
- stepBall(dt){const airborne=this.carryYards===null||this.position.y>this.world.ground(this.position.x,this.position.z)+BALL_RADIUS+.015;this.advanceFlight(this.position,this.vel,dt,airborne);const g=this.world.ground(this.position.x,this.position.z)+BALL_RADIUS,lie=this.world.lie(this.position.x,this.position.z);if(lie==='WATER'&&this.position.y<=g+.015){this.position.y=g;this.ball.position.copy(this.position);this.splash.start(this.position,this.vel);
+ stepBall(dt){const airborne=this.carryYards===null||this.vel.y!==0||this.position.y>this.world.ground(this.position.x,this.position.z)+BALL_RADIUS+.015;this.advanceFlight(this.position,this.vel,dt,airborne);const g=this.world.ground(this.position.x,this.position.z)+BALL_RADIUS,lie=this.world.lie(this.position.x,this.position.z);if(lie==='WATER'&&this.position.y<=g+.015){this.position.y=g;this.ball.position.copy(this.position);this.splash.start(this.position,this.vel);
   this.onSfx('hazard',{speed:this.vel.length()});this.vel.set(0,0,0);this.ball.visible=false;this.waterWait=1.45;
-  return}if(this.position.y<=g){this.position.y=g;this.groundContact(lie,dt)}this.ball.position.copy(this.position);this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;const dist=Math.hypot(this.position.x-this.world.holePosition.x,this.position.z-this.world.holePosition.z);if(this.course!=='range'&&dist<.38&&this.position.y<g+.4&&this.vel.length()<9){this.finishHole();return}if(this.vel.length()<.13&&Math.abs(this.position.y-g)<.015){this.vel.set(0,0,0);this.swinging=false;this.position.y=g;this.onSfx('land');
+  return}if(this.position.y<=g||(!airborne&&this.position.y-g<.06)){this.position.y=g;this.groundContact(lie,dt)}this.ball.position.copy(this.position);this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;const dist=Math.hypot(this.position.x-this.world.holePosition.x,this.position.z-this.world.holePosition.z);if(this.course!=='range'&&dist<.38&&this.position.y<g+.4&&this.vel.length()<9){this.finishHole();return}if(this.vel.length()<.13&&Math.abs(this.position.y-g)<.015){this.vel.set(0,0,0);this.swinging=false;this.position.y=g;this.onSfx('land');
  if(this.course==='range'){
   const total=this.travelYards();this.resetBallToTee();this.charge=0;
   this.placeGolfer();this.refresh();this.moveCamera(0,true);
@@ -372,6 +406,19 @@ export class GolfGame{
  }
  this.placeGolfer();this.refresh();this.notify(lie==='BUNKER'?'SAND TRAP · PLAY IT WHERE IT LIES':lie==='GREEN'?'ON THE GREEN · SWITCH TO PUTTER':`BALL AT REST · ${lie}`);if(this.club==='driver')this.notify(this.carryYards+' YDS CARRY · '+this.travelYards()+' YDS TOTAL · '+lie);if(lie==='GREEN'&&this.club!=='putter')this.chooseClub('putter')}}
  travelYards(){return Math.round(Math.hypot(this.position.x-this.shotOrigin.x,this.position.z-this.shotOrigin.z)*1.75)}
+ addressCamera(line,orbit,desired,target){
+  const root=this.golfer.root.position,shoulder=new THREE.Vector3(-line.z,0,line.x);
+  const offset=line.clone().multiplyScalar(-3.4).addScaledVector(shoulder,.55);
+  if(orbit)offset.applyAxisAngle(new THREE.Vector3(0,1,0),orbit);
+  desired.copy(root).add(offset);
+  desired.y=this.world.ground(desired.x,desired.z)+1.55;
+  target.copy(root).lerp(this.position,.5);
+  target.y+=.95;
+ }
+ setCameraFov(fov){
+  if(this.camera.fov===fov)return;
+  this.camera.fov=fov;this.camera.updateProjectionMatrix();
+ }
  moveCamera(dt, snap = false) {
   const tracking = this.swinging && this.swingTimer >= this.ballLaunchDelay;
   const desired = this.cameraTarget.clone();
@@ -382,16 +429,13 @@ export class GolfGame{
    desired.y = Math.max(desired.y, this.world.ground(desired.x, desired.z) + .5);
    this.cameraTarget.copy(this.ball.position);
   } else {
-   const line = this.shotDirection();
-   const shoulder = new THREE.Vector3(-line.z, 0, line.x);
-   const offset = line.clone().multiplyScalar(-3.4).addScaledVector(shoulder, .55);
-   if (!this.swinging && !this.charging) offset.applyAxisAngle(new THREE.Vector3(0,1,0), this.orbit);
-   desired.copy(this.golfer.root.position).add(offset);
-   desired.y = this.world.ground(desired.x, desired.z) + 1.55;
-   this.cameraTarget.copy(this.golfer.root.position).lerp(this.position, .5);
-   this.cameraTarget.y += .95;
+   this.addressCamera(this.shotDirection(),this.swinging||this.charging?0:this.orbit,desired,this.cameraTarget);
   }
-  this.camera.position.lerp(desired, snap ? 1 : 1 - Math.exp(-dt * 8));
+  const ease=snap?1:1-Math.exp(-dt*8);
+  const fov=(!tracking&&this.bagFieldOfView)||this.baseCameraFov||this.camera.fov;
+  const nextFov=THREE.MathUtils.lerp(this.camera.fov,fov,ease);
+  this.setCameraFov(Math.abs(nextFov-fov)<.01?fov:nextFov);
+  this.camera.position.lerp(desired,ease);
   this.camera.lookAt(this.cameraTarget);
  }
  menuCamera(dt){if(this.previewMode){const target=this.golfer.root.position.clone().add(new THREE.Vector3(0,1,0)),desired=target.clone().add(new THREE.Vector3(.25,.15,2.7));this.camera.position.lerp(desired,Math.min(1,dt*4));this.camera.lookAt(target);this.golfer.root.rotation.y=Math.sin(performance.now()*.00025)*.24;return}const t=performance.now()*.0001,desired=new THREE.Vector3(36+Math.sin(t)*16,30,-5+Math.cos(t)*35);this.camera.position.lerp(desired,dt*.4);this.camera.lookAt(this.world.holePosition.clone().lerp(this.world.teePosition,.42).add(new THREE.Vector3(0,3,0)))}
