@@ -2,7 +2,7 @@ import {setHatFinish} from './gear-logos.js';
 import * as T from 'three';
 import {makeGolfBall,setBallFinish} from './golf-ball.js?v=brands1';
 import {buildBag} from './golf-bag.js?v=clubs1';
-import {clubModel,makeShaft,setClubFinish} from './club-model.js?v=proshop1';
+import {clubModel,heelSocket,makeShaft,setClubFinish} from './club-model.js?v=proshop1';
 
 const images=new Map();
 const garments=new Map();
@@ -45,13 +45,24 @@ function garment(actor,slot,frame){
 let displayBag;
 let displaySet;
 const individualClubs=new Map();
+function previewClub(type,length,lean=0){
+ const club=new T.Group(),head=clubModel(type),shaft=makeShaft();
+ head.rotation.set(-.16,2.55,-.12);
+ const socket=heelSocket(type).applyQuaternion(head.quaternion);
+ const axis=new T.Vector3(lean,1,0).normalize();
+ shaft.position.copy(socket).addScaledVector(axis,length);
+ shaft.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis);
+ shaft.scale.y=length;
+ club.add(head,shaft);
+ return club;
+}
+
 function clubDisplay(){
  const group=new T.Group();
  for(const [i,id] of ['driver','iron7','wedge','putter'].entries()){
-  const club=new T.Group(),head=clubModel(id);
-  head.position.y=-1;club.add(head,makeShaft());
-  club.position.set((i-1.5)*.19,.55-i*.055,0);
-  club.rotation.set(.06,.32,-.18+i*.1);group.add(club);
+  const club=previewClub(id,[1.12,.93,.88,.86][i]);
+  club.position.set((i-1.5)*.19,0,0);
+  club.rotation.z=.16-i*.10;group.add(club);
  }
  return group;
 }
@@ -86,9 +97,8 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
   default: {
    const type=item.slot==='wedges'?'wedge':item.slot;
    if(!individualClubs.has(type)){
-    const head=clubModel(type);
-    head.rotation.set(-.38,2.55,-.12);
-    individualClubs.set(type,head);
+    const length={driver:1.12,wood:1.06,hybrid:1,wedge:.88,putter:.86}[type];
+    individualClubs.set(type,previewClub(type,length,.65));
    }
    model=individualClubs.get(type);
    setClubFinish(model,item);

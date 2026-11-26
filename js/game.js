@@ -13,6 +13,15 @@ const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
 const BAG_TAGS={driver:'Driver',wood:'3W',hybrid:'4H',pitching:'PW',approach:'AW',wedge:'SW',lob:'LW',putter:'Putter'};
 const BALL_RADIUS = .02135;
+const BALL_STOP_SPEED=.13;
+function puttRollSpeed(speed,lie,dt){
+ if(lie==='GREEN'){
+  // Grass resistance persists at low speed, while a firm putt sheds speed faster.
+  return Math.max(0,speed-(.12+.73*speed+.025*speed*speed)*dt);
+ }
+ const friction=lie==='FRINGE'?3.65:lie==='FAIRWAY'?2.8:lie==='BUNKER'?10:5.5;
+ return speed*Math.exp(-friction*dt);
+}
 const CLUBS={driver:{name:'DRIVER',speed:43,loft:.395,range:255},wood:{name:'3 WOOD',speed:39.8,loft:.42,range:228},hybrid:{name:'4 HYBRID',speed:42.2,loft:.315,range:191},...CLUB_IRONS,
  ...WEDGES,putter:{name:'PUTTER',speed:11,loft:.015,range:35}};
 export class GolfGame{
@@ -85,7 +94,7 @@ export class GolfGame{
   const speed = club.speed * Math.pow(power, .8) * surface;
   const velocity = this.shotDirection().multiplyScalar(speed * Math.sqrt(1 - club.loft ** 2));
   if (this.club === 'putter') velocity.multiplyScalar(.8 * (1 + .5 * THREE.MathUtils.smoothstep(power,.25,1)));
-  velocity.y = this.club === 'putter' ? 1.2 : speed * club.loft;
+  velocity.y = this.club === 'putter' ? 0 : speed * club.loft;
   return velocity;
  }
  advanceFlight(position, velocity, dt, airborne) {
@@ -95,7 +104,7 @@ export class GolfGame{
    velocity.x *= drag;
    velocity.z *= drag;
   }
-  if (airborne){velocity.x += this.wind*.18*dt;if(this.club!=='putter'){const lateral=curveAcceleration(this.flightShape,velocity);velocity.x+=lateral.x*dt;velocity.z+=lateral.z*dt;}}
+  if (airborne&&this.club!=='putter'){velocity.x+=this.wind*.18*dt;const lateral=curveAcceleration(this.flightShape,velocity);velocity.x+=lateral.x*dt;velocity.z+=lateral.z*dt;}
   velocity.y -= (driving ? 6.4 : 9.81) * dt;
   if(!this.world.treeContact?.deflect(position,velocity,dt))position.addScaledVector(velocity,dt);
  }
@@ -103,14 +112,22 @@ export class GolfGame{
   const {group, line, marker} = this.shotPreview;
   group.visible = this.started && !this.swinging && !this.modal;
   if (!group.visible) return;
-  const power = this.charging ? clamp(this.charge,.11,1) : 1;
+  const putting=this.club==='putter';
+  const power=this.charging?clamp(this.charge,putting?.02:.11,1):1;
   const velocity = this.launchVelocity(power), point = this.position.clone();const priorShape=this.flightShape;this.flightShape=this.shotShape;
   const points = [point.clone()];
-  for (let step = 0; step < 960; step++) {
-   this.advanceFlight(point, velocity, 1/120, true);
-   const ground = this.world.ground(point.x,point.z) + BALL_RADIUS;
-   if (point.y <= ground) {point.y = ground; break}
-   if (step % 12 === 0) points.push(point.clone());
+  const dt=putting?1/60:1/120;
+  for(let step=0;step<(putting?480:960);step++){
+   if(putting)point.addScaledVector(velocity,dt);
+   else this.advanceFlight(point,velocity,dt,true);
+   const ground=this.world.ground(point.x,point.z)+BALL_RADIUS;
+   if(putting){
+    point.y=ground;
+    const lie=this.world.lie(point.x,point.z),speed=velocity.length();
+    if(lie==='WATER'||speed<BALL_STOP_SPEED)break;
+    velocity.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
+   }else if(point.y<=ground){point.y=ground;break}
+   if(step%12===0)points.push(point.clone());
   }
   points.push(point.clone());this.flightShape=priorShape;
   line.geometry.dispose();
@@ -118,7 +135,7 @@ export class GolfGame{
   marker.position.copy(point);
   marker.position.y += .07;
   const carry = Math.round(Math.hypot(point.x-this.position.x,point.z-this.position.z)*1.75);
-  $('shotPreviewText').textContent = CLUBS[this.club].name + (WEDGES[this.club]?' '+WEDGES[this.club].degrees+'°':'') + ' · ' + carry + ' YDS CARRY · ' + SHAPES[this.shotShape+2] + ' · ' + Math.round(this.aim) + '° AIM';
+  $('shotPreviewText').textContent = CLUBS[this.club].name + (WEDGES[this.club]?' '+WEDGES[this.club].degrees+'°':'') + ' · ' + carry + (putting?' YDS ROLL · ':' YDS CARRY · ') + SHAPES[this.shotShape+2] + ' · ' + Math.round(this.aim) + '° AIM';
  }
  enterMenu(){this.placing=false;this.tee.visible=false;this.clearBag();this.started=false;this.previewMode=false;this.shotPreview.group.visible=false;this.world.create('royal',0);this.ball.visible=false;this.golfer.setVisible(false);this.coachActor?.setVisible(false);this.camera.position.set(39,37,110);this.camera.lookAt(-4,3,-45)}
  enterPreview(){this.golfer.stanceGround=null;this.previewMode=true;this.golfer.club.visible=false;this.golfer.setVisible(true);this.golfer.root.position.set(0,this.world.ground(0,67),67);this.golfer.root.rotation.set(0,0,0);this.menuCamera(1);this.golfer.animate('idle',true)}
@@ -353,7 +370,7 @@ export class GolfGame{
  refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=this.shots+1;const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.position.distanceTo(this.world.holePosition)*1.75)} YDS TO PIN`;if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
  document.querySelectorAll('[data-shape]').forEach(b=>b.classList.toggle('active',Number(b.dataset.shape)===this.shotShape));this.updateShotPreview()}
  startCharge(){if(this.placing||this.spectating)return;if(this.bagPhase||!this.started||this.swinging||this.modal||this.charging)return;this.placeGolfer();this.charging=true;this.orbit=0;this.moveCamera(0,true);this.charge=0;this.notify('HOLD SPACE FOR POWER · RELEASE TO SWING')}
- releaseShot(){if(!this.charging||this.swinging||this.modal)return;this.charging=false;const p=clamp(this.charge,.11,1);this.shots++;this.swinging=true;this.swingTimer=0;this.shotPreview.group.visible=false;this.impactPending=true;this.whooshPending=true;this.strikePower=p;this.cameraShotLine=this.shotDirection();this.shotOrigin=this.position.clone();this.carryYards=null;this.vel.copy(this.launchVelocity(p));this.flightShape=this.shotShape;this.impactSpin=CLUBS[this.club].isIron?CLUBS[this.club].spin:0;this.biteTimer=0;this.ballLaunchDelay=contactTime[this.shotName()];this.golfer.shot(this.shotName());this.notify(p>.74&&p<.88?'PURE STRIKE':'SHOT IN PLAY');this.refresh()}
+ releaseShot(){if(!this.charging||this.swinging||this.modal)return;this.charging=false;const p=clamp(this.charge,this.club==='putter'?.02:.11,1);this.shots++;this.swinging=true;this.swingTimer=0;this.shotPreview.group.visible=false;this.impactPending=true;this.whooshPending=true;this.strikePower=p;this.cameraShotLine=this.shotDirection();this.shotOrigin=this.position.clone();this.carryYards=null;this.vel.copy(this.launchVelocity(p));this.flightShape=this.shotShape;this.impactSpin=CLUBS[this.club].isIron?CLUBS[this.club].spin:0;this.biteTimer=0;this.ballLaunchDelay=contactTime[this.shotName()];this.golfer.shot(this.shotName());this.notify(p>.74&&p<.88?'PURE STRIKE':'SHOT IN PLAY');this.refresh()}
  update(dt){dt=Math.min(dt,.04);this.world.waterClock.value+=dt;this.splash.update(dt);this.golfer.update(dt);this.updatePlacement();
   if(this.waterWait>0){
    this.waterWait=Math.max(0,this.waterWait-dt);this.moveCamera(dt);
@@ -376,8 +393,14 @@ export class GolfGame{
   const first=this.carryYards===null;
   if(first)this.carryYards=this.travelYards();
   const sand=lie==='BUNKER',green=lie==='GREEN',fairway=lie==='FAIRWAY',club=CLUBS[this.club];
+  if(this.club==='putter'){
+   const speed=Math.hypot(this.vel.x,this.vel.z);
+   this.vel.y=0;
+   if(speed>0)this.vel.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
+   return;
+  }
   const descent=Math.max(0,-this.vel.y);
-  if(descent>(fairway?.85:1.7)&&this.club!=='putter'){
+  if(descent>(fairway?.85:1.7)){
    this.onSfx('land');
    const turfRetention=club.stop??(this.club==='driver'?.64:.75);
    const retention=fairway&&!first?.87:turfRetention*(sand?.23:green?.70:1);
@@ -389,7 +412,7 @@ export class GolfGame{
   }
   // Catch shallow arrivals too, without applying the impact loss on every roll step.
   const shallowRetention=WEDGES[this.club]?.stop??.78;
-  const skid=first&&this.club!=='putter'?(sand?.24:green?shallowRetention:1):1;
+  const skid=first?(sand?.24:green?shallowRetention:1):1;
   const friction=sand?10:green?2.04:fairway?2.8:lie==='FRINGE'?3.65:5.5;
   const bite=club.isIron&&this.biteTimer>0?this.impactSpin/1700:0;
   this.biteTimer=Math.max(0,this.biteTimer-dt);
@@ -398,7 +421,7 @@ export class GolfGame{
  }
  stepBall(dt){const airborne=this.carryYards===null||this.vel.y!==0||this.position.y>this.world.ground(this.position.x,this.position.z)+BALL_RADIUS+.015;this.advanceFlight(this.position,this.vel,dt,airborne);const g=this.world.ground(this.position.x,this.position.z)+BALL_RADIUS,lie=this.world.lie(this.position.x,this.position.z);if(lie==='WATER'&&this.position.y<=g+.015){this.position.y=g;this.ball.position.copy(this.position);this.splash.start(this.position,this.vel);
   this.onSfx('hazard',{speed:this.vel.length()});this.vel.set(0,0,0);this.ball.visible=false;this.waterWait=1.45;
-  return}if(this.position.y<=g||(!airborne&&this.position.y-g<.06)){this.position.y=g;this.groundContact(lie,dt)}this.ball.position.copy(this.position);this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;const dist=Math.hypot(this.position.x-this.world.holePosition.x,this.position.z-this.world.holePosition.z);if(this.course!=='range'&&dist<.38&&this.position.y<g+.4&&this.vel.length()<9){this.finishHole();return}if(this.vel.length()<.13&&Math.abs(this.position.y-g)<.015){this.vel.set(0,0,0);this.swinging=false;this.position.y=g;this.onSfx('land');
+  return}if(this.position.y<=g||(!airborne&&this.position.y-g<.06)){this.position.y=g;this.groundContact(lie,dt)}this.ball.position.copy(this.position);this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;const dist=Math.hypot(this.position.x-this.world.holePosition.x,this.position.z-this.world.holePosition.z);if(this.course!=='range'&&dist<.38&&this.position.y<g+.4&&this.vel.length()<9){this.finishHole();return}if(this.vel.length()<BALL_STOP_SPEED&&Math.abs(this.position.y-g)<.015){this.vel.set(0,0,0);this.swinging=false;this.position.y=g;this.onSfx('land');
  if(this.course==='range'){
   const total=this.travelYards();this.resetBallToTee();this.charge=0;
   this.placeGolfer();this.refresh();this.moveCamera(0,true);
