@@ -1,8 +1,12 @@
+import {brandedGear} from './pro-shop-catalog.js';
+
 // The clubhouse supports one local member per browser, including guest play before registration.
 export const walletKey='prestiege-club-wallet-v1';
 export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Club sets'};
-const defaults={shirt:'custom',ball:'white',hat:'club-cap',bag:'club-bag',clubs:'club-set'};
+const legacyDefaults={shirt:'custom',ball:'white',hat:'club-cap',bag:'club-bag',clubs:'club-set'};
+const defaults=Object.fromEntries(brandedGear.filter(item=>item.price===0).map(item=>[item.slot,item.id]));
 export const catalog=[
+ ...brandedGear,
  {id:'custom',slot:'shirt',name:'Creator polo',price:0,color:null},
  {id:'white',slot:'ball',name:'Classic white',price:0,color:'#f9f9f3'},
  {id:'links',slot:'shirt',name:'Links pinstripe',price:70,pattern:'pinstripe'},
@@ -45,11 +49,13 @@ export const catalog=[
  {id:'smoke-set',slot:'clubs',name:'Smoked chrome set',price:145,color:'#505d75',accent:'#567fde'},
  {id:'copper-set',slot:'clubs',name:'Brushed copper set',price:170,color:'#ce8b60',accent:'#773b26'}
 ];
-export const itemById=id=>catalog.find(item=>item.id===id);
+const products=new Map(catalog.map(item=>[item.id,item]));
+export const itemById=id=>products.get(id);
 export function wallet(){
  const raw=localStorage.getItem(walletKey);
  const state=raw?JSON.parse(raw):{credits:0,owned:[],equipped:{},rounds:{}};
- state.owned=[...new Set([...state.owned,...Object.values(defaults)])];
+ const legacy=raw&&state.owned.includes('white');
+ state.owned=[...new Set([...state.owned,'custom',...Object.values(defaults),...(legacy?Object.values(legacyDefaults):[])])];
  state.equipped={...defaults,...state.equipped};
  for(const slot of Object.keys(gearSections)){
   const choice=localStorage.getItem(walletKey+'-'+slot);

@@ -1,15 +1,16 @@
-import {gearImage} from './gear-preview.js';
-import {Match} from './match.js?v=proshop1';
+import {gearImage} from './gear-preview.js?v=brands1';
+import {setBallFinish} from './golf-ball.js?v=brands1';
+import {Match} from './match.js?v=brands1';
 import {Clubhouse} from './clubhouse.js?v=proshop1';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=proshop1';
+import {GolfGame} from './game.js?v=brands1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom} from './online.js?v=vote1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear} from './locker.js?v=proshop1';
+import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear} from './locker.js?v=brands1';
 const $=id=>document.getElementById(id);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
@@ -72,8 +73,8 @@ const saved=(()=>{try{return JSON.parse(localStorage.getItem('prestiege-golfer')
 const palette=()=>({shirt:$('shirtColor').value,pants:$('pantsColor').value,hair:$('hairColor').value,eyes:$('eyeColor').value,skin:$('skinColor').value});
 function applyGear(){
  const {equipped}=wallet();
- game.ball.material.color.set(itemById(equipped.ball).color);
- game.equipment={bag:equipped.bag,clubs:equipped.clubs};
+ setBallFinish(game.ball,itemById(equipped.ball));
+ game.equipment={bag:equipped.bag,clubs:equipped.clubs,ball:equipped.ball};
  game.setBagFinish(itemById(equipped.bag),itemById(equipped.clubs));
  game.golfer.applyAppearance(palette());
  finishApparel(game.golfer,equipped.shirt,equipped.hat,equipped.clubs);
@@ -87,7 +88,9 @@ function finishApparel(actor,shirt,hat,clubs){
 function finishShirt(actor,id){
  const shirt=itemById(id)?.slot==='shirt'?itemById(id):itemById('custom');
  const fabric=actor.outfit?.shirt;
- if(!fabric||fabric.userData.finish===shirt.id)return;
+ if(!fabric)return;
+ if(shirt.color)fabric.color.set(shirt.color);
+ if(fabric.userData.finish===shirt.id)return;
  fabric.userData.finish=shirt.id;
  fabric.customProgramCacheKey=()=>shirt.pattern||'club-solid';
  fabric.onBeforeCompile=shader=>{
@@ -102,28 +105,49 @@ function finishShirt(actor,id){
  };
  fabric.needsUpdate=true;
 }
-const gearCategory={store:'shirt',locker:'shirt'};
+const gearPageSize=8;
+const gearView={
+ store:{slot:'shirt',brand:'',offset:0},
+ locker:{slot:'shirt',brand:'',offset:0}
+};
 function renderGear(){
  const state=wallet();
  $('creditBalance').textContent=state.credits+' CREDITS';
  $('creditBalance').ariaLabel=state.credits+' credits. Open Pro Shop';
  if(page!=='store'&&page!=='locker')return;
- const view=page,list=$(view+'Items'),filters=$(view+'Categories'),slot=gearCategory[view];
+ const view=page,list=$(view+'Items'),filters=$(view+'Categories');
+ const filter=gearView[view],{slot}=filter;
  if(!filters.children.length){
   for(const [category,label] of Object.entries(gearSections)){
    const button=document.createElement('button');
    button.type='button';button.className='glass';button.dataset.category=category;button.textContent=label;
-   button.onclick=()=>{gearCategory[view]=category;$(view+'Status').textContent='';renderGear()};
+   button.onclick=()=>{Object.assign(filter,{slot:category,brand:'',offset:0});$(view+'Status').textContent='';renderGear()};
    filters.append(button);
   }
  }
  for(const button of filters.children)button.setAttribute('aria-pressed',String(button.dataset.category===slot));
  list.replaceChildren();
- const items=catalog.filter(item=>item.slot===slot&&(view==='locker'?state.owned.includes(item.id):item.price>0));
- for(const item of items){
+ const items=catalog.filter(item=>item.slot===slot&&(view==='locker'?state.owned.includes(item.id):item.brand));
+ const brandSelect=$(view+'Brand');
+ const brands=[...new Set(items.map(item=>item.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ brandSelect.replaceChildren(new Option('All brands',''),...brands.map(brand=>new Option(brand,brand)));
+ brandSelect.value=filter.brand;
+ brandSelect.onchange=()=>{
+  Object.assign(filter,{brand:brandSelect.value,offset:0});renderGear();
+ };
+ const results=filter.brand?items.filter(item=>item.brand===filter.brand):items;
+ const lastOffset=Math.max(0,Math.ceil(results.length/gearPageSize)-1)*gearPageSize;
+ filter.offset=Math.min(filter.offset,lastOffset);
+ const previous=$(view+'Prev'),next=$(view+'Next');
+ previous.disabled=filter.offset===0;next.disabled=filter.offset>=lastOffset;
+ previous.onclick=()=>{filter.offset-=gearPageSize;renderGear();list.scrollIntoView({block:'nearest'})};
+ next.onclick=()=>{filter.offset+=gearPageSize;renderGear();list.scrollIntoView({block:'nearest'})};
+ const end=Math.min(filter.offset+gearPageSize,results.length);
+ $(view+'Count').textContent=results.length?`${filter.offset+1}–${end} of ${results.length}`:'0 items';
+ for(const item of results.slice(filter.offset,end)){
   const owned=state.owned.includes(item.id),wearing=state.equipped[slot]===item.id;
   const card=document.createElement('article'),preview=document.createElement('div');
-  const name=document.createElement('strong'),action=document.createElement('button');
+  const name=document.createElement('strong'),brand=document.createElement('small'),action=document.createElement('button');
   card.className='gear-card';preview.className='gear-preview';
   try{
    const src=gearImage(item,game.golfer,$('shirtColor').value,game.equippedFrame,finishShirt);
@@ -131,15 +155,17 @@ function renderGear(){
     const image=new Image();image.src=src;image.alt='';preview.append(image);
    }
   }catch(error){console.warn('Gear preview unavailable:',error)}
-  name.textContent=item.name;action.className='glass';action.type='button';
-  action.textContent=view==='locker'?(wearing?'Equipped':'Equip'):(owned?'Owned':'Buy · '+item.price+' credits');
+  brand.textContent=item.brand||'Prestiege';
+  name.append(brand,document.createTextNode(item.name));
+  action.className='glass';action.type='button';
+  action.textContent=view==='locker'?(wearing?'Equipped':'Equip'):(owned?(item.price?'Owned':'In Locker'):'Buy · '+item.price+' credits');
   action.disabled=view==='locker'?wearing:owned||state.credits<item.price;
-  action.setAttribute('aria-label',action.textContent+' · '+item.name);
+  action.setAttribute('aria-label',action.textContent+' · '+[item.brand,item.name].filter(Boolean).join(' '));
   action.onclick=async()=>{try{
    if(view==='locker')wear(item.id);else await buy(item.id);
    applyGear();
    if(view==='locker'&&room.connected)room.send({type:'appearance',profile:playerCard()});
-   renderGear();$(view+'Status').textContent=item.name+(view==='locker'?' equipped.':' is in your Locker.');
+   renderGear();$(view+'Status').textContent=[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
   }catch(error){$(view+'Status').textContent=error.message}};
   card.append(preview,name,action);list.append(card);
  }

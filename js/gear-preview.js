@@ -1,8 +1,8 @@
 import * as T from 'three';
-import {makeGolfBall} from './golf-ball.js';
-import {buildBag} from './golf-bag.js?v=proshop1';
+import {makeGolfBall,setBallFinish} from './golf-ball.js?v=brands1';
+import {buildBag} from './golf-bag.js?v=brands1';
 import {clubModel,makeShaft,setClubFinish} from './club-model.js?v=proshop1';
-import {itemById} from './locker.js?v=proshop1';
+import {itemById} from './locker.js?v=brands1';
 
 const images=new Map();
 const garments=new Map();
@@ -71,7 +71,7 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
    if(item.slot==='shirt')finishShirt({outfit:{shirt:model.material}},item.id);
    break;
   case 'ball':
-   model=makeGolfBall(color);
+   model=makeGolfBall(color);setBallFinish(model,item);
    break;
   case 'bag':
    displayBag??=buildBag();

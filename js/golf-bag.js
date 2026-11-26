@@ -8,6 +8,19 @@ export const bagSections=[
  ['Wedges',['pitching','approach','wedge','lob']],['Putters',['putter']]
 ];
 
+const labels=new Map();
+function bagLabel(brand){
+ if(labels.has(brand))return labels.get(brand);
+ const canvas=document.createElement('canvas');
+ canvas.width=256;canvas.height=64;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#172029';ctx.fillRect(0,0,256,64);
+ ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 30px Arial';
+ ctx.fillText(brand,128,42,225);
+ const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
+ labels.set(brand,map);return map;
+}
+
 export function buildBag(){
  const bag=new T.Group(),heads=[];
  const leather=new T.MeshStandardMaterial({color:0x202824,roughness:.72});
@@ -49,7 +62,24 @@ export function buildBag(){
   const piping=mesh(new T.CylinderGeometry(.009,.009,.64,10),trim,x,.45,.141);
   piping.rotation.z=-x*.26;
  }
+ const label=mesh(new T.PlaneGeometry(.20,.050),new T.MeshStandardMaterial({roughness:.88}),0,.298,.237);
+ label.castShadow=false;
+ const legs=[];
+ for(const side of [-1,1]){
+  const socket=new T.Vector3(side*.12,.70,-.14),foot=new T.Vector3(side*.25,.025,-.43);
+  const axis=socket.clone().sub(foot),middle=foot.clone().lerp(socket,.5);
+  const leg=mesh(new T.CylinderGeometry(.010,.012,axis.length(),12),steel,...middle.toArray());
+  leg.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis.normalize());
+  legs.push(leg,mesh(new T.SphereGeometry(.027,12,8),trim,...foot.toArray()));
+ }
+ label.visible=false;legs.forEach(leg=>{leg.visible=false});
  bag.visible=false;return {bag,heads,setFinish(item,clubs){
+  label.visible=!!item.brand;
+  if(item.brand){
+   const map=bagLabel(item.brand);
+   if(label.material.map!==map){label.material.map=map;label.material.needsUpdate=true}
+  }
+  for(const leg of legs)leg.visible=!!item.stand;
   leather.color.set(item.color);trim.color.set(item.trim);
   steel.color.set(clubs.color||'#c7d0d1');
   heads.forEach(head=>setClubFinish(head,clubs));

@@ -36,3 +36,27 @@ function dimpledSphere(){
 export function makeGolfBall(color){
  return new T.Mesh(geometry??=dimpledSphere(),new T.MeshStandardMaterial({color,roughness:.38}));
 }
+
+const markings=new Map();
+export function setBallFinish(ball,item){
+ ball.material.color.set(item.color);
+ let map=null;
+ if(item.brand){
+  if(!markings.has(item.id)){
+   const canvas=document.createElement('canvas');
+   canvas.width=1024;canvas.height=512;
+   const ink=canvas.getContext('2d');
+   ink.fillStyle='#fff';ink.fillRect(0,0,1024,512);
+   ink.fillStyle='#161c23';ink.textAlign='center';
+   for(const x of [188,700]){
+    ink.font='bold 23px Arial';ink.fillText(item.brand,x,241,125);
+    ink.font='17px Arial';ink.fillText(item.name,x,265,125);
+   }
+   map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
+   markings.set(item.id,map);
+  }else map=markings.get(item.id);
+ }
+ if(ball.material.map!==map){
+  ball.material.map=map;ball.material.needsUpdate=true;
+ }
+}

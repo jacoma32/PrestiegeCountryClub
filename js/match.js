@@ -1,4 +1,5 @@
-import {itemById} from './locker.js?v=proshop1';
+import {setBallFinish} from './golf-ball.js?v=brands1';
+import {itemById} from './locker.js?v=brands1';
 
 // One ordered data channel carries the active player's camera, pose and hole result.
 const $=id=>document.getElementById(id);
@@ -22,7 +23,8 @@ export class Match {
  }
  playTurn(reset){
   const g=this.game,watch=this.turn!==this.room.role;
-  g.ball.material.color.setHex(this.ballColor);
+  const localBall=itemById(g.equipment?.ball);
+  if(localBall)setBallFinish(g.ball,localBall);else g.ball.material.color.setHex(this.ballColor);
   if(reset)g.startHole(this.hole);
   if(!watch&&g.equipment){
    g.setBagFinish(itemById(g.equipment.bag),itemById(g.equipment.clubs));
@@ -44,7 +46,7 @@ export class Match {
    bones:Array.from(a.basePose.keys(),b=>b.quaternion.toArray()),club:g.club,
    stick:pose(a.club),head:pose(a.clubHead),held:a.club.visible,
    bag:g.bag.visible?{pose:pose(g.bag),style:g.equipment?.bag,clubs:g.equipment?.clubs}:null,
-   tee:g.tee.visible,ball:g.ball.position.toArray(),color:g.ball.material.color.getHex(),visible:g.ball.visible,shots:g.shots};
+   tee:g.tee.visible,ball:g.ball.position.toArray(),ballStyle:g.equipment?.ball,color:g.ball.material.color.getHex(),visible:g.ball.visible,shots:g.shots};
  }
  send(data){this.room.send({...data,type:'state',hole:this.hole,turn:this.turn})}
  update(dt){
@@ -84,7 +86,13 @@ export class Match {
    if(this.watchedBag!==key){g.setBagFinish(style,set);this.watchedBag=key}
    applyPose(g.bag,f.bag.pose);g.showBagClubs(f.held?f.club:null);
   }
-  g.tee.visible=f.tee;g.ball.visible=f.visible;g.ball.material.color.setHex(f.color);
+  g.tee.visible=f.tee;g.ball.visible=f.visible;
+  const watchedBall=itemById(f.ballStyle);
+  if(watchedBall?.slot==='ball')setBallFinish(g.ball,watchedBall);
+  else{
+   setBallFinish(g.ball,itemById('white'));
+   g.ball.material.color.setHex(f.color);
+  }
  }
  receive(m){
   if(!this.ready){(this.pending??=[]).push(m);return}
@@ -140,7 +148,10 @@ export class Match {
  stop(){
   clearTimeout(this.timer);this.ready=false;this.game.spectating=false;this.game.ball.material.color.setHex(this.ballColor);
   const gear=this.game.equipment;
-  if(gear)this.game.setBagFinish(itemById(gear.bag),itemById(gear.clubs));
+  if(gear){
+   setBallFinish(this.game.ball,itemById(gear.ball));
+   this.game.setBagFinish(itemById(gear.bag),itemById(gear.clubs));
+  }
   document.body.classList.remove('watching-golf');$('nextHole').hidden=false;$('nextHole').disabled=false;$('toClubhouse').hidden=false;
   const actor=this.lobby.remote;
   if(actor){this.lobby.scene.add(actor.root);actor.root.visible=true;actor.root.position.set(.79,0,-.95);actor.root.rotation.set(0,-.22,0);actor.club.visible=false;actor.animate('idle',true)}

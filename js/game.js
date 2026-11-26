@@ -1,8 +1,8 @@
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
 import {WEDGES,wedgeLaunch} from './wedges.js';
-import {makeGolfBall} from './golf-ball.js';
-import {buildBag} from './golf-bag.js?v=proshop1';
+import {makeGolfBall} from './golf-ball.js?v=brands1';
+import {buildBag} from './golf-bag.js?v=brands1';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
