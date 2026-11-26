@@ -7,7 +7,7 @@ import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=putts1';
+import {GolfGame} from './game.js?v=clubauto1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom} from './online.js?v=vote1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
@@ -38,7 +38,7 @@ $('accountBtn').onclick=()=>{$('accountGate').classList.remove('hidden');documen
 const lessons=[
  ['WELCOME TO PRESTIEGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
  ['SET UP YOUR BALL','First, place your tee and ball. Watch me demonstrate the setup.','tee'],
- ['CHOOSE YOUR CLUB','Press C to walk to your bag. Click a labeled club to take it back to the ball. The driver is for long tee shots. Irons cover approach shots, wedges are for short shots, and the putter is for the green.','pointGesture'],
+ ['CHOOSE YOUR CLUB','The game starts you with a club for the distance to the pin. Press C and pick a club from your bag to change it. The driver is for long tee shots. Irons cover approach shots, wedges are for short shots, and the putter is for the green.','pointGesture'],
  ['AIM YOUR SHOT','Use A / D or the arrow keys to aim. Keep the blue tracer on your target and check the wind before you swing.','point'],
  ['WATCH A FULL SWING','Hold SPACE to build power, then release near the highlighted timing zone. Watch the golfer complete the full swing before the camera follows the ball.','drive'],
  ['CHIPPING & PUTTING','Use your wedge around the green and the putter once you reach the putting surface. I’ll demonstrate both.','chip'],
