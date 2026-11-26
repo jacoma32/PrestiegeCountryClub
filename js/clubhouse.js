@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {Golfer} from './actors.js?v=curl2';
+import {Golfer} from './actors.js?v=proshop1';
 
 export class Clubhouse {
  constructor(local,stage,finish){
@@ -34,7 +34,7 @@ export class Clubhouse {
   const remote=new Golfer(new T.Group());
   await remote.load(profile.frame);await remote.loadAllAnimations(['idle']);
   if(this.ticket!==ticket)return;
-  remote.applyAppearance(profile.colors);this.finish(remote,profile.pattern);
+  remote.applyAppearance(profile.colors);this.finish(remote,profile.pattern,profile.hat,profile.clubs);
   remote.club.visible=false;remote.root.position.set(.79,0,-.95);remote.root.rotation.y=-.22;
   this.scene.add(remote.root);this.remote=remote;
  }

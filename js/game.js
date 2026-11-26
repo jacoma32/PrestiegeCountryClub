@@ -1,12 +1,13 @@
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
 import {WEDGES,wedgeLaunch} from './wedges.js';
-import {buildBag} from './golf-bag.js?v=wedges1';
+import {makeGolfBall} from './golf-ball.js';
+import {buildBag} from './golf-bag.js?v=proshop1';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
 import {World,COURSES} from './world.js?v=tour72';
-import {Golfer} from './actors.js?v=curl2';
+import {Golfer} from './actors.js?v=proshop1';
 const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
 const BAG_TAGS={driver:'Driver',wood:'3W',hybrid:'4H',pitching:'PW',approach:'AW',wedge:'SW',lob:'LW',putter:'Putter'};
@@ -14,7 +15,7 @@ const BALL_RADIUS = .02135;
 const CLUBS={driver:{name:'DRIVER',speed:43,loft:.395,range:255},wood:{name:'3 WOOD',speed:39.8,loft:.42,range:228},hybrid:{name:'4 HYBRID',speed:42.2,loft:.315,range:191},...CLUB_IRONS,
  ...WEDGES,putter:{name:'PUTTER',speed:11,loft:.015,range:35}};
 export class GolfGame{
- constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;scene.add(this.bag);
+ constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
  this.bagPhase=null;this.listeners();this.enterMenu()}
  makeContactShadow() {
   const material=new THREE.ShaderMaterial({
@@ -51,7 +52,11 @@ export class GolfGame{
   const tip=this.placementFinger;
   if(tip)tip.getWorldPosition(this.ball.position);
  }
- makeBall(){const b=new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS,24,20),new THREE.MeshStandardMaterial({color:0xf9f9f3,roughness:.48}));b.castShadow=true;this.scene.add(b);return b}
+ makeBall(){
+  const ball=makeGolfBall('#f9f9f3');
+  ball.scale.setScalar(BALL_RADIUS);ball.castShadow=true;this.scene.add(ball);
+  return ball;
+ }
  prepareGolfer(frame) {
   if (this.equippedFrame === frame && this.golferReady) return this.golferReady;
   this.equippedFrame = frame;

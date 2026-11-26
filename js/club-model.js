@@ -157,3 +157,23 @@ export function makeShaft(){
  }
  return shaft;
 }
+
+// Catalog finishes are shared by meshes using the same original material.
+const finishes=new Map();
+export function setClubFinish(object,item){
+ let materials=finishes.get(item.id);
+ if(!materials)finishes.set(item.id,materials=new Map());
+ object.traverse(mesh=>{
+  if(!mesh.isMesh)return;
+  const base=mesh.userData.originalMaterial??=mesh.material;
+  const color=[nickel,face].includes(base)?item.color:[carbon,insert,sole].includes(base)?item.accent:null;
+  if(!color){mesh.material=base;return}
+  if(!materials.has(base)){
+   const material=base.clone();
+   material.color.set(color);
+   if(base===face)material.color.multiplyScalar(.85);
+   materials.set(base,material);
+  }
+  mesh.material=materials.get(base);
+ });
+}

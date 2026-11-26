@@ -1,4 +1,4 @@
-import {clubModel,heelSocket} from './club-model.js?v=wedges1';
+import {clubModel,heelSocket,setClubFinish} from './club-model.js?v=proshop1';
 import * as T from 'three';
 
 // A divided cart bag, with the tallest clubs in the rear row.
@@ -40,5 +40,18 @@ export function buildBag(){
   shaft.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis.normalize());
   head.userData.club=id;head.userData.shaft=shaft;head.userData.restY=top;head.userData.shaftY=shaft.position.y;heads.push(head);
  });
- bag.visible=false;return {bag,heads};
+ const zipper=mesh(new T.BoxGeometry(.018,.36,.018),steel,.035,.38,.231);
+ zipper.rotation.z=-.23;
+ mesh(new T.BoxGeometry(.033,.055,.025),steel,.073,.54,.232);
+ const handle=mesh(new T.TorusGeometry(.078,.017,10,22,Math.PI),trim,0,.676,.187);
+ handle.scale.y=.81;
+ for(const x of [-.12,.12]){
+  const piping=mesh(new T.CylinderGeometry(.009,.009,.64,10),trim,x,.45,.141);
+  piping.rotation.z=-x*.26;
+ }
+ bag.visible=false;return {bag,heads,setFinish(item,clubs){
+  leather.color.set(item.color);trim.color.set(item.trim);
+  steel.color.set(clubs.color||'#c7d0d1');
+  heads.forEach(head=>setClubFinish(head,clubs));
+ }};
 }

@@ -77,7 +77,7 @@ export function fitToRig(actor,[data,maps]) {
   if(previous===undefined||position.getY(previous)>y)patches.set(key,i);
  }
  actor.soles={mesh,indices:[...patches.values()],point:new T.Vector3()};
- return {skin,shirt,pants,eyes,hair,brows,ponytail};
+ return {skin,shirt,pants,eyes,hair,brows,ponytail,cap,mesh};
 }
 
 export function tintGolfer(materials,colors) {

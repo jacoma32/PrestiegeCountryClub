@@ -1,3 +1,5 @@
+import {itemById} from './locker.js?v=proshop1';
+
 // One ordered data channel carries the active player's camera, pose and hole result.
 const $=id=>document.getElementById(id);
 const COURSE_HOLES=18;
@@ -22,6 +24,10 @@ export class Match {
   const g=this.game,watch=this.turn!==this.room.role;
   g.ball.material.color.setHex(this.ballColor);
   if(reset)g.startHole(this.hole);
+  if(!watch&&g.equipment){
+   g.setBagFinish(itemById(g.equipment.bag),itemById(g.equipment.clubs));
+   this.watchedBag=null;
+  }
   g.spectating=watch;g.modal=false;
   $('roundModal').classList.add('hidden');$('nextHole').hidden=true;
   g.golfer.root.visible=!watch;g.ball.visible=!watch;
@@ -37,6 +43,7 @@ export class Match {
   return {kind:'frame',camera:pose(g.camera),root:pose(a.root),model:pose(a.model),
    bones:Array.from(a.basePose.keys(),b=>b.quaternion.toArray()),club:g.club,
    stick:pose(a.club),head:pose(a.clubHead),held:a.club.visible,
+   bag:g.bag.visible?{pose:pose(g.bag),style:g.equipment?.bag,clubs:g.equipment?.clubs}:null,
    tee:g.tee.visible,ball:g.ball.position.toArray(),color:g.ball.material.color.getHex(),visible:g.ball.visible,shots:g.shots};
  }
  send(data){this.room.send({...data,type:'state',hole:this.hole,turn:this.turn})}
@@ -67,6 +74,15 @@ export class Match {
    g.camera.position.lerp(target,blend);
    g.camera.quaternion.slerp(g.camera.quaternion.clone().fromArray(f.camera,3),blend);
    g.ball.position.lerp(target.fromArray(f.ball),blend);
+  }
+  g.bag.visible=!!f.bag;
+  if(f.bag){
+   const bag=itemById(f.bag.style),clubs=itemById(f.bag.clubs);
+   const style=bag?.slot==='bag'?bag:itemById('club-bag');
+   const set=clubs?.slot==='clubs'?clubs:itemById('club-set');
+   const key=style.id+':'+set.id;
+   if(this.watchedBag!==key){g.setBagFinish(style,set);this.watchedBag=key}
+   applyPose(g.bag,f.bag.pose);g.showBagClubs(f.held?f.club:null);
   }
   g.tee.visible=f.tee;g.ball.visible=f.visible;g.ball.material.color.setHex(f.color);
  }
@@ -123,6 +139,8 @@ export class Match {
  }
  stop(){
   clearTimeout(this.timer);this.ready=false;this.game.spectating=false;this.game.ball.material.color.setHex(this.ballColor);
+  const gear=this.game.equipment;
+  if(gear)this.game.setBagFinish(itemById(gear.bag),itemById(gear.clubs));
   document.body.classList.remove('watching-golf');$('nextHole').hidden=false;$('nextHole').disabled=false;$('toClubhouse').hidden=false;
   const actor=this.lobby.remote;
   if(actor){this.lobby.scene.add(actor.root);actor.root.visible=true;actor.root.position.set(.79,0,-.95);actor.root.rotation.set(0,-.22,0);actor.club.visible=false;actor.animate('idle',true)}

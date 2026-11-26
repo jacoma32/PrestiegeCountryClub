@@ -1,5 +1,7 @@
 // The clubhouse supports one local member per browser, including guest play before registration.
 export const walletKey='prestiege-club-wallet-v1';
+export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Club sets'};
+const defaults={shirt:'custom',ball:'white',hat:'club-cap',bag:'club-bag',clubs:'club-set'};
 export const catalog=[
  {id:'custom',slot:'shirt',name:'Creator polo',price:0,color:null},
  {id:'white',slot:'ball',name:'Classic white',price:0,color:'#f9f9f3'},
@@ -31,13 +33,25 @@ export const catalog=[
  {id:'violet',slot:'ball',name:'Orchid',price:55,color:'#d493ff'},
  {id:'lemon',slot:'ball',name:'Tour yellow',price:20,color:'#eaff35'},
  {id:'coral',slot:'ball',name:'Sunset coral',price:35,color:'#ff694b'},
- {id:'ice',slot:'ball',name:'Glacier blue',price:50,color:'#7adaff'}
+ {id:'ice',slot:'ball',name:'Glacier blue',price:50,color:'#7adaff'},
+ {id:'club-cap',slot:'hat',name:'Club cap',price:0,color:'#213b45'},
+ {id:'sand-cap',slot:'hat',name:'Sandstone performance cap',price:40,color:'#e5d0aa'},
+ {id:'pine-cap',slot:'hat',name:'Pine tour cap',price:55,color:'#22775a'},
+ {id:'claret-cap',slot:'hat',name:'Claret twill cap',price:50,color:'#96293d'},
+ {id:'club-bag',slot:'bag',name:'Club cart bag',price:0,color:'#202824',trim:'#3c4541'},
+ {id:'coastal-bag',slot:'bag',name:'Coastal cart bag',price:95,color:'#235880',trim:'#d9eaf0'},
+ {id:'saddle-bag',slot:'bag',name:'Saddle leather cart bag',price:125,color:'#844b2c',trim:'#dab276'},
+ {id:'club-set',slot:'clubs',name:'Club steel set',price:0},
+ {id:'smoke-set',slot:'clubs',name:'Smoked chrome set',price:145,color:'#505d75',accent:'#567fde'},
+ {id:'copper-set',slot:'clubs',name:'Brushed copper set',price:170,color:'#ce8b60',accent:'#773b26'}
 ];
 export const itemById=id=>catalog.find(item=>item.id===id);
 export function wallet(){
  const raw=localStorage.getItem(walletKey);
- const state=raw?JSON.parse(raw):{credits:0,owned:['custom','white'],equipped:{shirt:'custom',ball:'white'},rounds:{}};
- for(const slot of ['shirt','ball']){
+ const state=raw?JSON.parse(raw):{credits:0,owned:[],equipped:{},rounds:{}};
+ state.owned=[...new Set([...state.owned,...Object.values(defaults)])];
+ state.equipped={...defaults,...state.equipped};
+ for(const slot of Object.keys(gearSections)){
   const choice=localStorage.getItem(walletKey+'-'+slot);
   if(state.owned.includes(choice)&&itemById(choice)?.slot===slot)state.equipped[slot]=choice;
  }

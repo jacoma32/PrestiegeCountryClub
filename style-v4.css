@@ -87,13 +87,14 @@ body:has(#bagPanel:not([hidden])) .game-banner{top:3vh}
 #creditBalance{color:#f6d18b;white-space:nowrap}
 .gear-panel{max-width:860px;margin:auto;padding:clamp(16px,3vw,34px);background:#10251ff2;border:1px solid #667c6d;color:#f1efe1}
 .gear-panel h2{margin:0;font:600 clamp(32px,5vw,60px) Oswald,sans-serif}
-.gear-items{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr))}
-.gear-items h3{grid-column:1/-1;margin:12px 0 0;color:#e6c990}
-.gear-card{display:grid;justify-items:start;gap:10px;padding:14px;background:#213b32;border:1px solid #51695b}
+.gear-categories{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.gear-categories button[aria-pressed=true]{background:#e6c990;color:#142821;border-color:#e6c990}
+.gear-items{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(165px,100%),1fr))}
+.gear-card{display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:12px;background:#213b32;border:1px solid #51695b;min-width:0}
+.gear-card strong{font-size:.95rem;line-height:1.3}
 .gear-card button:disabled{opacity:.65;cursor:default}
-.swatch{background-color:var(--gear);background-image:var(--pattern,none);width:48px;height:40px}
-.swatch.shirt{clip-path:polygon(25% 0,40% 0,50% 10%,60% 0,75% 0,100% 25%,84% 42%,75% 35%,75% 100%,25% 100%,25% 35%,16% 42%,0 25%)}
-.swatch.ball{width:40px;border-radius:50%;box-shadow:inset -5px -6px 8px #0004}
+.gear-preview{aspect-ratio:3/2;background:radial-gradient(ellipse at 50% 35%,#50695c,#172e28);border-radius:3px;overflow:hidden}
+.gear-preview img{display:block;width:100%;height:100%;object-fit:contain}
 #bottomNav button{min-width:0}
 @media(max-width:650px){#topbar{padding:0 2%;gap:4px}#topbar .top-actions{gap:2px}#topbar .smallbtn{padding:5px 4px;font-size:9px}#topbar .mark small{display:none}#bottomNav button{letter-spacing:0}}
 
