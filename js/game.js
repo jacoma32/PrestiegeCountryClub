@@ -1,13 +1,14 @@
+import {clubChoice} from './locker.js?v=clubs1';
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
 import {WEDGES,wedgeLaunch} from './wedges.js';
 import {makeGolfBall} from './golf-ball.js?v=brands1';
-import {buildBag} from './golf-bag.js?v=brands1';
+import {buildBag} from './golf-bag.js?v=clubs1';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
 import {World,COURSES} from './world.js?v=tour72';
-import {Golfer} from './actors.js?v=proshop1';
+import {Golfer} from './actors.js?v=clubs1';
 const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
 const BAG_TAGS={driver:'Driver',wood:'3W',hybrid:'4H',pitching:'PW',approach:'AW',wedge:'SW',lob:'LW',putter:'Putter'};
@@ -207,7 +208,9 @@ export class GolfGame{
   for(const head of this.bagHeads){
    const id=head.userData.club,tag=document.createElement('button');
    tag.dataset.pick=id;tag.textContent=BAG_TAGS[id]||id.slice(4)+'I';
-   tag.setAttribute('aria-label',CLUBS[id].name);tag.title=CLUBS[id].name;
+   const item=clubChoice(this.equipment,id);
+   const label=item.slot==='clubs'?CLUBS[id].name:`${CLUBS[id].name} · ${item.brand} ${item.name}`;
+   tag.setAttribute('aria-label',label);tag.title=label;
    tag.onpointerenter=tag.onfocus=()=>this.highlightBagClub(id);
    tag.onpointerleave=tag.onblur=()=>this.highlightBagClub(null);
    contents.append(tag);this.clubTags.set(id,tag);

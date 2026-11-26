@@ -1,8 +1,8 @@
+import {setHatFinish} from './gear-logos.js';
 import * as T from 'three';
 import {makeGolfBall,setBallFinish} from './golf-ball.js?v=brands1';
-import {buildBag} from './golf-bag.js?v=brands1';
+import {buildBag} from './golf-bag.js?v=clubs1';
 import {clubModel,makeShaft,setClubFinish} from './club-model.js?v=proshop1';
-import {itemById} from './locker.js?v=brands1';
 
 const images=new Map();
 const garments=new Map();
@@ -37,7 +37,6 @@ function garment(actor,slot,frame){
   }
   geometry.setAttribute(name,new T.Float32BufferAttribute(values,size));
  }
- geometry.center();
  const material=new T.MeshStandardMaterial({map:slot==='shirt'?actor.outfit.shirt.map:null,roughness:.86,side:T.DoubleSide});
  const mesh=new T.Mesh(geometry,material);garments.set(key,mesh);
  return mesh;
@@ -45,6 +44,7 @@ function garment(actor,slot,frame){
 
 let displayBag;
 let displaySet;
+const individualClubs=new Map();
 function clubDisplay(){
  const group=new T.Group();
  for(const [i,id] of ['driver','iron7','wedge','putter'].entries()){
@@ -69,19 +69,30 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
    if(!model)return;
    model.material.color.set(color);
    if(item.slot==='shirt')finishShirt({outfit:{shirt:model.material}},item.id);
+   else setHatFinish(model.material,item);
    break;
   case 'ball':
    model=makeGolfBall(color);setBallFinish(model,item);
    break;
   case 'bag':
    displayBag??=buildBag();
-   displayBag.setFinish(item,itemById('club-set'));
+   displayBag.setFinish(item,{clubs:'club-set'});
    model=displayBag.bag;model.visible=true;
    break;
   case 'clubs':
    model=displaySet??=clubDisplay();
    setClubFinish(model,item);
    break;
+  default: {
+   const type=item.slot==='wedges'?'wedge':item.slot;
+   if(!individualClubs.has(type)){
+    const head=clubModel(type);
+    head.rotation.set(-.38,2.55,-.12);
+    individualClubs.set(type,head);
+   }
+   model=individualClubs.get(type);
+   setClubFinish(model,item);
+  }
  }
  const {renderer,scene,camera}=getStudio();
  const box=new T.Box3().setFromObject(model),center=box.getCenter(new T.Vector3());

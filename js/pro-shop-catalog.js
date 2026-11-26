@@ -100,3 +100,33 @@ export const brandedGear=[
  clubs('wilson-dynapower','Wilson','Dynapower Irons',175,'#b5c1c6','#603639'),
  clubs('wilson-profile','Wilson','Profile SGI Complete Set',0,'#b8c2ca','#393e4b')
 ];
+
+const singleClub=(id,slot,brand,name,price,color,accent)=>({id,slot,brand,name,price,color,accent});
+brandedGear.push(
+ singleClub('titleist-gt2-driver','driver','Titleist','GT2 Driver',210,'#aeb6be','#252936'),
+ singleClub('callaway-elyte-driver','driver','Callaway','Elyte Driver',205,'#bbc5c8','#397d56'),
+ singleClub('taylormade-qi35-driver','driver','TaylorMade','Qi35 Driver',225,'#b2b9bf','#42404d'),
+ singleClub('ping-g440-driver','driver','PING','G440 MAX Driver',220,'#c8d0d0','#235a89'),
+ singleClub('cobra-ds-adapt-driver','driver','Cobra','DS-ADAPT MAX-K Driver',195,'#adb5be','#5d75a4'),
+
+ singleClub('titleist-gt2-fairway','wood','Titleist','GT2 Fairway',145,'#c0c5ca','#252838'),
+ singleClub('callaway-elyte-fairway','wood','Callaway','Elyte Fairway Wood',140,'#bdc7c8','#35682d'),
+ singleClub('taylormade-qi35-fairway','wood','TaylorMade','Qi35 Fairway',155,'#b3bbc2','#524756'),
+ singleClub('ping-g440-fairway','wood','PING','G440 MAX Fairway',150,'#c4cdd1','#3b7398'),
+
+ singleClub('titleist-gt2-hybrid','hybrid','Titleist','GT2 Hybrid',120,'#aeb4bc','#373039'),
+ singleClub('callaway-elyte-hybrid','hybrid','Callaway','Elyte Hybrid',115,'#bfd0d0','#478a51'),
+ singleClub('taylormade-qi35-rescue','hybrid','TaylorMade','Qi35 Rescue',130,'#aeb8c2','#485269'),
+ singleClub('ping-g440-hybrid','hybrid','PING','G440 Hybrid',125,'#c2ced8','#376e9c'),
+
+ singleClub('vokey-sm10','wedges','Titleist','Vokey SM10 Tour Chrome',115,'#c6c9c8','#555761'),
+ singleClub('callaway-opus','wedges','Callaway','Opus Brushed Chrome',105,'#bcc5cb','#475a64'),
+ singleClub('taylormade-mg4','wedges','TaylorMade','Milled Grind 4',110,'#b7c1c7','#63646b'),
+ singleClub('ping-s159','wedges','PING','s159 Chrome',105,'#c2cbcf','#425668'),
+ singleClub('cleveland-rtz','wedges','Cleveland Golf','RTZ Tour Satin',110,'#cad0d2','#545c64'),
+
+ singleClub('scotty-newport2','putter','Scotty Cameron','Studio Style Newport 2',175,'#c6cbca','#25484a'),
+ singleClub('odyssey-aione-seven','putter','Odyssey','Ai-ONE #7',145,'#afd0e6','#2a4b73'),
+ singleClub('taylormade-spider-tour','putter','TaylorMade','Spider Tour',155,'#aeb5c0','#484c52'),
+ singleClub('ping-anser','putter','PING','Anser',135,'#c4cdcf','#343e4c')
+);

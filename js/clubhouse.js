@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {Golfer} from './actors.js?v=proshop1';
+import {Golfer} from './actors.js?v=clubs1';
 
 export class Clubhouse {
  constructor(local,stage,finish){

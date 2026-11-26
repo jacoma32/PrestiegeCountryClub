@@ -1,16 +1,17 @@
-import {gearImage} from './gear-preview.js?v=brands1';
+import {setHatFinish} from './gear-logos.js';
+import {gearImage} from './gear-preview.js?v=clubs1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=brands1';
-import {Clubhouse} from './clubhouse.js?v=proshop1';
+import {Match} from './match.js?v=clubs1';
+import {Clubhouse} from './clubhouse.js?v=clubs1';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=brands1';
+import {GolfGame} from './game.js?v=clubs1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom} from './online.js?v=vote1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear} from './locker.js?v=brands1';
+import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=clubs1';
 const $=id=>document.getElementById(id);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
@@ -74,16 +75,16 @@ const palette=()=>({shirt:$('shirtColor').value,pants:$('pantsColor').value,hair
 function applyGear(){
  const {equipped}=wallet();
  setBallFinish(game.ball,itemById(equipped.ball));
- game.equipment={bag:equipped.bag,clubs:equipped.clubs,ball:equipped.ball};
- game.setBagFinish(itemById(equipped.bag),itemById(equipped.clubs));
+ game.equipment={...clubLoadout(equipped),bag:equipped.bag,ball:equipped.ball};
+ game.setBagFinish(itemById(equipped.bag),game.equipment);
  game.golfer.applyAppearance(palette());
- finishApparel(game.golfer,equipped.shirt,equipped.hat,equipped.clubs);
+ finishApparel(game.golfer,equipped.shirt,equipped.hat,game.equipment);
 }
 function finishApparel(actor,shirt,hat,clubs){
  finishShirt(actor,shirt);
- const cap=itemById(hat),set=itemById(clubs);
- actor.outfit?.cap.color.set(cap?.slot==='hat'?cap.color:itemById('club-cap').color);
- actor.setEquipmentFinish(set?.slot==='clubs'?set:itemById('club-set'));
+ const cap=itemById(hat);
+ if(actor.outfit?.cap)setHatFinish(actor.outfit.cap,cap?.slot==='hat'?cap:itemById('club-cap'));
+ actor.setEquipmentFinish(clubLoadout(clubs));
 }
 function finishShirt(actor,id){
  const shirt=itemById(id)?.slot==='shirt'?itemById(id):itemById('custom');
@@ -105,10 +106,22 @@ function finishShirt(actor,id){
  };
  fabric.needsUpdate=true;
 }
-const gearPageSize=8;
+const gearPreviews=new IntersectionObserver(entries=>{
+ for(const {target,isIntersecting} of entries){
+  if(!isIntersecting)continue;
+  const item=itemById(target.dataset.item);
+  try{
+   const src=gearImage(item,game.golfer,$('shirtColor').value,game.equippedFrame,finishShirt);
+   if(src){
+    const image=new Image();image.src=src;image.alt='';target.replaceChildren(image);
+   }
+  }catch(error){console.warn('Gear preview unavailable:',error)}
+  gearPreviews.unobserve(target);
+ }
+},{rootMargin:'150px'});
 const gearView={
- store:{slot:'shirt',brand:'',offset:0},
- locker:{slot:'shirt',brand:'',offset:0}
+ store:{slot:'shirt',brand:''},
+ locker:{slot:'shirt',brand:''}
 };
 function renderGear(){
  const state=wallet();
@@ -121,11 +134,12 @@ function renderGear(){
   for(const [category,label] of Object.entries(gearSections)){
    const button=document.createElement('button');
    button.type='button';button.className='glass';button.dataset.category=category;button.textContent=label;
-   button.onclick=()=>{Object.assign(filter,{slot:category,brand:'',offset:0});$(view+'Status').textContent='';renderGear()};
+   button.onclick=()=>{Object.assign(filter,{slot:category,brand:''});$(view+'Status').textContent='';renderGear()};
    filters.append(button);
   }
  }
  for(const button of filters.children)button.setAttribute('aria-pressed',String(button.dataset.category===slot));
+ gearPreviews.disconnect();
  list.replaceChildren();
  const items=catalog.filter(item=>item.slot===slot&&(view==='locker'?state.owned.includes(item.id):item.brand));
  const brandSelect=$(view+'Brand');
@@ -133,41 +147,40 @@ function renderGear(){
  brandSelect.replaceChildren(new Option('All brands',''),...brands.map(brand=>new Option(brand,brand)));
  brandSelect.value=filter.brand;
  brandSelect.onchange=()=>{
-  Object.assign(filter,{brand:brandSelect.value,offset:0});renderGear();
+  Object.assign(filter,{brand:brandSelect.value});renderGear();
  };
  const results=filter.brand?items.filter(item=>item.brand===filter.brand):items;
- const lastOffset=Math.max(0,Math.ceil(results.length/gearPageSize)-1)*gearPageSize;
- filter.offset=Math.min(filter.offset,lastOffset);
- const previous=$(view+'Prev'),next=$(view+'Next');
- previous.disabled=filter.offset===0;next.disabled=filter.offset>=lastOffset;
- previous.onclick=()=>{filter.offset-=gearPageSize;renderGear();list.scrollIntoView({block:'nearest'})};
- next.onclick=()=>{filter.offset+=gearPageSize;renderGear();list.scrollIntoView({block:'nearest'})};
- const end=Math.min(filter.offset+gearPageSize,results.length);
- $(view+'Count').textContent=results.length?`${filter.offset+1}–${end} of ${results.length}`:'0 items';
- for(const item of results.slice(filter.offset,end)){
+ $(view+'Count').textContent=results.length+` item${results.length===1?'':'s'}`;
+ if(!results.length){
+  const message=document.createElement('p');
+  message.textContent='Visit the Pro Shop to add gear in this category.';
+  list.append(message);
+ }
+ for(const item of results){
   const owned=state.owned.includes(item.id),wearing=state.equipped[slot]===item.id;
   const card=document.createElement('article'),preview=document.createElement('div');
   const name=document.createElement('strong'),brand=document.createElement('small'),action=document.createElement('button');
   card.className='gear-card';preview.className='gear-preview';
-  try{
-   const src=gearImage(item,game.golfer,$('shirtColor').value,game.equippedFrame,finishShirt);
-   if(src){
-    const image=new Image();image.src=src;image.alt='';preview.append(image);
-   }
-  }catch(error){console.warn('Gear preview unavailable:',error)}
+  preview.dataset.item=item.id;
   brand.textContent=item.brand||'Prestiege';
   name.append(brand,document.createTextNode(item.name));
   action.className='glass';action.type='button';
-  action.textContent=view==='locker'?(wearing?'Equipped':'Equip'):(owned?(item.price?'Owned':'In Locker'):'Buy · '+item.price+' credits');
-  action.disabled=view==='locker'?wearing:owned||state.credits<item.price;
+  const canReset=wearing&&['driver','wood','hybrid','wedges','putter'].includes(slot);
+  if(canReset){
+   const equippedTag=document.createElement('small');
+   equippedTag.textContent='Equipped';
+   name.append(equippedTag);
+  }
+  action.textContent=view==='locker'?(canReset?'Use club set':wearing?'Equipped':'Equip'):(owned?(item.price?'Owned':'In Locker'):'Buy · '+item.price+' credits');
+  action.disabled=view==='locker'?wearing&&!canReset:owned||state.credits<item.price;
   action.setAttribute('aria-label',action.textContent+' · '+[item.brand,item.name].filter(Boolean).join(' '));
   action.onclick=async()=>{try{
-   if(view==='locker')wear(item.id);else await buy(item.id);
+   if(canReset)unequip(slot);else if(view==='locker')wear(item.id);else await buy(item.id);
    applyGear();
    if(view==='locker'&&room.connected)room.send({type:'appearance',profile:playerCard()});
-   renderGear();$(view+'Status').textContent=[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
+   renderGear();$(view+'Status').textContent=canReset?'Using clubs from your equipped set.':[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
   }catch(error){$(view+'Status').textContent=error.message}};
-  card.append(preview,name,action);list.append(card);
+  card.append(preview,name,action);list.append(card);gearPreviews.observe(preview);
  }
 }
 game.onHoleComplete=async(round,hole,shots)=>{
@@ -192,7 +205,7 @@ let onlineActive=false,match=null;
 let friendsReady=false,connectingFriends=null,inviteTo=null;
 function playerCard(){
  const {equipped}=wallet();
- return {name:friends.profile?.username||activeUser?.username||$('golferName').value||'Rookie',frame:$('golferFrame').value,colors:palette(),pattern:equipped.shirt,hat:equipped.hat,clubs:equipped.clubs};
+ return {name:friends.profile?.username||activeUser?.username||$('golferName').value||'Rookie',frame:$('golferFrame').value,colors:palette(),pattern:equipped.shirt,hat:equipped.hat,clubs:equipped.clubs,clubStyles:clubLoadout(equipped)};
 }
 function refreshTags(){
  const name=playerCard().name;
@@ -251,7 +264,7 @@ const room=new OnlineRoom({
  },
  onParty:(profile,joined)=>{
   const colors={};for(const key of Object.keys(palette()))if(/^#[0-9a-f]{6}$/i.test(profile.colors?.[key]))colors[key]=profile.colors[key];
-  lobby.member({name:room.remoteName,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:profile.clubs}).catch(showFriendsError);
+  lobby.member({name:room.remoteName,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:clubLoadout({...profile.clubStyles,clubs:profile.clubs})}).catch(showFriendsError);
   if(joined){joiningInvite=false;onlinePanel.classList.add('hidden');if(page!=='home')showPage('home');if(room.role==='host')friends.unhost().catch(showFriendsError)}
   renderFriends();
  },

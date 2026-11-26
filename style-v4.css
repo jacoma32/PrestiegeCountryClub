@@ -106,9 +106,7 @@ body:has(#bagPanel:not([hidden])) .game-banner{top:3vh}
 
 .course-visual::before,.course-visual b{display:none}.course-visual span{text-shadow:0 1px 4px #14211c}
 
-.gear-tools,.gear-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
+.gear-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
 .gear-tools select{margin-left:6px;max-width:180px;background:#213b32;color:#f1efe1;border:1px solid #667c6d;padding:6px 9px;font:inherit}
 .gear-tools span,.gear-card small{color:#e6c990}
 .gear-card small{display:block;font-weight:500;margin-bottom:3px}
-.gear-pagination{justify-content:flex-end}
-.gear-pagination button:disabled{opacity:.45;cursor:default}

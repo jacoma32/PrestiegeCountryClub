@@ -1,3 +1,4 @@
+import {clubChoice} from './locker.js?v=clubs1';
 import {fitPalm} from './club-grip.js?v=curl2';
 import {clubModel,makeShaft,heelSocket,setClubFinish} from './club-model.js?v=proshop1';
 import {loadFittedModel,fitToRig,tintGolfer} from './tour-golfer.js?v=proshop1';
@@ -47,14 +48,14 @@ export class Golfer{
   const bounds=new THREE.Box3();
   // Measure before applying the world rig transform.
   model.updateMatrixWorld(true);bounds.setFromObject(model,true);this.clubHead.add(model);
-  if(this.clubFinish)setClubFinish(model,this.clubFinish);
+  if(this.clubLoadout)setClubFinish(this.club,clubChoice(this.clubLoadout,type));
   this.fitShaft();this.soleCorners=[];
   for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])
    for(const z of [bounds.min.z,bounds.max.z])this.soleCorners.push(new THREE.Vector3(x,y,z));
  }
- setEquipmentFinish(item){
-  if(this.clubFinish===item)return;
-  this.clubFinish=item;setClubFinish(this.club,item);
+ setEquipmentFinish(loadout){
+  this.clubLoadout=loadout;
+  setClubFinish(this.club,clubChoice(loadout,this.clubType));
  }
  fitShaft(){
   const end=this.shaftEnd.copy(this.socket).applyQuaternion(this.clubHead.quaternion).add(this.clubHead.position);
