@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#081713"><link rel="icon" href="./assets/prestige-crest.webp" type="image/webp"><title>PRESTIGE COUNTRY CLUB — Where Legends Tee Off</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=prestige"><link rel="stylesheet" href="./style-v4.css?v=prestige"><link rel="stylesheet" href="./clubhouse.css?v=prestige"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","jszip":"https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"}}</script><style>.watching-golf .game-bottom,.watching-golf .game-footer,.watching-golf .shot-indicator,.watching-golf #banner{visibility:hidden}#nextHole[hidden],#toClubhouse[hidden]{display:none}</style></head><body><div id="viewport"></div><section id="onlinePanel" class="online-panel hidden" aria-label="Friends and online matches"><div class="online-card"><button id="onlineClose" class="glass" type="button">✕ CLOSE</button><div class="social-heading"><small>CLUBHOUSE SOCIAL</small><h2>Friends<span id="friendCount"></span></h2></div>
+<div id="friendsLogin"><p>Create a unique online username once. This browser remembers your online identity.</p><label>YOUR USERNAME<input id="friendsUsername" maxlength="20" placeholder="YourGolfName" autocomplete="off"></label><button id="friendsRegister" class="cta" type="button">CLAIM USERNAME</button></div>
+<div id="friendsContent" hidden><p id="friendsMe"></p><h3>Add a friend</h3><label>Gamertag<input id="friendsSearch" placeholder="FriendUsername" maxlength="20" autocomplete="off"></label><button id="friendsAdd" class="cta" type="button">SEND FRIEND REQUEST</button>
+<h3>Requests</h3><div id="friendsInbox" aria-live="polite"></div><h3>My friends</h3><div id="friendsList" aria-live="polite"></div>
+</div>
+<details id="inviteOptions"><summary>Other ways to join</summary><p id="onlineCode" class="online-code" hidden></p><button id="onlineCopy" class="glass" type="button" hidden>COPY INVITE LINK</button>
+<div class="party-tools"><button id="createParty" class="glass">CREATE INVITE LINK</button><label>INVITE CODE<input id="onlineJoinCode" maxlength="6" placeholder="6-letter code"></label><button id="onlineJoin" class="glass">JOIN PARTY</button></div></details>
+<p id="onlineStatus" role="status" aria-live="polite">Connecting to online friends…</p></div></section><div class="grain"></div>
+<aside id="partyPrompt" hidden aria-label="Party invitation"><small>PARTY INVITE</small><p id="partyMessage" role="status"></p><button id="partyDecline">Decline</button><button id="partyJoin">Join party</button></aside>
+<dialog id="courseVote" aria-labelledby="voteTitle"><small>MULTIPLAYER</small><h2 id="voteTitle">Vote for a course</h2><p>Each golfer gets one vote. A tie randomly selects one of the two picks.</p><div class="vote-grid"><button type="button" data-vote="royal"><img src="./assets/course/card-royal.webp" alt=""><strong>The Royal Classic</strong></button><button type="button" data-vote="ocean"><img src="./assets/course/card-ocean.webp" alt=""><strong>Ocean’s Edge</strong></button><button type="button" data-vote="summit"><img src="./assets/course/card-summit.webp" alt=""><strong>Summit Pines</strong></button><button type="button" data-vote="misty"><img src="./assets/course/card-misty.webp" alt=""><strong>Misty Pinnacle</strong></button></div><p id="voteStatus" role="status"></p><button id="cancelVote">Back to lobby</button></dialog><div id="accountGate" class="account-gate hidden"><div class="account-card"><img class="account-crest" src="./assets/prestige-crest.webp" width="72" height="72" alt=""><div class="eyebrow">PRESTIGE COUNTRY CLUB · MEMBER ACCESS</div><h1 id="accountModeTitle">CREATE YOUR CLUB ACCOUNT</h1><p class="account-intro">Create your player profile before stepping onto the course.</p><form id="accountForm"><label id="accountNameWrap">USERNAME<input id="accountName" maxlength="22" minlength="2" autocomplete="username" placeholder="Your golfer username" required></label><label>PASSWORD<input id="accountPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required></label><div id="accountFeedback" class="account-feedback hidden"></div><button id="accountSubmit" class="cta" type="submit">CREATE ACCOUNT <b>↗</b></button></form><button id="accountModeToggle" class="text-button" type="button">Already a member? Sign in</button><p class="account-note">No email needed. This club login is saved on this browser. Online Friends uses a separate Firebase username; password recovery and cross-device sign-in are not available yet.</p></div></div>
+
+<div id="topbar"><div class="player-menu"><button id="onlineOpen" class="smallbtn">Friends <span id="inviteDot" hidden>●</span></button><button class="smallbtn" id="myPlay" data-page="golfer">My Player</button><a class="game-brand" href="./" aria-label="Prestige Country Club homepage"><img src="./assets/prestige-crest.webp" alt=""></a></div><div class="topmeta">EST. 2026 <span class="dot"></span> THE WORLD IS YOUR FAIRWAY</div><div class="top-actions"><span id="headerTag"></span><button class="smallbtn" id="creditBalance" data-page="store" aria-label="Open Pro Shop">0 CREDITS</button><button id="soundBtn" class="smallbtn">SOUND OFF</button><button id="accountBtn" class="smallbtn">ACCOUNT</button></div></div>
+<section id="home" class="page active" aria-label="Clubhouse">
+<div class="home-actions"><div class="club-title"><img src="./assets/prestige-crest.webp" alt=""><div><span>PRESTIGE COUNTRY CLUB</span><h1>The Clubhouse</h1></div></div>
+<button id="heroPlay" class="round-feature"><small>CHAMPIONSHIP GOLF</small><strong>Play Now</strong><span>4 courses &nbsp; / &nbsp; 72 holes</span><b aria-hidden="true" class="play-arrow"></b></button>
+<button id="multiplayer" class="multiplayer">Multiplayer <span>Party play →</span></button><div class="club-tiles"><button data-page="golfer"><small>PROFILE</small>My Player</button><button data-page="locker"><small>EQUIPMENT</small>Locker</button><button data-page="store"><small>APPAREL</small>Pro Shop</button><button id="homeRange"><small>PRACTICE</small>Driving Range</button></div></div>
+<div class="lobby-stage" id="lobbyStage"><div class="party-menu"><span id="partyCount">PARTY · 1 / 2</span><button id="inviteFriend">+ Invite friend</button><button id="leaveParty" hidden>Leave party</button></div><div class="golfer-tag" id="localTag"><small>YOUR GOLFER</small><strong id="localName">Rookie</strong></div><div class="golfer-tag guest-tag" id="guestTag" hidden></div></div></section>
+<section id="courses" class="page"><div class="section-head"><div class="eyebrow">CHOOSE YOUR CHALLENGE</div><h2>THE COURSES<span>.</span></h2><p>Four original landscapes. 18-hole rounds on each. Your score, your story.</p></div><div class="course-grid"><button class="course-card" data-course="royal"><div class="course-visual royal"><span>01 / THE CLASSIC</span><b>R</b></div><div class="course-desc"><h3>THE ROYAL CLASSIC</h3><p>Shape a dogleg, carry a greenside bunker, then play a par-five corner.</p><span>18 HOLES · PARKLAND <b>PLAY ↗</b></span></div></button><button class="course-card" data-course="ocean"><div class="course-visual ocean"><span>02 / THE LINKS</span><b>O</b></div><div class="course-desc"><h3>OCEAN'S EDGE</h3><p>Skirt the shoreline, carry a tidal pool, then approach a narrow peninsula.</p><span>18 HOLES · COASTAL <b>PLAY ↗</b></span></div></button><button class="course-card" data-course="summit"><div class="course-visual summit"><span>03 / THE HEIGHTS</span><b>S</b></div><div class="course-desc"><h3>SUMMIT PINES</h3><p>Climb the ridge, play downhill to the valley, then tackle a mountain switchback.</p><span>18 HOLES · MOUNTAIN <b>PLAY ↗</b></span></div></button><button class="course-card" data-course="misty"><div class="course-visual misty"><span>04 / THE MIST</span><b>M</b></div><div class="course-desc"><h3>MISTY PINNACLE</h3><p>Play along a forested crest, descend to Alpine Saddle, then cross Granite Pass.</p><span>18 HOLES · ALPINE RIDGES <b>PLAY ↗</b></span></div></button></div></section>
+<section id="golfer" class="page"><div class="editor"><div><div class="eyebrow">THE PLAYER MAKES THE GAME</div><h2>MY <em>PLAYER.</em></h2><p>Create your golfer. Choose a body type, hair, eye and skin colors, then design your club outfit.</p><div class="fields"><label>PLAYER NAME<input id="golferName" maxlength="22" placeholder="Your name" value="ROOKIE"></label><label>BODY FRAME<select id="golferFrame"><option value="male">MALE GOLFER</option><option value="female">FEMALE GOLFER</option></select></label><label>HAIR COLOR<input id="hairColor" type="color" value="#36261f"></label><label>EYE COLOR<input id="eyeColor" type="color" value="#4c8069"></label><label>SKIN TONE<input id="skinColor" type="color" value="#ba8c70"></label><label>POLO COLOR<input id="shirtColor" type="color" value="#e9f0e9"></label><label>TROUSER COLOR<input id="pantsColor" type="color" value="#1d3535"></label></div><button id="saveGolfer" class="cta">SAVE MY GOLFER <b>✓</b></button><p class="micro">Model: <span id="modelSource">LOADING</span> · <span id="animationStatus">CHECKING ANIMATION PACK</span></p><p class="micro">Hair, eyes, complexion and clothing colors update in the live preview.</p></div><div class="preview"><div class="preview-title">LIVE 3D PLAYER PREVIEW <span>01 / 02</span></div><div class="preview-text">Your golfer appears in the 3D scene. Change body frame or colors to preview your look.</div></div></div></section>
+
+<section id="store" class="page gear-page"><div class="gear-panel"><h2>PRO SHOP</h2><p>Spend credits earned on the course. Equip your purchases in My Locker. Product previews show in-game designs.</p><div id="storeCategories" class="gear-categories" role="group" aria-label="Pro Shop categories"></div><div class="gear-tools"><label>Brand <select id="storeBrand"></select></label><span id="storeCount" aria-live="polite"></span></div><div id="storeItems" class="gear-items"></div><p id="storeStatus" role="status"></p></div></section>
+<section id="locker" class="page gear-page"><div class="gear-panel"><h2>MY LOCKER</h2><p>Choose your equipment for the next round. Use Creator polo for a custom color from My Player.</p><div id="lockerCategories" class="gear-categories" role="group" aria-label="Locker categories"></div><div class="gear-tools"><label>Brand <select id="lockerBrand"></select></label><span id="lockerCount" aria-live="polite"></span></div><div id="lockerItems" class="gear-items"></div><p id="lockerStatus" role="status"></p></div></section>
+<section id="about" class="page"><div class="academy-panel"><div class="eyebrow">ENGINEERED FOR THE FAIRWAY</div><h2>GOLF IS <em>A GAME OF FEEL.</em></h2><p>Prestige Country Club is a browser-based 3D golf project built for a school presentation. It uses the Three.js 3D engine for the golf course, golfer, ball flight, terrain, trees, bunkers and water hazards.</p><p class="micro">This is an independent school project. Not affiliated with PGA TOUR or 2K. Rounds, credits, and equipment are saved on this device.</p><p class="micro">Golf impact audio by cryany and 170129. <a href="https://github.com/32jurini/PrestiegeCountryClub/blob/main/assets/audio/CREDITS.md">Recording credits and licenses</a></p></div></section>
+<section id="playing" class="page"><div class="game-hud"><div id="rivalStats" class="rival-stats" hidden><strong id="rivalName">OPPONENT</strong><span id="rivalScore">CONNECTING…</span></div><div class="game-top"><button id="exitRound" class="glass">← CLUBHOUSE</button><div class="hole-brand"><small id="courseLabel">THE ROYAL CLASSIC</small><strong id="holeLabel">HOLE 01</strong></div><div class="hole-stat"><span>PAR <b id="parLabel">4</b></span><span>STROKE <b id="strokeLabel">1</b></span><span>SCORE <b id="scoreLabel">E</b></span></div></div><div id="banner" class="game-banner">ADDRESS THE BALL</div><div class="shot-indicator"><div class="shot-indicator-label">SHOT PREVIEW</div><div id="shotPreviewText">AIM AT THE FLAG · CHOOSE YOUR CLUB</div><div class="shot-legend"><span class="shot-line"></span> TRAJECTORY & LANDING TARGET</div></div><div class="game-bottom"><div class="wind-box"><small>WIND</small><b id="windLabel">↗ 4 MPH</b><small id="lieLabel">FAIRWAY</small></div><div class="swing-zone"><div class="swing-title"><b id="clubLabel">DRIVER</b><span id="distanceLabel">286 YDS TO PIN</span></div><div class="meter"><div class="target-band"></div><div id="meterBar"></div></div><div class="swing-caption"><span id="shotHelp">HOLD SPACE FOR POWER · RELEASE TO SWING</span><span id="powerLabel">0%</span></div><button id="openBag" class="glass">C · CLUB BAG</button><div class="iron-shape" role="group" aria-label="Shot shape"><button type="button" data-shape="-2">HOOK</button><button type="button" data-shape="-1">↶ DRAW</button><button type="button" data-shape="0" class="active">↑ STRAIGHT</button><button type="button" data-shape="1">↷ FADE</button><button type="button" data-shape="2">SLICE</button></div></div><div class="aim-panel"><small>SHOT DIRECTION</small><b id="aimLabel">0°</b><small>← / → AIM</small><button id="resetAim" class="glass">AIM AT PIN</button></div></div><div class="game-footer">SPACE: SWING <span>·</span> LEFT / RIGHT: AIM <span>·</span> C: CLUB BAG <span>·</span> MOUSE DRAG: CAMERA</div></div><aside id="bagPanel" aria-label="Choose a club" hidden><button id="closeBag">Return to ball</button><div id="bagContents"></div></aside><div id="roundModal" class="modal hidden"><div><div id="roundEyebrow" class="eyebrow">HOLE COMPLETE</div><h2 id="roundTitle">PAR</h2><p id="roundDescription"></p><div id="scorecard"></div><div class="modal-actions"><button id="nextHole" class="cta">NEXT HOLE <b>→</b></button><button id="toClubhouse" class="glass">CLUBHOUSE</button></div></div></div><div id="tutorialOverlay" class="tutorial-overlay hidden"><div class="coach-panel"><div class="coach-kicker">PCC GOLF ACADEMY · COACH TIMMY</div><h2 id="coachTitle">WELCOME TO YOUR FIRST LESSON</h2><p id="coachText">I’ll show you how the game works.</p><div class="coach-progress" id="coachProgress">LESSON 1 / 7</div><div class="coach-actions"><button id="coachSkip" class="glass">SKIP TUTORIAL</button><button id="coachNext" class="cta">NEXT →</button></div></div></div></section>
+<nav id="bottomNav" aria-label="Main menu"><button data-page="home" class="selected"><span>⌂</span>HOME</button><button data-page="courses"><span>⚑</span>PLAY GOLF</button><button id="rangeTab"><span>⚑</span>DRIVING RANGE</button><button data-page="store"><span>◇</span>PRO SHOP</button><button data-page="locker"><span>▤</span>LOCKER</button><button data-page="about"><span>≡</span>ABOUT</button></nav><div id="loader" class="hidden"><div class="loader-mark">PCC</div><div class="loader-line"><div></div></div><p>PREPARING YOUR EXPERIENCE</p></div><div id="error" class="hidden" role="alert"></div><script>
+/* Standalone username/password account controller — local device login, no email required. */
+(function(){
+const field=id=>document.getElementById(id),form=field('accountForm'),feedback=field('accountFeedback');
+const report=message=>{feedback.textContent=message;feedback.classList.remove('hidden')};
+const read=()=>{try{return JSON.parse(localStorage.getItem('prestiege-account')||'null')}catch{return null}};
+let mode=read()?'signin':'create';
+function render(){
+ const create=mode==='create';
+ field('accountModeTitle').textContent=create?'CREATE YOUR CLUB ACCOUNT':'WELCOME BACK';
+ field('accountSubmit').textContent=create?'CREATE ACCOUNT':'SIGN IN';
+ field('accountModeToggle').textContent=create?'Already a member? Sign in':'New to the club? Create account';
+ field('accountNameWrap').classList.remove('hidden');
+ feedback.classList.add('hidden');
+}
+field('accountModeToggle').addEventListener('click',()=>{mode=mode==='create'?'signin':'create';render()});
+window.addEventListener('pcc-account-mode',event=>{mode=event.detail==='signin'?'signin':'create';render()});
+async function digest(password){
+ if(!crypto?.subtle)throw Error('Use the secure HTTPS game website to sign in.');
+ const bytes=new TextEncoder().encode(password);
+ return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
+}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();event.stopImmediatePropagation();feedback.classList.add('hidden');
+ const button=field('accountSubmit');button.disabled=true;
+ try{
+  const username=field('accountName').value.trim(),password=field('accountPassword').value;
+  if(username.length<2||username.length>22)throw Error('Choose a username with 2–22 characters.');
+  if(password.length<6)throw Error('Password must have at least 6 characters.');
+  const stored=read(),hashed=await digest(password);
+  let user;
+  if(mode==='create'){
+   if(stored)throw Error('An account already exists in this browser. Choose Sign in.');
+   user={username,passwordHash:hashed,createdAt:new Date().toISOString()};
+   localStorage.setItem('prestiege-account',JSON.stringify(user));
+  }else{
+   if(!stored||stored.username?.toLowerCase()!==username.toLowerCase()||stored.passwordHash!==hashed)
+    throw Error('Username or password incorrect for this browser. Accounts are not shared between devices yet.');
+   user=stored;
+  }
+  window.dispatchEvent(new CustomEvent('pcc-account-ready',{detail:user}));
+  if(!document.body.classList.contains('gated')){form.reset();return}
+  report('Account saved. Game is still starting; refresh if this message remains.');
+ }catch(error){report(error.message||'Could not sign in. Check browser storage settings.')}
+ finally{button.disabled=false}
+});
+render();
+window.addEventListener('error',event=>{if(document.body.classList.contains('gated'))report('Game startup error: '+event.message)});
+window.addEventListener('unhandledrejection',event=>{if(document.body.classList.contains('gated'))report('Game loading failed: '+(event.reason?.message||'Please refresh'))});
+})();
+</script><script>
+/* Boot watchdog: the menu must remain accessible if the 3D module fails. */
+(function(){
+  const loader=document.getElementById('loader');
+  const error=document.getElementById('error');
+  let ready=false;
+  function issue(message){
+    loader.classList.add('hidden');
+    error.textContent=message;
+    error.classList.remove('hidden');
+    document.body.classList.remove('gated');
+    document.getElementById('accountGate').classList.add('hidden');
+  }
+  window.addEventListener('pcc-game-ready',()=>{ready=true;loader.classList.add('hidden');});
+  window.addEventListener('error',event=>{
+    if(!ready)issue('3D startup error: '+(event.message||'A game file failed to load')+'. The menu remains available.');
+  });
+  window.addEventListener('unhandledrejection',event=>{
+    if(!ready)issue('3D startup error: '+(event.reason?.message||'A required resource failed')+'. The menu remains available.');
+  });
+  window.setTimeout(()=>{
+    if(!ready)issue('The 3D engine did not finish starting. You can still use the menu; the game needs a startup repair.');
+  },10000);
+})();
+</script><script type="module" src="./js/main.js?v=prestige"></script></body></html>

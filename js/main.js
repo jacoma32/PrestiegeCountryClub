@@ -16,7 +16,7 @@ const $=id=>document.getElementById(id);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
 lightClubs(renderer,new RoomEnvironment());
-const game=new GolfGame(renderer,scene,camera),sound=new SoundEngine();game.onSfx=(event,detail)=>sound.play(event,detail);let page='home',accountMode='create',activeUser=null;
+const game=new GolfGame(renderer,scene,camera),sound=new SoundEngine();game.onSfx=(event,detail)=>sound.play(event,detail);let page='home',activeUser=null;
 const preview = document.querySelector('#golfer .preview');
 const stage=$('lobbyStage'),lobby=new Clubhouse(game.golfer,stage,finishApparel);
 function sizeCanvas() {
@@ -28,15 +28,12 @@ function sizeCanvas() {
 }
 new ResizeObserver(sizeCanvas).observe(preview);new ResizeObserver(sizeCanvas).observe(stage);
 const showPage=id=>{if(id!=='playing'&&page==='playing'&&onlineActive)endOnline();if(page==='home')scene.add(game.golfer.root);page=id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('selected',b.dataset.page===id));document.body.classList.toggle('is-playing',id==='playing');(id==='home'?stage:id==='golfer'?preview:$('viewport')).appendChild(renderer.domElement);sizeCanvas();if(id==='store'||id==='locker')renderGear();if(id!=='playing'){game.enterMenu();if(id==='golfer')game.enterPreview();if(id==='home'){lobby.enter();refreshTags();if(room.connected)room.send({type:'appearance',profile:playerCard()})}}};
-const showError=msg=>{$('accountFeedback').textContent=msg;$('accountFeedback').classList.remove('hidden')};
-const hex=bytes=>Array.from(new Uint8Array(bytes)).map(b=>b.toString(16).padStart(2,'0')).join('');
-async function hashPassword(password){if(!globalThis.crypto?.subtle)throw new Error('Secure sign-in requires HTTPS. Open the published GitHub Pages website.');const bytes=new TextEncoder().encode(password);return hex(await crypto.subtle.digest('SHA-256',bytes))}
 function readAccount(){try{return JSON.parse(localStorage.getItem('prestiege-account')||'null')}catch{return null}}
 function enterClub(user){activeUser=user;$('accountGate').classList.add('hidden');document.body.classList.remove('gated');$('accountBtn').textContent=user.username.toUpperCase();const saved=(()=>{try{return JSON.parse(localStorage.getItem('prestiege-golfer'))||null}catch{return null}})();if(!saved){showPage('golfer');game.enterPreview()}else showPage('home')}
 window.addEventListener('pcc-account-ready',event=>enterClub(event.detail));
 $('accountBtn').onclick=()=>{$('accountGate').classList.remove('hidden');document.body.classList.add('gated');window.dispatchEvent(new CustomEvent('pcc-account-mode',{detail:readAccount()?'signin':'create'}))};
 const lessons=[
- ['WELCOME TO PRESTIEGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
+ ['WELCOME TO PRESTIGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
  ['SET UP YOUR BALL','First, place your tee and ball. Watch me demonstrate the setup.','tee'],
  ['CHOOSE YOUR CLUB','The game starts you with a club for the distance to the pin. Press C and pick a club from your bag to change it. The driver is for long tee shots. Irons cover approach shots, wedges are for short shots, and the putter is for the green.','pointGesture'],
  ['AIM YOUR SHOT','Use A / D or the arrow keys to aim. Keep the blue tracer on your target and check the wind before you swing.','point'],

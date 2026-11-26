@@ -1,10 +1,10 @@
-# Prestiege Country Club — V4 School Presentation Build
+# Prestige Country Club — V4 School Presentation Build
 
 A 3D golf-school project built with Three.js, HTML, CSS and JavaScript. This is a work-in-progress simulator, not PGA TOUR 2K.
 
 ## Features
 
-- First-time account creation and sign-in **for this browser only** (local demo; no real cloud authentication or password recovery)
+- Homepage membership through Firebase email and Google sign-in. See [Firebase setup](FIREBASE-SETUP.md) to enable both methods.
 - Male/female MyGolfer choice, colors and a saved browser profile
 - Coach Timmy's seven-step on-screen tutorial, automatically offered on the first tee
 - 19 supplied FBX animations packed into `assets/animations.zip`
@@ -15,7 +15,7 @@ A 3D golf-school project built with Three.js, HTML, CSS and JavaScript. This is 
 
 ## GitHub Pages
 
-Upload all the **contents** of this folder into the root of the public `PrestiegeCountryClub` repository. `index.html` must be visible in the repository root. Keep the `js`, `assets` folders and `style.css`, `style-v4.css` in their relative paths. On GitHub, go to **Settings > Pages > Deploy from a branch > main > /(root)**. Once deployment finishes, visit `https://32jurini.github.io/PrestiegeCountryClub/`.
+Upload all the **contents** of this folder into the root of the public `PrestiegeCountryClub` repository. `index.html` must be visible in the repository root. Keep the `js`, `assets` folders and `style.css`, `style-v4.css` in their relative paths. On GitHub, go to **Settings > Pages > Deploy from a branch > main > /(root)**. Once deployment finishes, visit `https://jacoma32.github.io/PrestiegeCountryClub/`.
 
 **If the source code was already published automatically:** you only need to upload the three asset files contained in the separate `Prestiege-V4-GitHub-Asset-Upload.zip` file, preserving their `assets/` paths:
 
@@ -37,7 +37,7 @@ These are individually below GitHub's 25 MB browser-upload limit. Do not upload 
 
 ## School-project limitations
 
-- Accounts and scores are only saved in localStorage on that computer, not online. It is not a secure online account database; add a hosted backend (for example Supabase Auth) before accepting real personal credentials.
+- Scores, equipment, and local golfer profiles are saved in this browser. The legacy in-game Account button is still available until the homepage sign-in methods are enabled and verified.
 - 3D golfer model quality and material customization are limited by the source assets. Hair/eye tint changes only work on identifiable model materials.
 - Timmy has on-screen tutorial dialogue and animation gestures, but no spoken voice narration.
 - A browser gameplay pass on GitHub Pages and final animation rig testing are still required before a public presentation.
