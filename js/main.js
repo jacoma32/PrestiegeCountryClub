@@ -50,7 +50,18 @@ const start=async(name='royal',tutorial=false)=>{
   showPage('home');room.beginVote();return;
  }
  showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
-document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-page]:not(#playGolf)').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+const playMode=$('playMode');
+$('playGolf').onclick=()=>playMode.showModal();
+$('playSolo').onclick=()=>{
+ playMode.close();
+ if(room.room)endOnline();
+ showPage('courses');
+};
+$('playWithFriend').onclick=()=>{
+ playMode.close();
+ $('multiplayer').click();
+};
 $('heroPlay').onclick=()=>{if(room.connected){room.beginVote();return}if(!localStorage.getItem('prestiege-v4-tutorial-done'))start('royal',true);else showPage('courses')};document.querySelectorAll('[data-course]').forEach(b=>b.addEventListener('click',()=>start(b.dataset.course,!localStorage.getItem('prestiege-v4-tutorial-done'))));$('rangeTab').onclick=()=>start('range',false);$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>game.openBag();
 $('closeBag').onclick=()=>game.returnFromBag(game.club);
 $('bagContents').addEventListener('click',event=>{
