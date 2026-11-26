@@ -11,7 +11,7 @@ import {GolfGame} from './game.js?v=clubauto1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom} from './online.js?v=vote1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=clubs1';
+import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
 const $=id=>document.getElementById(id);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
@@ -122,8 +122,8 @@ const gearView={
 };
 function renderGear(){
  const state=wallet();
- $('creditBalance').textContent=state.credits+' CREDITS';
- $('creditBalance').ariaLabel=state.credits+' credits. Open Pro Shop';
+ $('creditBalance').textContent=state.credits+' COINS';
+ $('creditBalance').ariaLabel=state.credits+' coins. Open Pro Shop';
  if(page!=='store'&&page!=='locker')return;
  const view=page,list=$(view+'Items'),filters=$(view+'Categories');
  const filter=gearView[view],{slot}=filter;
@@ -168,7 +168,7 @@ function renderGear(){
    equippedTag.textContent='Equipped';
    name.append(equippedTag);
   }
-  action.textContent=view==='locker'?(canReset?'Use club set':wearing?'Equipped':'Equip'):(owned?(item.price?'Owned':'In Locker'):'Buy · '+item.price+' credits');
+  action.textContent=view==='locker'?(canReset?'Use club set':wearing?'Equipped':'Equip'):(owned?(item.price?'Owned':'In Locker'):'Buy · '+item.price+' coins');
   action.disabled=view==='locker'?wearing&&!canReset:owned||state.credits<item.price;
   action.setAttribute('aria-label',action.textContent+' · '+[item.brand,item.name].filter(Boolean).join(' '));
   action.onclick=async()=>{try{
@@ -184,10 +184,10 @@ game.onHoleComplete=async(round,hole,shots)=>{
  const session=match;if(session)queueMicrotask(()=>{if(match===session)session.holed(shots)});
  const sameHole=()=>game.roundId===round&&game.index===hole&&game.modal;
  try{
-  const credits=await award(round,hole,shots);
+  const coins=await award(round,hole,shots);
   renderGear();
-  if(credits&&sameHole())$('roundDescription').append(' · +'+credits+' CREDITS');
- }catch{if(sameHole())$('roundDescription').append(' · Credits could not be saved on this browser.')}
+  if(coins&&sameHole())$('roundDescription').append(' · +'+coins+' COINS');
+ }catch{if(sameHole())$('roundDescription').append(' · Coins could not be saved on this browser.')}
 };
 window.addEventListener('storage',e=>{if(e.key===walletKey||e.key?.startsWith(walletKey+'-')){renderGear();applyGear()}});
 renderGear();

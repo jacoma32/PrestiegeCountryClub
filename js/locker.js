@@ -100,7 +100,7 @@ export function buy(id){
  return update(state=>{
   const item=itemById(id);
   if(!item||state.owned.includes(id))return false;
-  if(state.credits<item.price)throw Error('Earn more credits on the course.');
+  if(state.credits<item.price)throw Error('Earn more coins on the course.');
   state.credits-=item.price;state.owned.push(id);return true;
  });
 }
