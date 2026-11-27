@@ -121,9 +121,9 @@ export class GolfGame{
    carryYards:null,shotOrigin:this.position,biteTimer:0,impactSpin:CLUBS[this.club].spin??0,
   };
   const points=[state.position.clone()];
-  let carryPoint,carryIndex;
+  let carryPoint,carryIndex,outcome;
   for(let step=0;step<2400;step++){
-   const outcome=this.advanceBall(state,1/120);
+   outcome=this.advanceBall(state,1/120);
    if(!carryPoint&&state.carryYards!==null){
     carryPoint=state.position.clone();
     carryIndex=points.push(carryPoint);
@@ -132,6 +132,10 @@ export class GolfGame{
   }
   points.push(state.position.clone());
   this.predictedPath=points;
+  const distance=this.travelYards(state);
+  const shape=putting?'PUTT':SHAPES[this.shotShape+2];
+  const finish=outcome==='water'?' · WATER':outcome==='cup'?' · CUP':'';
+  this.predictedResult=shape+' · '+(putting?Math.round(Math.hypot(state.position.x-this.position.x,state.position.z-this.position.z)*5.25)+' FT':distance+' YD')+finish;
   this.previewKey=key;this.previewHole=this.world.hole;
   const point=!putting&&carryPoint?carryPoint:points.at(-1);
   const displayedPoints=!putting&&carryIndex?points.slice(0,carryIndex):points;

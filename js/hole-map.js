@@ -7,18 +7,25 @@ export class HoleMap {
  constructor(panel,canvas){
   this.panel=panel;
   this.canvas=canvas;
+  this.readout=panel.querySelector('.map-prediction');
   this.context=canvas.getContext('2d');
   this.base=document.createElement('canvas');
   this.base.width=canvas.width/2;
   this.base.height=canvas.height/2;
  }
 
- build(world){
+ build(world,path){
   const {hole,teePosition,holePosition}=world;
-  const left=Math.min(...hole.route.map(row=>row[1]-row[2]),...world.water.map(pool=>pool.x-pool.rx),...world.bunkers.map(bunker=>bunker.x-bunker.rx))-12;
-  const right=Math.max(...hole.route.map(row=>row[1]+row[2]),...world.water.map(pool=>pool.x+pool.rx),...world.bunkers.map(bunker=>bunker.x+bunker.rx))+12;
-  const top=Math.min(holePosition.z-16,...world.water.map(pool=>pool.z-pool.rz));
-  const bottom=teePosition.z+14;
+  let left=Math.min(...hole.route.map(row=>row[1]-row[2]),...world.water.map(pool=>pool.x-pool.rx),...world.bunkers.map(bunker=>bunker.x-bunker.rx))-12;
+  let right=Math.max(...hole.route.map(row=>row[1]+row[2]),...world.water.map(pool=>pool.x+pool.rx),...world.bunkers.map(bunker=>bunker.x+bunker.rx))+12;
+  let top=Math.min(holePosition.z-16,...world.water.map(pool=>pool.z-pool.rz));
+  let bottom=teePosition.z+14;
+  if(path){
+   for(const point of path){
+    left=Math.min(left,point.x-8);right=Math.max(right,point.x+8);
+    top=Math.min(top,point.z-8);bottom=Math.max(bottom,point.z+8);
+   }
+  }
   const scale=Math.min(this.canvas.width/(right-left),this.canvas.height/(bottom-top));
   this.project=(x,z)=>[
    this.canvas.width/2+(x-(left+right)/2)*scale,
@@ -45,14 +52,20 @@ export class HoleMap {
   const visible=playing&&game.started&&game.course!=='range';
   if(this.panel.hidden===visible)this.panel.hidden=!visible;
   if(!visible||!this.context)return;
-  if(this.hole!==game.world.hole)this.build(game.world);
   const position=game.spectating?game.ball.position:game.position;
-  const [x,y]=this.project(position.x,position.z);
   const path=game.spectating||game.swinging||game.modal?null:game.predictedPath;
+  if(this.hole!==game.world.hole)this.build(game.world,path);
+  else if(path&&path!==this.lastPath&&path.some(point=>{
+   const [px,py]=this.project(point.x,point.z);
+   return px<4||py<4||px>this.canvas.width-4||py>this.canvas.height-4;
+  }))this.build(game.world,path);
+  const [x,y]=this.project(position.x,position.z);
   if(x===this.lastX&&y===this.lastY&&path===this.lastPath&&this.drawnHole===this.hole)return;
   this.lastX=x;this.lastY=y;this.lastPath=path;this.drawnHole=this.hole;
   const ctx=this.context;
   ctx.drawImage(this.base,0,0,this.canvas.width,this.canvas.height);
+  this.readout.textContent=path?game.predictedResult:'';
+  this.readout.hidden=!path;
   const [pinX,pinY]=this.pin;
   const ballX=Math.max(5,Math.min(this.canvas.width-5,x));
   const ballY=Math.max(5,Math.min(this.canvas.height-5,y));
@@ -60,7 +73,9 @@ export class HoleMap {
    ctx.beginPath();
    ctx.moveTo(...this.project(path[0].x,path[0].z));
    for(const point of path.slice(1))ctx.lineTo(...this.project(point.x,point.z));
-   ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.stroke();
+   ctx.lineJoin='round';ctx.lineCap='round';
+   ctx.strokeStyle='#17261d';ctx.lineWidth=6;ctx.stroke();
+   ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
   }
   ctx.fillStyle='#ffe2a0';ctx.strokeStyle='#17261d';ctx.lineWidth=2;
   ctx.beginPath();
@@ -68,5 +83,12 @@ export class HoleMap {
   ctx.fillStyle='#fff';ctx.beginPath();
   ctx.arc(ballX,ballY,4,0,Math.PI*2);
   ctx.fill();ctx.stroke();
+  if(path?.length){
+   const end=path.at(-1);
+   const [endX,endY]=this.project(end.x,end.z);
+   ctx.beginPath();ctx.arc(endX,endY,4.5,0,Math.PI*2);
+   ctx.fillStyle='#17261d';ctx.fill();
+   ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  }
  }
 }
