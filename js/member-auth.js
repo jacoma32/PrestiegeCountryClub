@@ -3,23 +3,45 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const projectUrl = 'https://bsslcrkfldoapjlzpxig.supabase.co';
 const publishableKey = 'sb_publishable_I_T71j3hS2e9kZQ7jbLgfQ_RNuCXyQ5';
 
-export const auth = createClient(projectUrl, publishableKey, {
+export const client = createClient(projectUrl, publishableKey, {
   auth: { flowType: 'pkce' },
-}).auth;
+});
+export const auth = client.auth;
 
-export async function googleEnabled() {
-  const response = await fetch(projectUrl + '/auth/v1/settings', {
-    headers: { apikey: publishableKey },
+async function callPlayerService(input, token) {
+  const response = await fetch(projectUrl + '/functions/v1/register-player', {
+    method: 'POST',
+    headers: { apikey: publishableKey, 'Content-Type': 'application/json', ...(token && { Authorization: 'Bearer ' + token }) },
+    body: JSON.stringify(input),
   });
-  if (!response.ok) throw new Error('Could not check sign-in settings.');
-  const settings = await response.json();
-  return settings.external.google === true;
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw Object.assign(new Error(body.message || 'Account service unavailable'), { publicMessage: body.message, status: response.status });
+  }
+  return response.json();
+}
+
+export function registerPlayer(username, password) {
+  return callPlayerService({ username, password });
+}
+
+export async function playerSaveRequest(operation, userId, changes) {
+  const { data, error } = await auth.getSession();
+  if (error) throw error;
+  if (data.session?.user.id !== userId) throw Error('Sign in again to change your save.');
+  return callPlayerService({ operation, ...changes }, data.session.access_token);
+}
+
+export async function signInPlayer(username, password) {
+  const email = username.toLowerCase() + '@players.prestige.invalid';
+  const { error } = await auth.signInWithPassword({ email, password });
+  if (error) throw error;
 }
 
 export async function changePassword(currentPassword, password) {
   const { data, error } = await auth.getUser();
   if (error) throw error;
-  if (!data.user?.email) throw Object.assign(new Error('Email sign-in required'), { code: 'session_not_found' });
+  if (!data.user?.email) throw Object.assign(new Error('Sign-in required'), { code: 'session_not_found' });
 
   // Verify in a short-lived session so a failed attempt leaves the game session intact.
   const verifier = createClient(projectUrl, publishableKey, {

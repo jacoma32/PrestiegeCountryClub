@@ -1,3 +1,5 @@
+import {playerSave} from './player-save.js';
+
 import {brandedGear} from './pro-shop-catalog.js?v=clubs1';
 
 // The clubhouse supports one local member per browser, including guest play before registration.
@@ -65,19 +67,31 @@ export function clubChoice(loadout,type){
  return itemById(loadout?.[slot])??itemById(loadout?.clubs)??itemById('club-set');
 }
 export function wallet(){
+ const cloud = playerSave();
+ if (cloud) return normalizeWallet(structuredClone(cloud.state.wallet), slot => cloud.state.slots?.[slot]);
  const raw=localStorage.getItem(walletKey);
- const state=raw?JSON.parse(raw):{credits:0,owned:[],equipped:{},rounds:{}};
- const legacy=raw&&state.owned.includes('white');
+ return normalizeWallet(raw ? JSON.parse(raw) : undefined, slot => localStorage.getItem(walletKey+'-'+slot));
+}
+function normalizeWallet(saved, readSlot){
+ const state=saved??{credits:0,owned:[],equipped:{},rounds:{}};
+ const legacy=state.owned.includes('white');
  state.owned=[...new Set([...state.owned,'custom',...Object.values(defaults),...(legacy?Object.values(legacyDefaults):[])])];
  state.equipped={...defaults,...state.equipped};
  for(const slot of Object.keys(gearSections)){
   if(clubSlots.includes(slot)&&slot!=='clubs')delete state.equipped[slot];
-  const choice=localStorage.getItem(walletKey+'-'+slot);
+  const choice=readSlot(slot);
   if(state.owned.includes(choice)&&itemById(choice)?.slot===slot)state.equipped[slot]=choice;
  }
  return state;
 }
 function update(change){
+ const cloud = playerSave();
+ if (cloud) return cloud.update(save => {
+  const state = normalizeWallet(save.wallet, () => undefined);
+  const result = change(state);
+  save.wallet = state;
+  return result;
+ });
  const commit=()=>{
   const state=wallet(),result=change(state);
   localStorage.setItem(walletKey,JSON.stringify(state));
@@ -107,11 +121,18 @@ export function buy(id){
 export function wear(id){
  const item=itemById(id);
  if(!item||!wallet().owned.includes(id))throw Error('Purchase this item first.');
+ const cloud = playerSave();
+ if (cloud) return cloud.update(save => {
+  save.slots ??= {};
+  save.slots[item.slot] = id;
+ });
  // A single-slot write commits before navigation and cannot overwrite a concurrent payout.
  localStorage.setItem(walletKey+'-'+item.slot,id);
 }
 
 export function unequip(slot){
  if(!clubSlots.includes(slot)||slot==='clubs')return;
+ const cloud = playerSave();
+ if (cloud) return cloud.update(save => { if (save.slots) delete save.slots[slot]; });
  localStorage.removeItem(walletKey+'-'+slot);
 }

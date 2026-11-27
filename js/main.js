@@ -12,10 +12,22 @@ import {SoundEngine} from './sound.js?v=settings1';
 import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
 import {FriendsService,isOnline} from './friends.js?v=friendflow1';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
+import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=username1';
 import {HoleMap} from './hole-map.js?v=shotpath2';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
+import {loadPlayerSave,playerSave} from './player-save.js';
 const $=id=>document.getElementById(id);
+let account;
+try {
+ account = await loadPlayerSave();
+} catch (error) {
+ console.error('Player save unavailable', error);
+ $('loader').classList.add('hidden');
+ $('error').textContent = 'Your account save could not load. Reload to try again.';
+ $('error').classList.remove('hidden');
+ throw error;
+}
+window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 const device=golfDevice();
 const holeMap=new HoleMap($('holeMap'),$('holeMapCanvas'));
 document.body.dataset.golfDevice=device.name;
@@ -27,7 +39,8 @@ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/i
 lightClubs(renderer,new RoomEnvironment());
 const game=new GolfGame(renderer,scene,camera),sound=new SoundEngine();game.touchControls=device.touch;
 if(device.touch)bindTouchGolf(game,{swing:$('touchSwing'),left:$('touchAimLeft'),right:$('touchAimRight')});
-game.onSfx=(event,detail)=>sound.play(event,detail);let page='home',activeUser=null;
+game.onSfx=(event,detail)=>sound.play(event,detail);let page='home';
+const activeUser=account;
 const preview = document.querySelector('#golfer .preview');
 const stage=$('lobbyStage'),lobby=new Clubhouse(game.golfer,stage,finishApparel);
 function sizeCanvas() {
@@ -39,7 +52,6 @@ function sizeCanvas() {
 }
 new ResizeObserver(sizeCanvas).observe(preview);new ResizeObserver(sizeCanvas).observe(stage);
 const showPage=id=>{if(id!=='playing'&&page==='playing'&&onlineActive)endOnline();if(page==='home')scene.add(game.golfer.root);page=id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('selected',b.dataset.page===id));document.body.classList.toggle('is-playing',id==='playing');(id==='home'?stage:id==='golfer'?preview:$('viewport')).appendChild(renderer.domElement);sizeCanvas();if(id==='store'||id==='locker')renderGear();if(id!=='playing'){game.enterMenu();if(id==='golfer')game.enterPreview();if(id==='home'){lobby.enter();refreshTags();if(room.connected)room.send({type:'appearance',profile:playerCard()})}}};
-function readAccount(){try{return JSON.parse(localStorage.getItem('prestiege-account')||'null')}catch{return null}}
 const lessons=[
  ['WELCOME TO PRESTIGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
  ['SET UP YOUR BALL','First, place your tee and ball. Watch me demonstrate the setup.','tee'],
@@ -121,7 +133,7 @@ $('playing').addEventListener('click',event=>{
  const club=game.clubUnderPointer(event);if(club)game.returnFromBag(club);
 });
 document.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>game.setShape(b.dataset.shape));
-const saved=(()=>{try{return JSON.parse(localStorage.getItem('prestiege-golfer'))||{}}catch{return {}}})();$('golferName').value=saved.name||'ROOKIE';$('golferFrame').value=saved.frame||'male';$('shirtColor').value=saved.shirt||'#e9f0e9';$('hairColor').value=saved.hair||'#36261f';$('eyeColor').value=saved.eyes||'#4c8069';$('skinColor').value=saved.skin||'#ba8c70';$('pantsColor').value=saved.pants||'#1d3535';
+const saved=playerSave() ? (playerSave().state.golfer || {}) : (()=>{try{return JSON.parse(localStorage.getItem('prestiege-golfer'))||{}}catch{return {}}})();$('golferName').value=saved.name||'ROOKIE';$('golferFrame').value=saved.frame||'male';$('shirtColor').value=saved.shirt||'#e9f0e9';$('hairColor').value=saved.hair||'#36261f';$('eyeColor').value=saved.eyes||'#4c8069';$('skinColor').value=saved.skin||'#ba8c70';$('pantsColor').value=saved.pants||'#1d3535';
 const palette=()=>({shirt:$('shirtColor').value,pants:$('pantsColor').value,hair:$('hairColor').value,eyes:$('eyeColor').value,skin:$('skinColor').value});
 function applyGear(){
  const {equipped}=wallet();
@@ -226,7 +238,7 @@ function renderGear(){
   action.disabled=view==='locker'?wearing&&!canReset:owned||state.credits<item.price;
   action.setAttribute('aria-label',action.textContent+' · '+[item.brand,item.name].filter(Boolean).join(' '));
   action.onclick=async()=>{try{
-   if(canReset)unequip(slot);else if(view==='locker')wear(item.id);else await buy(item.id);
+   if(canReset)await unequip(slot);else if(view==='locker')await wear(item.id);else await buy(item.id);
    applyGear();
    if(view==='locker'&&room.connected)room.send({type:'appearance',profile:playerCard()});
    renderGear();$(view+'Status').textContent=canReset?'Using clubs from your equipped set.':[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
@@ -251,7 +263,7 @@ window.addEventListener('storage',e=>{if(e.key===walletKey||e.key?.startsWith(wa
 renderGear();
 
 async function equip(){const frame=$('golferFrame').value;$('animationStatus').textContent='LOADING GOLF ANIMATIONS…';const source=await game.prepareGolfer(frame);applyGear();renderGear();$('modelSource').textContent=source.toUpperCase();const ready=['idle','drive','chip','putt','walk','run','tee','pick'].filter(name=>game.golfer.actions.has(name)).length;$('animationStatus').textContent=ready===8?`8/8 GOLF ANIMATIONS READY · ${game.golfer.actions.size}/19 CLIPS LOADED`:`${ready}/8 GOLF ANIMATIONS · BUILT-IN SWING BACKUP`;return source}
-$('saveGolfer').onclick=async()=>{const golfer={name:$('golferName').value.trim()||'ROOKIE',frame:$('golferFrame').value,...palette()};localStorage.setItem('prestiege-golfer',JSON.stringify(golfer));$('loader').classList.remove('hidden');try{await equip();$('loader').classList.add('hidden');showPage('home')}catch(e){$('loader').classList.add('hidden');$('error').textContent='Golfer could not load: '+e.message;$('error').classList.remove('hidden')}};
+$('saveGolfer').onclick=async()=>{const golfer={name:$('golferName').value.trim()||'ROOKIE',frame:$('golferFrame').value,...palette()};$('loader').classList.remove('hidden');try{const cloud=playerSave();if(cloud)await cloud.update(save=>{save.golfer=golfer});else localStorage.setItem('prestiege-golfer',JSON.stringify(golfer));await equip();$('loader').classList.add('hidden');showPage('home')}catch(e){$('loader').classList.add('hidden');$('error').textContent='Golfer could not load: '+e.message;$('error').classList.remove('hidden')}};
 ['shirtColor','pantsColor','hairColor','eyeColor','skinColor'].forEach(id=>$(id).addEventListener('input',()=>applyGear()));$('golferFrame').addEventListener('change',async()=>{$('golferFrame').disabled=true;$('loader').classList.remove('hidden');try{await equip()}catch(e){$('error').textContent='Golfer preview could not load: '+e.message;$('error').classList.remove('hidden')}finally{$('golferFrame').disabled=false;$('loader').classList.add('hidden')}});
 const soundButton = $('soundBtn');
 function showSoundPreference(enabled) {
@@ -474,4 +486,4 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelt
  const lightTarget=game.spectating?game.ball.position:game.position;
  sun.target.position.copy(lightTarget);sun.position.copy(lightTarget).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();
 window.dispatchEvent(new Event('pcc-game-ready'));
-(async()=>{$('loader').classList.add('hidden');const account=readAccount();activeUser=account;refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();
+(async()=>{$('loader').classList.add('hidden');refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();

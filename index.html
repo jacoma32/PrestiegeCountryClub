@@ -17,7 +17,7 @@
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
   <script src="./js/background-video.js" defer></script>
-  <script type="module" src="./js/homepage.js?v=verification2"></script>
+  <script type="module" src="./js/homepage.js?v=username1"></script>
   <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
@@ -29,7 +29,6 @@
     <div class="member-actions">
       <button type="button" class="button" id="signIn">Sign in</button>
       <button type="button" class="button gold" id="signUp">Sign up</button>
-      <button type="button" class="button" id="openVerification">Verify email</button>
       <button type="button" class="button" id="signOut" hidden>Sign out</button>
     </div>
   </header>
@@ -54,34 +53,16 @@
       <button type="button" class="button" id="closeDialog" aria-label="Close">×</button>
     </div>
     <form id="memberForm">
-      <label id="memberNameField" hidden>Player name
-        <input id="memberName" maxlength="22" autocomplete="nickname">
+      <label>Username
+        <input id="memberName" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username" required>
       </label>
-      <label>Email
-        <input id="memberEmail" type="email" autocomplete="email" required>
-      </label>
+      <small id="usernameHint" hidden>Use 3–20 letters, numbers, or underscores.</small>
       <label>Password
         <input id="memberPassword" type="password" autocomplete="current-password" aria-describedby="memberPasswordHint" required>
         <small id="memberPasswordHint" hidden>Use at least 6 characters.</small>
       </label>
       <p id="memberError" class="status" role="alert"></p>
       <button class="button gold" id="memberSubmit" type="submit">Sign in</button>
-    </form>
-  </dialog>
-  <dialog id="verifyEmail" aria-labelledby="verifyTitle" aria-describedby="verifyInstructions">
-    <div class="dialog-head">
-      <h2 id="verifyTitle">Check your email</h2>
-      <button type="button" class="button" id="closeVerification" aria-label="Close">×</button>
-    </div>
-    <p id="verifyInstructions">Use the confirmation link in your email or enter the six-digit code if your message includes one. If you haven’t received anything, check Spam or request another email below.</p>
-    <form id="verifyForm">
-      <label>Email <input id="verifyAddress" type="email" autocomplete="email" required></label>
-      <label>Verification code
-        <input id="verifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
-      </label>
-      <button id="verifySubmit" class="button gold" type="submit">Verify code</button>
-      <button id="resendVerification" class="button" type="button">Send another email</button>
-      <p id="verifyStatus" class="status" role="status"></p>
     </form>
   </dialog>
 </body>

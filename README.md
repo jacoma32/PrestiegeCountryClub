@@ -4,7 +4,7 @@ A 3D golf-school project built with Three.js, HTML, CSS and JavaScript. This is 
 
 ## Features
 
-- Homepage membership through Supabase Auth. See [Supabase setup](SUPABASE-SETUP.md) for email and Google sign-in settings and [Friends setup](FIREBASE-SETUP.md) for in-game invitations.
+- Homepage membership through Supabase Auth. See [Supabase setup](SUPABASE-SETUP.md) for username accounts and cloud saves and [Friends setup](FIREBASE-SETUP.md) for in-game invitations.
 - Male/female MyGolfer choice, colors and a saved browser profile
 - Coach Timmy's seven-step on-screen tutorial, automatically offered on the first tee
 - 19 supplied FBX animations packed into `assets/animations.zip`

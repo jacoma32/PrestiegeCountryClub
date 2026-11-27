@@ -34,11 +34,11 @@ const passwordErrors = {
   session_not_found: 'Sign in again to change your password.',
 };
 
-import('./member-auth.js?v=settings1').then(({ auth, changePassword }) => {
+import('./member-auth.js?v=username1').then(({ auth, changePassword }) => {
   auth.onAuthStateChange((_event, session) => {
     form.hidden = !session?.user.email;
     accountStatus.hidden = !form.hidden;
-    accountStatus.textContent = 'Sign in with email on the homepage to change your password.';
+    accountStatus.textContent = 'Sign in on the homepage to change your password.';
     if (form.hidden) form.reset();
   });
 
