@@ -2,7 +2,7 @@
 const courses = ['royal', 'ocean', 'summit', 'misty', 'dunes'];
 export const partySlots = ['host', 'guest1', 'guest2', 'guest3'];
 export const partyLimit = partySlots.length;
-const protocol = 2;
+const protocol = 3;
 const cleanProfile = profile => typeof profile?.name === 'string'
  ? {...profile,name:profile.name.trim().slice(0,22)||'Friend'} : null;
 
@@ -138,7 +138,7 @@ export class OnlineRoom {
   if(data.type==='appearance'){
    const profile=cleanProfile(data.profile);
    if(profile){this.players[id]=profile;this.publishRoster()}
-  }else if(data.type==='requestVote')this.beginVote();
+  }else if(data.type==='requestVote')this.beginVote(data.length);
   else if(data.type==='pick'&&data.id===this.ballot?.id)this.recordPick(id,data.course);
   else if(data.type==='cancelVote'&&data.id===this.ballot?.id)this.cancelVote();
   else if(data.type==='state'&&this.inMatch&&data.turn===id&&['frame','finish'].includes(data.kind)){
@@ -160,12 +160,12 @@ export class OnlineRoom {
    clearTimeout(this.joinTimer);
    this.id=data.you;this.players=players;this.onParty?.(players,joined);
   }else if(this.connected&&data.type==='ballot'&&!this.inMatch){
-   this.ballot={id:data.id,picks:data.picks};
+   this.ballot={id:data.id,picks:data.picks,length:data.length===9?9:18};
    this.onVote?.(this.ballot);
   }else if(data.type==='cancelVote'&&data.id===this.ballot?.id){
    this.ballot=null;this.onVote?.(null);
   }else if(data.type==='start'&&this.ballot&&this.ballot.id===data.id&&courses.includes(data.course)){
-   this.startMatch(data.course);
+   this.startMatch(data.course,this.ballot.length);
   }else if(data.type==='state'&&this.inMatch)this.onState?.(data);
  }
 
@@ -176,10 +176,10 @@ export class OnlineRoom {
   this.onParty?.(this.players,joined);
  }
 
- beginVote(){
+ beginVote(length=18){
   if(!this.connected||this.ballot||this.inMatch)return;
-  if(this.role==='guest'){this.send({type:'requestVote'});return}
-  this.ballot={id:crypto.randomUUID(),picks:Object.fromEntries(this.playerIds.map(id=>[id,null]))};
+  if(this.role==='guest'){this.send({type:'requestVote',length});return}
+  this.ballot={id:crypto.randomUUID(),length:length===9?9:18,picks:Object.fromEntries(this.playerIds.map(id=>[id,null]))};
   this.publishVote();
  }
 
@@ -199,7 +199,7 @@ export class OnlineRoom {
   const best=courses.filter((_,index)=>totals[index]===Math.max(...totals));
   const result=best[Math.floor(Math.random()*best.length)];
   this.broadcast({type:'start',id:this.ballot.id,course:result});
-  this.startMatch(result);
+  this.startMatch(result,this.ballot.length);
  }
 
  publishVote(){
@@ -214,9 +214,9 @@ export class OnlineRoom {
   this.ballot=null;this.broadcast(message);this.onVote?.(null);
  }
 
- startMatch(course){
+ startMatch(course,length){
   this.inMatch=true;this.ballot=null;
-  this.onVote?.(null);this.onStart?.(course);
+  this.onVote?.(null);this.onStart?.(course,length);
  }
 
  write(connection,data){

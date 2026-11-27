@@ -1,3 +1,4 @@
+import {makePuttingGrid} from './putting-grid.js';
 import {pinFlagMaterial} from './pin-flag.js';
 import {protectGreens} from './green-layout.js';
 import {finishes,mow,ridgeBackdrop,plantMargins,terrainFinish,teeBoard} from './course-finish.js?v=dunes1';
@@ -157,6 +158,8 @@ export class World{
  this.green={x:this.holePosition.x,z:this.holePosition.z,rx:h.green[0],rz:h.green[1]};
  this.surfaceEllipse(this.green.x,this.green.z,h.green[0]+FRINGE_WIDTH,h.green[1]+FRINGE_WIDTH,fringe,FRINGE_LIFT,'green');
  this.surfaceEllipse(this.green.x,this.green.z,...h.green,greenMat,GREEN_LIFT,'green');
+ this.puttGrid=name==='range'?null:makePuttingGrid(this);
+ if(this.puttGrid)this.root.add(this.puttGrid);
  this.holePosition.y=this.groundHeight(this.green.x,this.green.z)+.06;
  const holeRing=this.mesh(new THREE.RingGeometry(.12,.29,28),this.mat(0xe5e5de));holeRing.rotation.x=-Math.PI/2;holeRing.position.copy(this.holePosition).add(new THREE.Vector3(0,.016,0));const cup=this.mesh(new THREE.CircleGeometry(.12,24),this.mat(0x101715));cup.rotation.x=-Math.PI/2;cup.position.copy(this.holePosition).add(new THREE.Vector3(0,.02,0));
  for(const [features,collection,material] of [[h.sand,this.bunkers,sand],[h.water,this.water,null]]){

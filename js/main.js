@@ -1,20 +1,22 @@
 import {setHatFinish} from './gear-logos.js';
 import {gearImage} from './gear-preview.js?v=putts1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=party4';
+import {Match} from './match.js?v=roundtools1';
 import {Clubhouse} from './clubhouse.js?v=party4';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=whiteflag1';
+import {GolfGame} from './game.js?v=roundtools1';
 import {SoundEngine} from './sound.js?v=strikefield';
-import {OnlineRoom,partyLimit} from './online.js?v=dunes1';
+import {OnlineRoom,partyLimit} from './online.js?v=roundtools1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
+import {HoleMap} from './hole-map.js';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
 const $=id=>document.getElementById(id);
 const device=golfDevice();
+const holeMap=new HoleMap($('holeMap'),$('holeMapCanvas'));
 document.body.dataset.golfDevice=device.name;
 document.body.classList.toggle('touch-golf',device.touch);
 $('shotHelp').textContent=device.touch?'HOLD SWING FOR POWER · RELEASE TO HIT':'HOLD SPACE FOR POWER · RELEASE TO SWING';
@@ -46,26 +48,41 @@ const lessons=[
  ['CHOOSE YOUR CLUB','The game starts you with a club for the distance to the pin. '+(device.touch?'Tap Club bag':'Press C or click Club Bag')+' to choose a different club. Use a driver for long shots, an iron for approaches, a wedge for short shots, and a putter on the green.','pointGesture'],
  ['AIM YOUR SHOT',(device.touch?'Tap the left and right arrows to aim.':'Press A or D, or use the left and right arrow keys to aim.')+' Keep the blue tracer on your target and check the wind before you swing.','point'],
  ['WATCH A FULL SWING',(device.touch?'Touch and hold Swing to build power.':'Hold Space to build power.')+' Release near the highlighted zone to hit the ball.','drive'],
- ['CHIPPING & PUTTING','Use your wedge around the green and the putter once you reach the putting surface. I’ll demonstrate both.','chip'],
+ ['CHIPPING & PUTTING','Use your wedge around the green and the putter once you reach the putting surface. The putting grid arrows point downhill, and the distance to the cup is shown in feet.','chip'],
  ['YOU’RE READY','That’s the basics. Your golfer is ready. Play the hole, keep your score, and I’ll be here if you need a hand.','clap']
 ];let lessonIndex=0;
 const renderLesson=()=>{const [title,body,action]=lessons[lessonIndex];$('coachTitle').textContent=title;$('coachText').textContent=body;$('coachProgress').textContent=`LESSON ${lessonIndex+1} / ${lessons.length}`;$('coachNext').textContent=lessonIndex===lessons.length-1?'START PLAYING →':'NEXT →';game.coachAction(action);sound.play('menu')};
 const closeTutorial=()=>{$('tutorialOverlay').classList.add('hidden');try{localStorage.setItem('prestiege-v4-tutorial-done','yes')}catch{}};
 const openTutorial=()=>{lessonIndex=0;$('tutorialOverlay').classList.remove('hidden');renderLesson()};
 $('coachNext').onclick=()=>{if(++lessonIndex>=lessons.length)closeTutorial();else renderLesson()};$('coachSkip').onclick=closeTutorial;
-const start=async(name='royal',tutorial=false)=>{
+const start=async(name='royal',tutorial=false,length=18)=>{
  if(room.connected&&!room.inMatch){
-  showPage('home');room.beginVote();return;
+  showPage('home');room.beginVote(length);return;
  }
- showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
+ showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial,length);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
 document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
 const playMode=$('playMode');
-let selectedCourse='';
+let selectedCourse='',selectedLength=18,friendRound=false;
+function chooseRound(course='',label='Friend round',friendsOnly=false){
+ selectedCourse=course;
+ friendRound=friendsOnly;
+ $('playModeCourse').textContent=label;
+ $('playModeTitle').textContent='How many holes do you want to play?';
+ $('roundLengths').hidden=false;
+ $('playChoices').hidden=true;
+ playMode.showModal();
+}
 for(const button of document.querySelectorAll('[data-course]')){
+ button.onclick=()=>chooseRound(button.dataset.course,button.querySelector('h3').textContent);
+}
+for(const button of document.querySelectorAll('[data-round-length]')){
  button.onclick=()=>{
-  selectedCourse=button.dataset.course;
-  $('playModeCourse').textContent=button.querySelector('h3').textContent;
-  playMode.showModal();
+  selectedLength=Number(button.dataset.roundLength);
+  if(friendRound){playMode.close('friends');room.beginVote(selectedLength);return}
+  $('playModeTitle').textContent='Are you playing by yourself or with friends?';
+  $('roundLengths').hidden=true;
+  $('playChoices').hidden=false;
+  $('playSolo').focus();
  };
 }
 $('playSolo').onclick=()=>{
@@ -73,11 +90,11 @@ $('playSolo').onclick=()=>{
  const course=selectedCourse;
  selectedCourse='';
  if(room.room)endOnline();
- start(course,!localStorage.getItem('prestiege-v4-tutorial-done'));
+ start(course,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
 };
 $('playWithFriend').onclick=()=>{
  playMode.close('friends');
- if(room.connected)room.beginVote();
+ if(room.connected)room.beginVote(selectedLength);
  else{$('inviteOptions').open=true;openFriends()}
 };
 playMode.addEventListener('close',()=>{
@@ -291,6 +308,7 @@ const room=new OnlineRoom({
    const selected=Array.from(dialog.querySelectorAll('[data-vote]')).find(button=>button.dataset.vote===selectedCourse);
    selected?.focus();
   }
+  $('voteTitle').textContent='Vote for a course · '+ballot.length+' holes';
   const picked=ballot.picks[room.id];
   const remaining=Object.values(ballot.picks).filter(pick=>!pick).length;
   $('cancelVote').textContent=picked?'Leave party':'Back to lobby';
@@ -314,13 +332,13 @@ const room=new OnlineRoom({
  },
  onHosted:(code,course)=>friends.host(code,course,inviteTo).then(()=>{onlineStatus.textContent=inviteTo?'Party invite sent.':'Party open. Share the invite link or code.'}).catch(err=>onlineStatus.textContent=err.message),
  onStatus:message=>{if(!room.room||message.startsWith('Connection failed')||message.startsWith('Cannot join'))joiningInvite=false;refreshTags();onlineCode.hidden=$('onlineCopy').hidden=room.role!=='host'||!room.room;onlineStatus.textContent=message;onlineCode.textContent=room.role==='host'&&room.room?'ROOM CODE: '+room.room:'';},
- onStart:async course=>{
+ onStart:async (course,length)=>{
   if(room.role==='host')friends.unhost().catch(()=>{});
   selectedCourse='';
   onlineActive=true;onlinePanel.classList.add('hidden');
   $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;
-  const session=match=new Match(game,room,lobby);
-  await start(course,false);
+  const session=match=new Match(game,room,lobby,length);
+  await start(course,false,length);
   if(match===session&&game.started)session.start();
  },
  onState:state=>match?.receive(state),
@@ -395,7 +413,7 @@ async function hostParty(uid=null){
 }
 $('homeRange').onclick=()=>$('rangeTab').click();
 $('inviteFriend').onclick=()=>{if(room.role==='host')$('inviteOptions').open=true;openFriends()};
-$('multiplayer').onclick=()=>room.connected?room.beginVote():openFriends();
+$('multiplayer').onclick=()=>room.connected?chooseRound():openFriends();
 $('cancelVote').onclick=()=>{
  if(room.ballot?.picks[room.id]){endOnline();$('courseVote').close()}else room.cancelVote();
 };
@@ -414,6 +432,8 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelt
   const settings=course==='dunes'?[-45,38,26,0xffddaa,2.14]:course==='misty'?[-24,12,-64,0xffbb85,1.75]:course==='ocean'?[-48,34,16,0xffe4bc,2.15]:course==='summit'?[29,55,-38,0xfff2df,2.02]:[-39,43,27,0xffdfb3,2.08];
   sunOffset.set(settings[0],settings[1],settings[2]);sun.color.setHex(settings[3]);sun.intensity=settings[4];
  }
+ holeMap.update(game,page==='playing');
+ if(game.world.puttGrid)game.world.puttGrid.visible=page==='playing'&&game.started&&!game.spectating&&game.club==='putter'&&!game.swinging&&!game.bagPhase&&!game.modal;
  sun.target.position.copy(game.position);sun.position.copy(game.position).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();
 window.dispatchEvent(new Event('pcc-game-ready'));
 (async()=>{$('loader').classList.add('hidden');const account=readAccount();if(account){activeUser=account;$('accountBtn').textContent=account.username.toUpperCase()}$('accountGate').classList.add('hidden');document.body.classList.remove('gated');refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();

@@ -3,7 +3,6 @@ import {itemById,clubLoadout} from './locker.js?v=clubs1';
 
 // Every golfer takes one turn per hole. The host relays the active golfer's frames and result.
 const $=id=>document.getElementById(id);
-const COURSE_HOLES=18;
 const validScore=n=>Number.isInteger(n)&&n>0&&n<10000;
 const pose=o=>[...o.position.toArray(),...o.quaternion.toArray(),...o.scale.toArray()];
 function applyPose(o,p){
@@ -12,8 +11,8 @@ function applyPose(o,p){
 }
 
 export class Match {
- constructor(game,room,lobby){
-  Object.assign(this,{game,room,lobby});this.ballColor=game.ball.material.color.getHex();
+ constructor(game,room,lobby,length=18){
+  Object.assign(this,{game,room,lobby,length});this.ballColor=game.ball.material.color.getHex();
   this.order=room.playerIds;this.hole=0;this.turn=this.order[0];
   this.points=Object.fromEntries(this.order.map(id=>[id,0]));this.card={};this.lastSend=0;
  }
@@ -35,7 +34,7 @@ export class Match {
   $('roundModal').classList.add('hidden');$('nextHole').hidden=true;
   g.golfer.root.visible=!watch;g.ball.visible=!watch;
   if(watch){g.bag.visible=false;g.shotPreview.group.visible=false;g.contactShadow.visible=false}
-  $('rivalScore').textContent=(watch?'WATCHING '+this.name(this.turn):'YOUR TURN')+' · HOLE '+(this.hole+1)+' OF '+COURSE_HOLES+' · '+this.standings();
+  $('rivalScore').textContent=(watch?'WATCHING '+this.name(this.turn):'YOUR TURN')+' · HOLE '+(this.hole+1)+' OF '+this.length+' · '+this.standings();
   document.body.classList.toggle('watching-golf',watch);
   this.lobby.hideMembers();
   this.frame=null;this.lastSend=0;
@@ -120,10 +119,10 @@ export class Match {
   this.result=true;
   const winner=this.uniqueLeader(this.card,Math.min);
   if(winner)this.points[winner]++;
-  this.complete=this.hole+1===COURSE_HOLES;
+  this.complete=this.hole+1===this.length;
   const title=(id,subject)=>!id?subject+' TIED':id===this.room.id?'YOU WIN THE '+subject:this.name(id)+' WINS THE '+subject;
   const courseWinner=this.uniqueLeader(this.points,Math.max);
-  $('roundEyebrow').textContent=this.complete?'COURSE COMPLETE · 18 OF 18':'HOLE '+(this.hole+1)+' OF 18 COMPLETE';
+  $('roundEyebrow').textContent=this.complete?'COURSE COMPLETE · '+this.length+' OF '+this.length:'HOLE '+(this.hole+1)+' OF '+this.length+' COMPLETE';
   $('roundTitle').textContent=this.complete?title(courseWinner,'COURSE'):title(winner,'HOLE');
   $('roundDescription').textContent='Hole '+(this.hole+1)+' strokes · '+this.scores(this.card);
   $('scorecard').textContent=this.standings()+(this.complete?'':' · Continuing to hole '+(this.hole+2));
