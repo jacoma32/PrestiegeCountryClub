@@ -8,7 +8,8 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
 import {GolfGame} from './game.js?v=friendflow1';
-import {SoundEngine} from './sound.js?v=strikefield';
+import {SoundEngine} from './sound.js?v=settings1';
+import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
 import {FriendsService,isOnline} from './friends.js?v=friendflow1';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
@@ -252,7 +253,39 @@ renderGear();
 async function equip(){const frame=$('golferFrame').value;$('animationStatus').textContent='LOADING GOLF ANIMATIONS…';const source=await game.prepareGolfer(frame);applyGear();renderGear();$('modelSource').textContent=source.toUpperCase();const ready=['idle','drive','chip','putt','walk','run','tee','pick'].filter(name=>game.golfer.actions.has(name)).length;$('animationStatus').textContent=ready===8?`8/8 GOLF ANIMATIONS READY · ${game.golfer.actions.size}/19 CLIPS LOADED`:`${ready}/8 GOLF ANIMATIONS · BUILT-IN SWING BACKUP`;return source}
 $('saveGolfer').onclick=async()=>{const golfer={name:$('golferName').value.trim()||'ROOKIE',frame:$('golferFrame').value,...palette()};localStorage.setItem('prestiege-golfer',JSON.stringify(golfer));$('loader').classList.remove('hidden');try{await equip();$('loader').classList.add('hidden');showPage('home')}catch(e){$('loader').classList.add('hidden');$('error').textContent='Golfer could not load: '+e.message;$('error').classList.remove('hidden')}};
 ['shirtColor','pantsColor','hairColor','eyeColor','skinColor'].forEach(id=>$(id).addEventListener('input',()=>applyGear()));$('golferFrame').addEventListener('change',async()=>{$('golferFrame').disabled=true;$('loader').classList.remove('hidden');try{await equip()}catch(e){$('error').textContent='Golfer preview could not load: '+e.message;$('error').classList.remove('hidden')}finally{$('golferFrame').disabled=false;$('loader').classList.add('hidden')}});
-$('soundBtn').onclick=async()=>{const on=await sound.toggle();$('soundBtn').textContent=on?'SOUND ON':'SOUND OFF'};
+const soundButton = $('soundBtn');
+function showSoundPreference(enabled) {
+ soundButton.textContent = enabled ? 'SOUND ON' : 'SOUND OFF';
+ soundButton.setAttribute('aria-pressed', String(enabled));
+}
+function refreshPreferences() {
+ const preferences = readPreferences();
+ applyTextSize(preferences.textSize);
+ if (!preferences.sound) sound.setEnabled(false);
+ showSoundPreference(preferences.sound);
+}
+refreshPreferences();
+window.addEventListener('pageshow', refreshPreferences);
+window.addEventListener('storage', refreshPreferences);
+function activatePreferredSound(event) {
+ if (soundButton.contains(event.target) || soundButton.disabled || soundButton.getAttribute('aria-pressed') !== 'true' || sound.enabled) return;
+ sound.setEnabled(true).catch(() => {});
+}
+window.addEventListener('click', activatePreferredSound, true);
+window.addEventListener('keydown', activatePreferredSound, true);
+soundButton.onclick = async () => {
+ soundButton.disabled = true;
+ const enabled = soundButton.getAttribute('aria-pressed') !== 'true';
+ try {
+  await sound.setEnabled(enabled, enabled);
+  savePreferences({ sound: enabled });
+  showSoundPreference(enabled);
+ } catch {
+  showSoundPreference(sound.enabled);
+ } finally {
+  soundButton.disabled = false;
+ }
+};
 
 const onlinePanel=$('onlinePanel'),onlineStatus=$('onlineStatus'),onlineCode=$('onlineCode'),rivalStats=$('rivalStats');
 let onlineActive=false,match=null;

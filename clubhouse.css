@@ -119,3 +119,12 @@ body:not(.touch-golf) .game-hud .game-bottom{bottom:38px}
  .friend-round .rival-stats{top:max(66px,calc(env(safe-area-inset-top) + 54px));padding:5px 7px}
  .friend-round .hole-map{left:auto;right:max(8px,env(safe-area-inset-right));top:90px}
 }
+
+.clubhouse-settings { display: inline-block; margin-top: .65rem; text-decoration: none; }
+html[data-text-size="large"] body { --game-text-scale: 1.125; }
+html[data-text-size="extra-large"] body { --game-text-scale: 1.25; }
+html[data-text-size] .club-title,
+html[data-text-size] #shotHelp,
+html[data-text-size] .game-footer {
+  zoom: var(--game-text-scale, 1);
+}

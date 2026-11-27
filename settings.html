@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1b14">
+  <title>Settings | Prestige Country Club</title>
+  <link rel="icon" href="./assets/prestige-crest.webp" type="image/webp">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
+  <link rel="stylesheet" href="./homepage.css?v=settings1">
+  <link rel="stylesheet" href="./settings.css">
+  <script type="module" src="./js/settings.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a href="./" class="site-brand" aria-label="Prestige Country Club homepage">
+      <img src="./assets/prestige-crest.webp" width="52" height="52" alt="">
+      <span>Prestige</span>
+    </a>
+    <a id="backLink" class="button" href="./">← Home</a>
+  </header>
+  <main class="settings">
+    <h1>Settings</h1>
+    <section aria-labelledby="preferencesTitle">
+      <h2 id="preferencesTitle">Game preferences</h2>
+      <p>Sound and text size are saved in this browser.</p>
+      <label class="sound-option"><input id="soundPreference" type="checkbox"> Play game sounds</label>
+      <label>Text size
+        <select id="textSize">
+          <option value="standard">Standard</option>
+          <option value="large">Large</option>
+          <option value="extra-large">Extra large</option>
+        </select>
+      </label>
+      <p id="preferencesStatus" class="status" role="status"></p>
+    </section>
+    <section aria-labelledby="passwordTitle">
+      <h2 id="passwordTitle">Change password</h2>
+      <p id="accountStatus" role="status">Checking sign-in…</p>
+      <form id="passwordForm" hidden>
+        <label>Current password
+          <input name="currentPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <label>New password
+          <input name="newPassword" type="password" autocomplete="new-password" minlength="6" aria-describedby="newPasswordHint" required>
+          <small id="newPasswordHint">Use at least 6 characters.</small>
+        </label>
+        <label>Confirm new password
+          <input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <button class="button gold" type="submit">Change password</button>
+      </form>
+      <p id="passwordStatus" class="status" role="status"></p>
+    </section>
+  </main>
+</body>
+</html>

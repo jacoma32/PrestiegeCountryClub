@@ -1,7 +1,20 @@
 // Recorded strike sources and editing notes are in assets/audio/CREDITS.md.
 export class SoundEngine {
  constructor(){this.ctx=null;this.enabled=false;this.hits=new Map();this.loadingHits=null;this.puttIndex=0;}
- async toggle(){if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();await this.ctx.resume();this.enabled=!this.enabled;if(this.enabled){this.loadHits();this.play('welcome')}return this.enabled;}
+ async setEnabled(enabled, preview = false) {
+  this.enabled = enabled;
+  if (!enabled) return;
+  try {
+   if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+   await this.ctx.resume();
+   if (!this.enabled) return;
+   this.loadHits();
+   if (preview) this.play('welcome');
+  } catch (error) {
+   this.enabled = false;
+   throw error;
+  }
+ }
  loadHits(){
   if(this.loadingHits)return this.loadingHits;
   const files=['drive','putt-a','putt-b'].filter(key=>!this.hits.has(key));

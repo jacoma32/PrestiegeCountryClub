@@ -16,7 +16,7 @@
     const party = new URLSearchParams(location.search).get('party');
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
-  <script type="module" src="./js/homepage.js?v=supabase3"></script>
+  <script type="module" src="./js/homepage.js?v=settings1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -41,6 +41,7 @@
       <p>Prestige Country Club is the golf game for players who expect more. Elegant courses, real physics, and a club worth joining.</p>
       <a class="button gold play" href="./game.html">Play golf</a>
       <a class="button play" href="./merch.html">Merch</a>
+      <a class="button play" id="homeSettings" href="./settings.html" hidden>Settings</a>
       <p id="memberStatus" class="status" role="status"></p>
     </div>
   </main>
@@ -57,7 +58,8 @@
         <input id="memberEmail" type="email" autocomplete="email" required>
       </label>
       <label>Password
-        <input id="memberPassword" type="password" autocomplete="current-password" required>
+        <input id="memberPassword" type="password" autocomplete="current-password" aria-describedby="memberPasswordHint" required>
+        <small id="memberPasswordHint" hidden>Use at least 6 characters.</small>
       </label>
       <p id="memberError" class="status" role="alert"></p>
       <button class="button gold" id="memberSubmit" type="submit">Sign in</button>

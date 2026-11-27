@@ -1,3 +1,5 @@
+import './preferences.js';
+
 const byId = (id) => document.getElementById(id);
 const dialog = byId('memberDialog');
 const form = byId('memberForm');
@@ -16,7 +18,7 @@ function loadMembership() {
   membership ??= import('./member-auth.js?v=supabase1').then(({ auth }) => {
     auth.onAuthStateChange((event, session) => {
       signIn.hidden = signUp.hidden = Boolean(session);
-      signOut.hidden = !session;
+      signOut.hidden = byId('homeSettings').hidden = !session;
       if (session) mainStatus.textContent = 'Signed in. You’re ready to play.';
       else if (event === 'SIGNED_OUT') mainStatus.textContent = 'Signed out.';
     });
@@ -48,6 +50,7 @@ function openMemberDialog(signingUp) {
   byId('memberName').required = creating;
   password.autocomplete = creating ? 'new-password' : 'current-password';
   password.minLength = creating ? 6 : 0;
+  byId('memberPasswordHint').hidden = !creating;
   byId('memberTitle').textContent = submit.textContent = creating ? 'Sign up' : 'Sign in';
   dialog.showModal();
 }
