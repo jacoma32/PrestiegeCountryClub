@@ -17,7 +17,7 @@ let membership;
 function loadMembership() {
   membership ??= import('./member-auth.js?v=supabase1').then(({ auth }) => {
     auth.onAuthStateChange((event, session) => {
-      signIn.hidden = signUp.hidden = Boolean(session);
+      signIn.hidden = signUp.hidden = byId('openVerification').hidden = Boolean(session);
       signOut.hidden = byId('homeSettings').hidden = !session;
       if (session) {
         mainStatus.textContent = 'Signed in. You’re ready to play.';
@@ -129,13 +129,14 @@ const verifySubmit = byId('verifySubmit');
 const resend = byId('resendVerification');
 const closeVerification = byId('closeVerification');
 
-function openVerification(email) {
+function openVerification(email = '') {
   verifyForm.reset();
   verifyAddress.value = email;
   verifyStatus.textContent = '';
   verification.showModal();
 }
 
+byId('openVerification').addEventListener('click', () => openVerification());
 closeVerification.addEventListener('click', () => verification.close());
 verification.addEventListener('cancel', event => {
   if (closeVerification.disabled) event.preventDefault();
@@ -160,7 +161,7 @@ verifyForm.addEventListener('submit', event => {
   event.preventDefault();
   runVerification(async auth => {
     const { error } = await auth.verifyOtp({
-      email: verifyAddress.value,
+      email: verifyAddress.value.trim(),
       token: verifyCode.value,
       type: 'email',
     });
@@ -171,10 +172,11 @@ verifyForm.addEventListener('submit', event => {
 });
 
 resend.addEventListener('click', () => {
+  if (!verifyAddress.reportValidity()) return;
   runVerification(async auth => {
     const { error } = await auth.resend({
       type: 'signup',
-      email: verifyAddress.value,
+      email: verifyAddress.value.trim(),
       options: { emailRedirectTo: redirectTo },
     });
     if (error) throw error;

@@ -17,7 +17,7 @@
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
   <script src="./js/background-video.js" defer></script>
-  <script type="module" src="./js/homepage.js?v=verification1"></script>
+  <script type="module" src="./js/homepage.js?v=verification2"></script>
   <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
@@ -29,6 +29,7 @@
     <div class="member-actions">
       <button type="button" class="button" id="signIn">Sign in</button>
       <button type="button" class="button gold" id="signUp">Sign up</button>
+      <button type="button" class="button" id="openVerification">Verify email</button>
       <button type="button" class="button" id="signOut" hidden>Sign out</button>
     </div>
   </header>
@@ -74,7 +75,7 @@
     </div>
     <p id="verifyInstructions">Use the confirmation link in your email or enter the six-digit code if your message includes one. If you haven’t received anything, check Spam or request another email below.</p>
     <form id="verifyForm">
-      <label>Email <input id="verifyAddress" type="email" readonly></label>
+      <label>Email <input id="verifyAddress" type="email" autocomplete="email" required></label>
       <label>Verification code
         <input id="verifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
       </label>
