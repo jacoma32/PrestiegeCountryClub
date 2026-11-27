@@ -112,12 +112,3 @@ signOut.addEventListener('click', async () => {
 });
 
 loadMembership().catch(() => {});
-
-const video = byId('gameplay');
-function resumeBackground() {
-  if (!document.hidden && video.paused) video.play().catch(() => {});
-}
-document.addEventListener('visibilitychange', resumeBackground);
-window.addEventListener('pageshow', resumeBackground);
-window.addEventListener('click', resumeBackground);
-resumeBackground();
