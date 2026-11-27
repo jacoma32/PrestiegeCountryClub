@@ -10,13 +10,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
-  <link rel="stylesheet" href="./homepage.css?v=whiteflag1">
+  <link rel="stylesheet" href="./homepage.css?v=password-eye1">
   <script>
     // Forward party invitations that were copied before the homepage moved.
     const party = new URLSearchParams(location.search).get('party');
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
   <script type="module" src="./js/homepage.js?v=settings1"></script>
+  <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
   <header class="site-header">
