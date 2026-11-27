@@ -16,7 +16,7 @@
     const party = new URLSearchParams(location.search).get('party');
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
-  <script type="module" src="./js/homepage.js?v=supabase2"></script>
+  <script type="module" src="./js/homepage.js?v=supabase3"></script>
 </head>
 <body>
   <header class="site-header">
@@ -27,7 +27,6 @@
     <div class="member-actions">
       <button type="button" class="button" id="signIn">Sign in</button>
       <button type="button" class="button gold" id="signUp">Sign up</button>
-      <button type="button" class="button" id="googleSignIn">Sign in with Google</button>
       <button type="button" class="button" id="signOut" hidden>Sign out</button>
     </div>
   </header>
