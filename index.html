@@ -17,7 +17,7 @@
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
   <script src="./js/background-video.js" defer></script>
-  <script type="module" src="./js/homepage.js?v=gameplay-loop1"></script>
+  <script type="module" src="./js/homepage.js?v=verification1"></script>
   <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
@@ -68,9 +68,20 @@
     </form>
   </dialog>
   <dialog id="verifyEmail" aria-labelledby="verifyTitle" aria-describedby="verifyInstructions">
-    <h2 id="verifyTitle" style="font-size:3rem;margin:0 0 .75rem;color:var(--gold)">Check your email</h2>
-    <p id="verifyInstructions">Look for a verification email from Supabase and click the link to confirm your Prestige Country Club account. If it doesn’t show up, check your spam folder.</p>
-    <form method="dialog"><button class="button gold" autofocus>Got it</button></form>
+    <div class="dialog-head">
+      <h2 id="verifyTitle">Check your email</h2>
+      <button type="button" class="button" id="closeVerification" aria-label="Close">×</button>
+    </div>
+    <p id="verifyInstructions">Use the confirmation link in your email or enter the six-digit code if your message includes one. If you haven’t received anything, check Spam or request another email below.</p>
+    <form id="verifyForm">
+      <label>Email <input id="verifyAddress" type="email" readonly></label>
+      <label>Verification code
+        <input id="verifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+      </label>
+      <button id="verifySubmit" class="button gold" type="submit">Verify code</button>
+      <button id="resendVerification" class="button" type="button">Send another email</button>
+      <p id="verifyStatus" class="status" role="status"></p>
+    </form>
   </dialog>
 </body>
 </html>
