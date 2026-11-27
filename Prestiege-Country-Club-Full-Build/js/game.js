@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {World,COURSES} from './world.js';
+import {World,COURSES} from './world.js?v=whiteflag1';
 import {Golfer} from './actors.js';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 const clamp=THREE.MathUtils.clamp;const $=id=>document.getElementById(id);
