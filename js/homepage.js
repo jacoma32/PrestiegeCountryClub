@@ -118,26 +118,10 @@ signOut.addEventListener('click', async () => {
 loadMembership().catch(() => {});
 
 const video = byId('gameplay');
-const videoToggle = byId('videoToggle');
-const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
-function playGameplay() {
-  const source = video.querySelector('source');
-  if (!source.hasAttribute('src')) {
-    source.src = source.dataset.src;
-    video.load();
-  }
-  video.play().catch(() => {});
+function resumeBackground() {
+  if (!document.hidden && video.paused) video.play().catch(() => {});
 }
-video.addEventListener('playing', () => {
-  videoToggle.hidden = false;
-  videoToggle.textContent = 'Pause gameplay';
-});
-video.addEventListener('pause', () => { videoToggle.textContent = 'Play gameplay'; });
-videoToggle.addEventListener('click', () => {
-  if (video.paused) playGameplay();
-  else video.pause();
-});
-motionPreference.addEventListener('change', () => {
-  if (motionPreference.matches) video.pause();
-});
-if (!motionPreference.matches) playGameplay();
+document.addEventListener('visibilitychange', resumeBackground);
+window.addEventListener('pageshow', resumeBackground);
+window.addEventListener('click', resumeBackground);
+resumeBackground();

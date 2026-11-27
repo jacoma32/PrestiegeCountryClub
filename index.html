@@ -10,13 +10,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
-  <link rel="stylesheet" href="./homepage.css">
+  <link rel="stylesheet" href="./homepage.css?v=montage1">
   <script>
     // Forward party invitations that were copied before the homepage moved.
     const party = new URLSearchParams(location.search).get('party');
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
-  <script type="module" src="./js/homepage.js"></script>
+  <script type="module" src="./js/homepage.js?v=montage1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -32,8 +32,9 @@
     </div>
   </header>
   <main class="hero">
-    <video id="gameplay" class="hero-video" muted playsinline loop preload="none" poster="./assets/prestige-gameplay.webp" aria-hidden="true">
-      <source data-src="./assets/prestige-gameplay.webm" type="video/webm">
+    <video id="gameplay" class="hero-video" autoplay muted playsinline loop preload="auto" poster="./assets/prestige-gameplay.webp" aria-hidden="true">
+      <source src="./assets/prestige-montage.webm" type="video/webm">
+      <source src="./assets/prestige-montage.mp4" type="video/mp4">
     </video>
     <div class="hero-content">
       <img class="hero-crest" src="./assets/prestige-crest.webp" width="160" height="160" alt="Prestige Country Club">
@@ -42,7 +43,6 @@
       <a class="button gold play" href="./game.html">Play golf</a>
       <p id="memberStatus" class="status" role="status"></p>
     </div>
-    <button id="videoToggle" class="button video-toggle" type="button" hidden>Pause gameplay</button>
   </main>
   <dialog id="memberDialog" aria-labelledby="memberTitle">
     <div class="dialog-head">

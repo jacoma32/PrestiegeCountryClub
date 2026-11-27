@@ -25,3 +25,28 @@
 #playMode h2{margin:0 0 16px;font:600 clamp(26px,5vw,36px)/1.1 "Cormorant Garamond",Georgia,serif}
 #playMode .play-mode-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 #playMode button{width:auto;margin:0;padding:10px 16px}
+
+#playModeCourse{margin:0 0 6px;color:#e8cf9a;font-size:.9rem}
+.touch-shot-controls,.touch-camera{display:none}
+.touch-golf .touch-camera{display:block;position:absolute;inset:0;touch-action:none}
+.touch-golf .game-footer,.touch-golf .shot-indicator,.touch-golf .aim-panel>small:last-of-type{display:none}
+.touch-golf .touch-shot-controls{display:grid;grid-template-columns:48px minmax(90px,1fr) 48px;gap:8px;margin:7px 0}
+.touch-golf .touch-shot-controls button{width:100%;min-height:46px;margin:0;padding:6px 8px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font:600 16px Outfit,sans-serif}
+.touch-golf .game-hud .game-bottom{bottom:max(12px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right))}
+.touch-golf .game-top{top:max(12px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right))}
+.touch-golf #openBag,.touch-golf #resetAim,.touch-golf .game-top button{min-height:44px;touch-action:manipulation}
+.touch-golf .iron-shape button{min-height:32px;touch-action:manipulation}
+.touch-golf #bagContents button,.touch-golf #closeBag{min-height:44px;touch-action:manipulation}
+@media(max-width:700px){
+ .touch-golf .game-hud .game-bottom{grid-template-columns:minmax(0,1fr) auto;gap:6px}
+ .touch-golf .game-bottom .swing-zone{grid-column:1/-1;grid-row:2;width:100%;max-width:390px}
+ .touch-golf .game-bottom .wind-box,.touch-golf .game-bottom .aim-panel{display:flex;grid-row:1;grid-column:auto;gap:5px;padding:4px 6px;min-width:0}
+ .touch-golf .game-bottom .wind-box{flex-wrap:wrap}
+ .touch-golf .game-banner{max-width:calc(100vw - 20px);white-space:normal;text-align:center;padding:8px 10px}
+}
+@media(orientation:landscape) and (max-height:500px){
+ .touch-golf .game-hud .game-bottom{grid-template-columns:minmax(210px,290px) 1fr auto}
+ .touch-golf .game-bottom .swing-zone{grid-column:1;grid-row:1 / span 2;width:auto}
+ .touch-golf .game-bottom .wind-box{display:flex;grid-column:3;grid-row:1}
+ .touch-golf .game-bottom .aim-panel{display:flex;grid-column:3;grid-row:2}
+}

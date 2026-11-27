@@ -7,16 +7,24 @@ import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=clubauto1';
+import {GolfGame} from './game.js?v=touch1';
 import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom,partyLimit} from './online.js?v=party4';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
+import {golfDevice,bindTouchGolf} from './device-controls.js?v=touch1';
 const $=id=>document.getElementById(id);
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
+const device=golfDevice();
+document.body.dataset.golfDevice=device.name;
+document.body.classList.toggle('touch-golf',device.touch);
+$('shotHelp').textContent=device.touch?'HOLD SWING FOR POWER · RELEASE TO HIT':'HOLD SPACE FOR POWER · RELEASE TO SWING';
+$('openBag').textContent=device.touch?'Club bag':'C · CLUB BAG';
+const renderer=new THREE.WebGLRenderer({antialias:!device.touch,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio,device.touch?1.25:1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;$('viewport').appendChild(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,innerWidth/innerHeight,.1,1100);const sun=new THREE.DirectionalLight(0xffe7c7,2.1);sun.position.set(-65,100,42);sun.castShadow=true;sun.shadow.mapSize.setScalar(device.touch?1024:2048);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=320;sun.shadow.normalBias=.009;sun.shadow.bias=-.00012;scene.add(sun.target);scene.add(sun);scene.add(new THREE.HemisphereLight(0xc3e8ff,0x55513e,1.25));
 lightClubs(renderer,new RoomEnvironment());
-const game=new GolfGame(renderer,scene,camera),sound=new SoundEngine();game.onSfx=(event,detail)=>sound.play(event,detail);let page='home',activeUser=null;
+const game=new GolfGame(renderer,scene,camera),sound=new SoundEngine();game.touchControls=device.touch;
+if(device.touch)bindTouchGolf(game,{swing:$('touchSwing'),left:$('touchAimLeft'),right:$('touchAimRight')});
+game.onSfx=(event,detail)=>sound.play(event,detail);let page='home',activeUser=null;
 const preview = document.querySelector('#golfer .preview');
 const stage=$('lobbyStage'),lobby=new Clubhouse(game.golfer,stage,finishApparel);
 function sizeCanvas() {
@@ -35,9 +43,9 @@ $('accountBtn').onclick=()=>{$('accountGate').classList.remove('hidden');documen
 const lessons=[
  ['WELCOME TO PRESTIGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
  ['SET UP YOUR BALL','First, place your tee and ball. Watch me demonstrate the setup.','tee'],
- ['CHOOSE YOUR CLUB','The game starts you with a club for the distance to the pin. Press C and pick a club from your bag to change it. The driver is for long tee shots. Irons cover approach shots, wedges are for short shots, and the putter is for the green.','pointGesture'],
- ['AIM YOUR SHOT','Use A / D or the arrow keys to aim. Keep the blue tracer on your target and check the wind before you swing.','point'],
- ['WATCH A FULL SWING','Hold SPACE to build power, then release near the highlighted timing zone. Watch the golfer complete the full swing before the camera follows the ball.','drive'],
+ ['CHOOSE YOUR CLUB','The game starts you with a club for the distance to the pin. '+(device.touch?'Tap Club bag':'Press C or click Club Bag')+' to choose a different club. Use a driver for long shots, an iron for approaches, a wedge for short shots, and a putter on the green.','pointGesture'],
+ ['AIM YOUR SHOT',(device.touch?'Tap the left and right arrows to aim.':'Press A or D, or use the left and right arrow keys to aim.')+' Keep the blue tracer on your target and check the wind before you swing.','point'],
+ ['WATCH A FULL SWING',(device.touch?'Touch and hold Swing to build power.':'Hold Space to build power.')+' Release near the highlighted zone to hit the ball.','drive'],
  ['CHIPPING & PUTTING','Use your wedge around the green and the putter once you reach the putting surface. I’ll demonstrate both.','chip'],
  ['YOU’RE READY','That’s the basics. Your golfer is ready. Play the hole, keep your score, and I’ll be here if you need a hand.','clap']
 ];let lessonIndex=0;
@@ -50,19 +58,34 @@ const start=async(name='royal',tutorial=false)=>{
   showPage('home');room.beginVote();return;
  }
  showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
-document.querySelectorAll('[data-page]:not(#playGolf)').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
 const playMode=$('playMode');
-$('playGolf').onclick=()=>playMode.showModal();
+let selectedCourse='';
+for(const button of document.querySelectorAll('[data-course]')){
+ button.onclick=()=>{
+  selectedCourse=button.dataset.course;
+  $('playModeCourse').textContent=button.querySelector('h3').textContent;
+  playMode.showModal();
+ };
+}
 $('playSolo').onclick=()=>{
  playMode.close();
+ const course=selectedCourse;
+ selectedCourse='';
  if(room.room)endOnline();
- showPage('courses');
+ start(course,!localStorage.getItem('prestiege-v4-tutorial-done'));
 };
 $('playWithFriend').onclick=()=>{
- playMode.close();
- $('multiplayer').click();
+ playMode.close('friends');
+ if(room.connected)room.beginVote();
+ else{$('inviteOptions').open=true;openFriends()}
 };
-$('heroPlay').onclick=()=>{if(room.connected){room.beginVote();return}if(!localStorage.getItem('prestiege-v4-tutorial-done'))start('royal',true);else showPage('courses')};document.querySelectorAll('[data-course]').forEach(b=>b.addEventListener('click',()=>start(b.dataset.course,!localStorage.getItem('prestiege-v4-tutorial-done'))));$('rangeTab').onclick=()=>start('range',false);$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>game.openBag();
+playMode.addEventListener('close',()=>{
+ if(playMode.returnValue!=='friends')selectedCourse='';
+ playMode.returnValue='';
+});
+$('heroPlay').onclick=()=>showPage('courses');
+$('rangeTab').onclick=()=>start('range',false);$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
 $('closeBag').onclick=()=>game.returnFromBag(game.club);
 $('bagContents').addEventListener('click',event=>{
  const button=event.target.closest('[data-pick]');
@@ -263,7 +286,11 @@ const room=new OnlineRoom({
   const dialog=$('courseVote');
   if(!ballot){if(dialog.open)dialog.close();return}
   onlinePanel.classList.add('hidden');
-  if(!dialog.open)dialog.showModal();
+  if(!dialog.open){
+   dialog.showModal();
+   const selected=Array.from(dialog.querySelectorAll('[data-vote]')).find(button=>button.dataset.vote===selectedCourse);
+   selected?.focus();
+  }
   const picked=ballot.picks[room.id];
   const remaining=Object.values(ballot.picks).filter(pick=>!pick).length;
   $('cancelVote').textContent=picked?'Leave party':'Back to lobby';
@@ -289,6 +316,7 @@ const room=new OnlineRoom({
  onStatus:message=>{if(!room.room||message.startsWith('Connection failed')||message.startsWith('Cannot join'))joiningInvite=false;refreshTags();onlineCode.hidden=$('onlineCopy').hidden=room.role!=='host'||!room.room;onlineStatus.textContent=message;onlineCode.textContent=room.role==='host'&&room.room?'ROOM CODE: '+room.room:'';},
  onStart:async course=>{
   if(room.role==='host')friends.unhost().catch(()=>{});
+  selectedCourse='';
   onlineActive=true;onlinePanel.classList.add('hidden');
   $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;
   const session=match=new Match(game,room,lobby);
