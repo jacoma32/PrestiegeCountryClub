@@ -9,7 +9,7 @@ function pathCenter(world,z){
 }
 
 export function landscape(world){
- const {current,holeIndex,length}=world,coast=current==='ocean',park=current==='royal'||current==='range',alpine=current==='misty';
+ const {current,holeIndex,length}=world,coast=current==='ocean',park=current==='royal'||current==='range',alpine=current==='misty',desert=current==='dunes';
  let seed=(holeIndex+1)*7937+current.charCodeAt(0)*73;
  const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
  const trees=[],stones=[],grasses=[];
@@ -20,7 +20,7 @@ export function landscape(world){
  }
  // Place stands along the outside of bends and around the back of the green.
  // Each stand graduates from low edge planting to taller trees at its center.
- const groups=coast?19:park?34:46;
+ const groups=desert?0:coast?19:park?34:46;
  for(let i=0;i<groups;i++){
   const t=(i+random())/groups,side=coast?-1:(i%2?1:-1);
   const z=85-t*(length+48),w=world.station(z,2);
@@ -33,11 +33,11 @@ export function landscape(world){
   }
   if(stand.length>=3)trees.push(...stand);
  }
- const patches=coast?105:park?57:85;
+ const patches=desert?53:coast?105:park?57:85;
  for(let i=0;i<patches;i++){
   const z=80-random()*(length+28),side=random()<.5?-1:1;
   const x=world.fairwayX(z)+side*(world.station(z,2)+3+random()*24);
-  const outcrop=!park&&random()<(alpine?.40:coast?.20:.26);
+  const outcrop=!park&&random()<(desert?.63:alpine?.40:coast?.20:.26);
   for(let j=0;j<(outcrop?5:21);j++){
    const px=x+(random()-.5)*9,pz=z+(random()-.5)*8;
    if(!rough(px,pz,1.6))continue;
@@ -63,9 +63,46 @@ export function landscape(world){
   });
   batch.receiveShadow=true;world.root.add(batch);
  }
- scatter(grasses,blades,coast?0xc1ad70:park?0x829343:0x899154,false);
- scatter(stones,rock,coast?0x827c67:alpine?0x8b8391:0x87918b,true);
+ scatter(grasses,blades,desert?0x8e8c53:coast?0xc1ad70:park?0x829343:0x899154,false);
+ scatter(stones,rock,desert?0x975e3a:coast?0x827c67:alpine?0x8b8391:0x87918b,true);
+ if(desert){
+  const locations=[];
+  for(let i=0;i<38;i++){
+   const z=76-random()*(length+26),side=i%2?-1:1;
+   const x=world.fairwayX(z)+side*(world.station(z,2)+6+random()*49);
+   if(rough(x,z,4))locations.push([x,z,1.7+random()*2.6,random()*Math.PI*2]);
+  }
+  plantCacti(world,locations);
+ }
  return {trees,species:species[current]};
+}
+
+function plantCacti(world,locations){
+ if(!locations.length)return;
+ const geometry=new T.CapsuleGeometry(.5,1,4,9);
+ const material=new T.MeshStandardMaterial({color:0x53673b,roughness:.88});
+ const pieces=[
+  [0,.5,.13,.5,0],
+  [-.10,.43,.09,.11,Math.PI/2],
+  [-.20,.55,.085,.16,0],
+  [.11,.59,.09,.12,Math.PI/2],
+  [.22,.68,.08,.13,0],
+ ];
+ const batch=new T.InstancedMesh(geometry,material,locations.length*pieces.length);
+ const pose=new T.Object3D(),tint=new T.Color();
+ locations.forEach(([x,z,height,angle],index)=>{
+  const ground=world.groundHeight(x,z);
+  pieces.forEach(([offset,y,width,length,tilt],piece)=>{
+   pose.position.set(x+Math.cos(angle)*offset*height,ground+y*height,z-Math.sin(angle)*offset*height);
+   pose.rotation.set(0,angle,tilt,'YXZ');
+   pose.scale.set(width*height,length*height,width*height);
+   pose.updateMatrix();
+   const instance=index*pieces.length+piece;
+   batch.setMatrixAt(instance,pose.matrix);
+   batch.setColorAt(instance,tint.setScalar(.78+.22*Math.sin(angle/2)));
+  });
+ });
+ batch.castShadow=true;batch.receiveShadow=true;world.root.add(batch);
 }
 
 export function fairwayCollar(world,material){
@@ -99,7 +136,7 @@ export function sandFinish(material){
 export function cartPath(world){
  const coastal=world.current==='ocean';
  const vertices=[],indices=[],colors=[],steps=150;
- const tint=new T.Color(coastal?0xb8ad91:world.current==='royal'?0x8e8b78:0x938e80);
+ const tint=new T.Color(coastal?0xb8ad91:world.current==='royal'?0x8e8b78:world.current==='dunes'?0xad865e:0x938e80);
  let previous=false;
  for(let i=0;i<=steps;i++){
   const t=i/steps,z=80-(world.length+26)*t;

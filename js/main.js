@@ -7,9 +7,9 @@ import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=straight2';
+import {GolfGame} from './game.js?v=dunes1';
 import {SoundEngine} from './sound.js?v=strikefield';
-import {OnlineRoom,partyLimit} from './online.js?v=party4';
+import {OnlineRoom,partyLimit} from './online.js?v=dunes1';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
@@ -411,7 +411,7 @@ const sunOffset=new THREE.Vector3(-39,53,27);
 function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelta(),.05);if(page==='home'){lobby.draw(renderer,dt);return}if(match)match.update(dt);else game.update(dt);const course=game.world.current;
  if(sun.userData.course!==course){
   sun.userData.course=course;
-  const settings=course==='misty'?[-24,12,-64,0xffbb85,1.75]:course==='ocean'?[-48,34,16,0xffe4bc,2.15]:course==='summit'?[29,55,-38,0xfff2df,2.02]:[-39,43,27,0xffdfb3,2.08];
+  const settings=course==='dunes'?[-45,38,26,0xffddaa,2.14]:course==='misty'?[-24,12,-64,0xffbb85,1.75]:course==='ocean'?[-48,34,16,0xffe4bc,2.15]:course==='summit'?[29,55,-38,0xfff2df,2.02]:[-39,43,27,0xffdfb3,2.08];
   sunOffset.set(settings[0],settings[1],settings[2]);sun.color.setHex(settings[3]);sun.intensity=settings[4];
  }
  sun.target.position.copy(game.position);sun.position.copy(game.position).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();

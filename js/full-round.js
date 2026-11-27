@@ -40,21 +40,34 @@ const layouts = {
   ['Moraine Bend',4,218,-24,-36,-41,3,5], ['Echo Ledge',3,87,3,9,15,-4,-8],
   ['The Long Ascent',5,298,24,49,16,9,14], ['West Arete',4,191,-9,17,30,4,1],
   ['Pinnacle Descent',4,227,-25,-39,-5,-7,-13]
+ ],
+ dunes: [
+  ['First Light',4,205,14,30,16,3,1], ['Saguaro Gate',3,91,2,11,15,-1,-3],
+  ['Long Mirage',5,291,-24,-52,-30,5,2], ['Coyote Crossing',4,188,-14,-11,12,-4,-2],
+  ['Copper Wash',4,215,21,43,29,2,6], ['Sun Shelf',3,108,-2,-8,-14,3,5],
+  ['Wind Gap',4,199,-16,-33,-43,4,2], ['Dry River',5,281,31,44,5,-5,-7],
+  ['Oasis Turn',4,208,17,-9,-27,1,4], ['Redstone Mesa',4,216,-12,-33,-20,5,9],
+  ['Glass Sand',3,85,3,10,11,-2,-5], ['Jackrabbit Run',4,194,10,26,38,-3,1],
+  ['The Salt Flat',5,301,-28,-43,-9,0,-1], ['Creosote Bend',4,203,19,4,-22,2,3],
+  ['Apache Ridge',4,227,-18,-41,-39,5,4], ['Sunset Bowl',3,101,-4,-8,7,-3,-6],
+  ['The Sand Sea',5,286,26,46,21,4,0], ['Last Horizon',4,220,-22,-36,4,3,5]
  ]
 };
 
 export function extendCourses(courses) {
  for (const [course, rows] of Object.entries(layouts)) {
   rows.forEach(([name,par,length,first,bend,pin,rise,finish], i) => {
-   const tee = course==='misty'?24:course==='summit'?12:2;
+   const desert=course==='dunes';
+   const tee=course==='misty'?24:course==='summit'?12:desert?9:2;
    const side = i%2===0?1:-1;
    const landing = Math.round(length*(par===5?.42:.34));
    const corner = Math.round(length*(par===3?.63:.72));
    const green = [8+i%5,8+(i*3)%5];
    const route = [[0,0,10,tee],[landing,first,15+i%6,tee+rise],
     [corner,bend,12+(i*3)%7,tee+rise*.6],[length-10,pin,10,tee+finish],[length,pin,9,tee+finish]];
-   const sand = [[pin+side*(green[0]+4),length-5,4,6+i%3]];
+   const sand = [[pin+side*(green[0]+(desert?6:4)),length-5,desert?6:4,6+i%3]];
    if(par>3)sand.push([first-side*(12+i%4),landing,5+i%3,8+i%5]);
+   if(desert&&par>3)sand.push([bend+side*17,corner+4,7+i%3,11]);
    const water = [];
    if(course==='ocean')water.push([bend+side*19,corner,11+i%4,13+i%7]);
    if(course==='royal'&&(i===1||i===7))water.push([first-14,landing+4,7,9]);

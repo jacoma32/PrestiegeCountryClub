@@ -1,10 +1,10 @@
 import {protectGreens} from './green-layout.js';
-import {finishes,mow,ridgeBackdrop,plantMargins,terrainFinish,teeBoard} from './course-finish.js';
+import {finishes,mow,ridgeBackdrop,plantMargins,terrainFinish,teeBoard} from './course-finish.js?v=dunes1';
 import {waterMaterial,coastalBank,shoreX} from './water.js?v=tour72';
-import {landscape,fairwayCollar,sandFinish,cartPath} from './course-landscape.js?v=tour72';
+import {landscape,fairwayCollar,sandFinish,cartPath} from './course-landscape.js?v=dunes1';
 import {TreeContact} from './tree-contact.js';
 import {plantTrees,horizon,detailSurface,frameHole,cutBunkers} from './course-detail.js?v=tour72';
-import {extendCourses} from './full-round.js';
+import {extendCourses} from './full-round.js?v=dunes1';
 import * as THREE from 'three';
 export const COURSES={royal:{name:'THE ROYAL CLASSIC',type:'parkland',sky:0x93bed0,fog:0xb4c5a7,grass:0x507849,rough:0x3e6140,fairway:0x7aa65e,trees:0x254b2b,wind:3,holes:[
  {"name":"Orchard Bend","par":4,"hint":"Favor the left landing area to open the turn.","route":[[0,0,10,0],[55,-13,20,0],[118,-37,16,0],[184,8,9,0]],"green":[11,10],"sand":[[-12,112,9,12],[0,174,5,4]],"water":[]},
@@ -24,7 +24,9 @@ misty:{name:'MISTY PINNACLE',type:'mountain',sky:0xa0b0b6,fog:0xaebdc1,grass:0x4
 {name:'Cloud Ridge',par:4,hint:'Follow the crest through the pines to the lower shelf.',route:[[0,0,10,22],[55,8,15,23],[110,-12,13,20],[174,4,9,18]],green:[10,9],sand:[[-13,115,5,8]],water:[]},
 {name:'Alpine Saddle',par:3,hint:'Play a controlled 9 iron downhill to the sheltered green.',route:[[0,0,10,24],[12,0,12,24],[50,-5,15,17],[78,-9,12,12],[92,-9,10,12]],green:[10,9],sand:[],water:[]},
 {name:'Granite Pass',par:4,hint:'Follow the narrow ridge and aim for the shelf below the peak.',route:[[0,0,10,22],[65,-15,14,25],[130,10,12,20],[195,20,8,16]],green:[9,10],sand:[[24,130,5,7]],water:[]}
-]}};
+]},
+dunes:{name:'THE DUNES',type:'desert',sky:0xb4cee0,fog:0xdfbd95,grass:0xd8ab73,rough:0xc29361,fairway:0x87a260,wind:11,holes:[]}
+};
 extendCourses(COURSES);
 protectGreens(COURSES);
 COURSES.range={...COURSES.royal,name:'DRIVING RANGE',wind:0,holes:[{
@@ -70,6 +72,10 @@ export class World{
    (38+17*Math.sin(z*.024+x*.019)+11*Math.cos(x*.051-z*.013)):0;
   const phase=this.holeIndex*1.71,shoulder=THREE.MathUtils.smoothstep(edge,5,51);
   let landform=0;
+  if(this.current==='dunes'){
+   const wave=.5+.5*Math.sin(.061*x+.027*z+1.25*Math.sin(z*.025+phase));
+   landform=shoulder*(3+12*wave**2+3*Math.cos(x*.021-z*.042));
+  }
   if(this.current==='summit')landform=shoulder*(8+4.8*Math.sin(.031*z+.023*x+phase)+3.6*Math.cos(.034*x-phase));
   if(this.current==='ocean'&&x<28)landform=shoulder*(1.3+1.1*Math.cos(x*.21-z*.065+phase));
   return landform+ridge+hills-sandDepth+ this.station(z,3)+.5*Math.sin(x*.053)*Math.sin(z*.025)+.26*Math.sin(z*.049+x*.017)}
@@ -118,7 +124,7 @@ export class World{
    }
    #include <colorspace_fragment>
    }`
- }));dome.renderOrder=-1;this.root.add(dome);this.scene.fog=new THREE.FogExp2(name==='misty'?0xc49c9f:c.fog,name==='misty'?.0082:.0044);this.fairways=[];this.bunkers=[];this.water=[];const gmat=this.mat(c.grass);gmat.map=this.grassTexture;gmat.color.set(finish.rough);const terrain=new THREE.PlaneGeometry(750,650,300,260);terrain.rotateX(-Math.PI/2);const p=terrain.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,this.groundHeight(x,z))}if(name==='misty'){
+ }));dome.renderOrder=-1;this.root.add(dome);this.scene.fog=new THREE.FogExp2(name==='misty'?0xc49c9f:c.fog,name==='misty'?.0082:.0044);this.fairways=[];this.bunkers=[];this.water=[];const gmat=this.mat(c.grass);gmat.map=name==='dunes'?null:this.grassTexture;gmat.color.set(finish.rough);const terrain=new THREE.PlaneGeometry(750,650,300,260);terrain.rotateX(-Math.PI/2);const p=terrain.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,this.groundHeight(x,z))}if(name==='misty'){
   const shades=[],low=new THREE.Color(0xffffff),granite=new THREE.Color(0xabada6),tint=new THREE.Color();
   for(let i=0;i<p.count;i++){
    const x=p.getX(i),z=p.getZ(i),rise=p.getY(i)-this.station(z,3);
@@ -129,7 +135,8 @@ export class World{
  }
  terrain.computeVertexNormals();const base=this.mesh(terrain,gmat);base.castShadow=false;
  const fair=this.mat(c.fairway);fair.map=this.fairwayTexture;fair.color.set(c.fairway).lerp(new THREE.Color(0xd3d7aa),.52);const fringe=this.mat(finish.collar);const greenMat=this.mat(finish.green);const teeMat=this.mat(0x6da461);const sand=this.mat(finish.sand);
- for(const mat of [greenMat,teeMat,fair,gmat,fringe])detailSurface(mat);terrainFinish(gmat,name);mow(fair,name,idx,false);mow(greenMat,name,idx,true);for(const mat of [gmat,fair,teeMat,fringe,greenMat])cutBunkers(mat,h.sand);
+ for(const mat of [greenMat,teeMat,fair,fringe])detailSurface(mat);
+ if(name==='dunes')sandFinish(gmat);else{detailSurface(gmat);terrainFinish(gmat,name)}mow(fair,name,idx,false);mow(greenMat,name,idx,true);for(const mat of [gmat,fair,teeMat,fringe,greenMat])cutBunkers(mat,h.sand);
  this.teePosition.set(0,this.groundHeight(0,70)+.04,70);this.holePosition.set(this.fairwayX(this.getGreenZ()),0,this.getGreenZ());this.holePosition.y=this.groundHeight(this.holePosition.x,this.holePosition.z)+.035;
  const strips=150,lanes=24,verts=[],uv=[],indices=[];
  for(let i=0;i<=strips;i++){
@@ -177,8 +184,9 @@ export class World{
  cloth.position.set(.79,4.49,0);cloth.castShadow=false;
  this.flag.position.copy(this.holePosition);this.root.add(this.flag);
  plantTrees(this,planting.trees,planting.species);
- if(name==='range')this.rangeTargets();else frameHole(this);
- horizon(this);ridgeBackdrop(this);plantMargins(this);teeBoard(this);
+ if(name==='range')this.rangeTargets();else if(name!=='dunes')frameHole(this);
+ if(name!=='dunes')horizon(this);
+ ridgeBackdrop(this);if(name!=='dunes')plantMargins(this);teeBoard(this);
  for(const x of [-2.2,2.2]){
   const marker=this.mesh(new THREE.SphereGeometry(.16,14,8),this.mat(0xeee9d9));
   marker.position.set(x,this.groundHeight(x,70)+.15,70);marker.scale.y=.7;

@@ -4,7 +4,8 @@ export const finishes={
  royal:{rough:0x93a66e,green:0x95b276,collar:0x779951,sand:0xe0cfaa,cut:5.1,ridge:0x62724e},
  ocean:{rough:0xb4ad82,green:0x94aa78,collar:0x819569,sand:0xdfc99e,cut:4.3,ridge:0x748877},
  summit:{rough:0x8e9b7c,green:0x8dae7d,collar:0x698a63,sand:0xc9c0a8,cut:5.6,ridge:0x596e77},
- misty:{rough:0x999685,green:0x9eaf83,collar:0x808c67,sand:0xd1bca4,cut:4.8,ridge:0x786b78}
+ misty:{rough:0x999685,green:0x9eaf83,collar:0x808c67,sand:0xd1bca4,cut:4.8,ridge:0x786b78},
+ dunes:{rough:0xd6a466,green:0x93ae6c,collar:0x7d8d55,sand:0xe7c487,cut:4.5,ridge:0xb77b53}
 };
 
 // World-space grain keeps the cut scale consistent around bends and across differently sized greens.
@@ -40,6 +41,7 @@ export function ridgeBackdrop(world){
    const a=i/count*Math.PI*2,t=j/5,r=345+band*104+t*54;
    const spine=.48+.22*Math.cos(3*a+phase)+.14*Math.sin(7*a-phase)+.09*Math.sin(17*a)+.045*Math.cos(37*a+phase);
    let crest=(mountain?(alpine?153:118):coast?32:48)*(spine+.18*band);
+   if(world.current==='dunes')crest=22+78*T.MathUtils.smoothstep(spine,.49,.64)+16*band;
    if(coast)crest*=T.MathUtils.smoothstep(-Math.sin(a),-.15,.7);
    const y=-9+t*crest+Math.sin(Math.PI*t)*4*Math.sin(19*a+phase);
    pos.push(r*Math.sin(a),y,centerZ+r*Math.cos(a));
@@ -115,7 +117,7 @@ export function teeBoard(world){
  if(!finishes[world.current])return;
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=384;
  const ctx=canvas.getContext('2d'),hole=world.hole,last=hole.route.at(-1);
- const colors={royal:'#233f33',ocean:'#244755',summit:'#283d3b',misty:'#493f48'};
+ const colors={royal:'#233f33',ocean:'#244755',summit:'#283d3b',misty:'#493f48',dunes:'#633f2d'};
  ctx.fillStyle=colors[world.current];ctx.fillRect(0,0,512,384);
  ctx.strokeStyle='#afaa87';ctx.lineWidth=3;ctx.strokeRect(10,10,492,364);
  ctx.fillStyle='#f8f1dd';ctx.font='bold 76px Georgia';ctx.fillText(String(world.holeIndex+1).padStart(2,'0'),34,99);

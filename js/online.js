@@ -1,5 +1,5 @@
 // The room host owns the roster and relays PeerJS messages to the other golfers.
-const courses = ['royal', 'ocean', 'summit', 'misty'];
+const courses = ['royal', 'ocean', 'summit', 'misty', 'dunes'];
 export const partySlots = ['host', 'guest1', 'guest2', 'guest3'];
 export const partyLimit = partySlots.length;
 const protocol = 2;
