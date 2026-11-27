@@ -12,7 +12,7 @@ import {SoundEngine} from './sound.js?v=strikefield';
 import {OnlineRoom,partyLimit} from './online.js?v=party4';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
-import {golfDevice,bindTouchGolf} from './device-controls.js?v=touch1';
+import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
 const $=id=>document.getElementById(id);
 const device=golfDevice();
 document.body.dataset.golfDevice=device.name;

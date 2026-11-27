@@ -2,9 +2,10 @@ export function golfDevice(agent=navigator,coarsePointer=matchMedia('(any-pointe
  const {userAgent,maxTouchPoints}=agent;
  const ipad=/iPad/i.test(userAgent)||(/Macintosh/i.test(userAgent)&&maxTouchPoints>1);
  const iphone=/iPhone|iPod/i.test(userAgent);
+ const androidPhone=/Android/i.test(userAgent)&&/Mobile/i.test(userAgent);
  return {
-  name:ipad?'ipad':iphone?'iphone':'computer',
-  touch:ipad||iphone||(maxTouchPoints>0&&coarsePointer),
+  name:ipad?'ipad':iphone?'iphone':androidPhone?'phone':'computer',
+  touch:ipad||iphone||androidPhone||(maxTouchPoints>0&&coarsePointer),
  };
 }
 
