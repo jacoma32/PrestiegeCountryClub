@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1b14">
+  <title>Merch | Prestige Country Club</title>
+  <link rel="icon" href="./assets/prestige-crest.webp" type="image/webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap">
+  <link rel="stylesheet" href="./homepage.css?v=montage1">
+  <link rel="stylesheet" href="./merch.css">
+  <script type="module" src="./js/merch.js"></script>
+</head>
+<body>
+  <header class="site-header merch-header">
+    <a href="./" class="site-brand" aria-label="Prestige Country Club homepage">
+      <img src="./assets/prestige-crest.webp" width="52" height="52" alt="">
+      <span>Prestige</span>
+    </a>
+    <a href="./" class="button">← Back to Home</a>
+  </header>
+  <main class="merch">
+    <h1>Club Merchandise</h1>
+    <p>Preview of physical merchandise planned for Prestige Country Club. Products are coming soon.</p>
+    <div class="catalog-tools">
+      <button type="button" class="button" id="filterToggle" aria-expanded="false" aria-controls="merchFilters">Filter</button>
+      <p id="productCount" role="status">6 products</p>
+    </div>
+    <fieldset id="merchFilters" hidden>
+      <legend>Category</legend>
+      <label><input type="radio" name="category" value="all" checked>All products</label>
+      <label><input type="radio" name="category" value="apparel">Apparel</label>
+      <label><input type="radio" name="category" value="accessories">Accessories</label>
+      <label><input type="radio" name="category" value="equipment">Golf equipment</label>
+    </fieldset>
+    <div class="merch-grid">
+      <article data-category="apparel">
+        <div class="product-image polo" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Club Polo</h2><p>Forest-green golf polo</p></div>
+      </article>
+      <article data-category="accessories">
+        <div class="product-image cap" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Crest Cap</h2><p>Cream adjustable golf cap</p></div>
+      </article>
+      <article data-category="apparel">
+        <div class="product-image pullover" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Fairway Quarter-Zip</h2><p>Forest-green pullover</p></div>
+      </article>
+      <article data-category="equipment">
+        <div class="product-image balls" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Club Golf Balls</h2><p>Sleeve of three white golf balls</p></div>
+      </article>
+      <article data-category="accessories">
+        <div class="product-image towel" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Club Golf Towel</h2><p>Green towel with cream edging</p></div>
+      </article>
+      <article data-category="equipment">
+        <div class="product-image headcover" aria-hidden="true"></div>
+        <div class="product-copy"><h2>Blade Putter Cover</h2><p>Green and cream headcover</p></div>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
