@@ -5,7 +5,6 @@ const mainStatus = byId('memberStatus');
 const formError = byId('memberError');
 const signIn = byId('signIn');
 const signUp = byId('signUp');
-const googleSignIn = byId('googleSignIn');
 const signOut = byId('signOut');
 const submit = byId('memberSubmit');
 const password = byId('memberPassword');
@@ -14,14 +13,14 @@ let creating = false;
 const redirectTo = new URL('./', location.href).href;
 let membership;
 function loadMembership() {
-  membership ??= import('./member-auth.js?v=supabase1').then(({ auth, googleEnabled }) => {
+  membership ??= import('./member-auth.js?v=supabase1').then(({ auth }) => {
     auth.onAuthStateChange((event, session) => {
-      signIn.hidden = signUp.hidden = googleSignIn.hidden = Boolean(session);
+      signIn.hidden = signUp.hidden = Boolean(session);
       signOut.hidden = !session;
       if (session) mainStatus.textContent = 'Signed in. You’re ready to play.';
       else if (event === 'SIGNED_OUT') mainStatus.textContent = 'Signed out.';
     });
-    return { auth, googleEnabled };
+    return { auth };
   }).catch(error => {
     membership = undefined;
     throw error;
@@ -34,7 +33,6 @@ const errors = {
   email_address_not_authorized: 'This email can’t receive verification yet. Public email delivery still needs to be set up.',
   email_not_confirmed: 'Open the confirmation email before signing in.',
   weak_password: 'Choose a stronger password.',
-  provider_disabled: 'Google sign-in hasn’t been enabled in Supabase yet.',
   over_email_send_rate_limit: 'Too many emails were requested. Try again later.',
   over_request_rate_limit: 'Too many attempts. Try again in a moment.',
 };
@@ -93,25 +91,6 @@ form.addEventListener('submit', async (event) => {
     formError.textContent = message(error);
   } finally {
     submit.disabled = byId('closeDialog').disabled = false;
-  }
-});
-
-googleSignIn.addEventListener('click', async () => {
-  googleSignIn.disabled = true;
-  mainStatus.textContent = '';
-  try {
-    const { auth, googleEnabled } = await loadMembership();
-    if (!await googleEnabled()) {
-      mainStatus.textContent = errors.provider_disabled;
-      return;
-    }
-    const { error } = await auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-    if (error) throw error;
-  } catch (error) {
-    mainStatus.textContent = error.status === 400 && /provider.*(disabled|not enabled)/i.test(error.message)
-      ? errors.provider_disabled : message(error);
-  } finally {
-    googleSignIn.disabled = false;
   }
 });
 
