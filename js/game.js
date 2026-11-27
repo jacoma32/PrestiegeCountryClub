@@ -390,7 +390,11 @@ export class GolfGame{
  setShape(shape){if(this.spectating)return;if(this.club==='putter'||this.swinging||this.modal||this.bagPhase)return;this.shotShape=Math.max(-2,Math.min(2,Math.round(Number(shape)||0)));this.refresh()}
  aimDelta(d){if(this.spectating||this.placing)return;if(this.bagPhase||this.swinging||this.modal)return;this.aim=clamp(this.aim+d,-65,65);this.placeGolfer();this.refresh()}
  refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=this.shots+1;const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.distanceToPin())} YDS TO PIN`;if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
- document.querySelectorAll('[data-shape]').forEach(b=>b.classList.toggle('active',Number(b.dataset.shape)===this.shotShape));this.updateShotPreview()}
+ document.querySelectorAll('[data-shape]').forEach(button=>{
+  const selected=Number(button.dataset.shape)===this.shotShape;
+  button.classList.toggle('active',selected);
+  button.setAttribute('aria-pressed',String(selected));
+ });this.updateShotPreview()}
  startCharge(){
   if(this.placing||this.spectating||this.bagPhase||!this.started||this.swinging||this.modal||this.charging)return false;
   this.placeGolfer();this.charging=true;this.orbit=0;this.moveCamera(0,true);this.charge=0;

@@ -32,7 +32,8 @@ body:not(.gated) #topbar,body:not(.gated) #bottomNav{pointer-events:auto}
 .iron-options,.iron-shape{display:flex;gap:4px;margin-top:7px}
 .iron-options button,.iron-shape button{flex:1;min-width:0;background:#132f27;border:1px solid #416155;color:#d0ddcf;padding:7px 2px;font:600 12px "Cormorant Garamond",Georgia,serif;cursor:pointer;pointer-events:auto}
 .iron-shape button{font:600 10px Outfit,sans-serif;padding:6px 2px}
-.iron-options button:hover,.iron-shape button:hover,.iron-options button.active,.iron-shape button.active{background:#e2cc97;border-color:#e2cc97;color:#10251c}
+.iron-options button:hover,.iron-options button.active,.iron-shape button.active{background:#e2cc97;border-color:#e2cc97;color:#10251c}
+@media(hover:hover){.iron-shape button:hover:not(.active){border-color:#e2cc97}}
 .iron-details{font:500 9px Outfit,sans-serif;letter-spacing:.5px;color:#e1e1d2;margin-top:7px;min-height:12px}
 .iron-bag.iron-selected{border-top-color:#e2cc97}
 @media(max-width:700px){.game-bottom .swing-zone{width:min(400px,calc(100vw - 16px))}.iron-options button{padding:6px 1px;font-size:11px}.iron-shape button{font-size:9px}.iron-bag-title span{display:none}}
