@@ -1,15 +1,15 @@
 import {setHatFinish} from './gear-logos.js';
 import {gearImage} from './gear-preview.js?v=putts1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=greens1';
-import {Clubhouse} from './clubhouse.js?v=clubs1';
+import {Match} from './match.js?v=party4';
+import {Clubhouse} from './clubhouse.js?v=party4';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
 import {GolfGame} from './game.js?v=clubauto1';
 import {SoundEngine} from './sound.js?v=strikefield';
-import {OnlineRoom} from './online.js?v=vote1';
+import {OnlineRoom,partyLimit} from './online.js?v=party4';
 import {FriendsService,isOnline} from './friends.js?v=invite2';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
 const $=id=>document.getElementById(id);
@@ -218,8 +218,9 @@ function playerCard(){
 function refreshTags(){
  const name=playerCard().name;
  $('localName').textContent='@'+name;$('headerTag').textContent='@'+name;
- const party=!!room.remoteName;$('partyCount').textContent='PARTY · '+(party?'2':'1')+' / 2';
- $('inviteFriend').hidden=party;$('leaveParty').hidden=!room.room;
+ const party=room.connected;
+ $('partyCount').textContent='PARTY · '+Math.max(1,room.playerIds.length)+' / '+partyLimit;
+ $('inviteFriend').hidden=party&&!room.canInvite;$('leaveParty').hidden=!room.room;
  $('heroPlay').hidden=party;
  $('onlineJoin').disabled=$('createParty').disabled=party;
  $('multiplayer').querySelector('span').textContent=party?'Vote for course →':'Party play →';
@@ -248,7 +249,7 @@ async function answerInvite(join){
    joiningInvite=true;
    if(room.role==='host')await friends.unhost();
    onlinePanel.classList.remove('hidden');
-   await room.join(invite.hosting,playerCard().name);
+   await room.join(invite.hosting);
   }
  }catch(error){onlinePanel.classList.remove('hidden');showFriendsError(error)}
  finally{replyBusy=false;refreshInvite()}
@@ -263,24 +264,33 @@ const room=new OnlineRoom({
   if(!ballot){if(dialog.open)dialog.close();return}
   onlinePanel.classList.add('hidden');
   if(!dialog.open)dialog.showModal();
-  const picked=ballot[room.role],other=ballot[room.role==='host'?'guest':'host'];
+  const picked=ballot.picks[room.id];
+  const remaining=Object.values(ballot.picks).filter(pick=>!pick).length;
   $('cancelVote').textContent=picked?'Leave party':'Back to lobby';
   for(const button of dialog.querySelectorAll('[data-vote]')){
    button.disabled=!!picked;button.setAttribute('aria-pressed',String(button.dataset.vote===picked));
   }
-  $('voteStatus').textContent=picked?(other?'Votes are in.':'Vote locked. Waiting for @'+room.remoteName+'…'):(other?'Your friend has voted. Choose your course.':'Choose your course.');
+  $('voteStatus').textContent=picked?(remaining?'Vote locked. Waiting for '+remaining+' more.':'Votes are in.'):'Choose your course.';
  },
- onParty:(profile,joined)=>{
-  const colors={};for(const key of Object.keys(palette()))if(/^#[0-9a-f]{6}$/i.test(profile.colors?.[key]))colors[key]=profile.colors[key];
-  lobby.member({name:room.remoteName,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:clubLoadout({...profile.clubStyles,clubs:profile.clubs})}).catch(showFriendsError);
-  if(joined){joiningInvite=false;onlinePanel.classList.add('hidden');if(page!=='home')showPage('home');if(room.role==='host')friends.unhost().catch(showFriendsError)}
+ onParty:(players,joined)=>{
+  const profiles={};
+  for(const [id,profile] of Object.entries(players)){
+   if(id===room.id)continue;
+   const colors={};for(const key of Object.keys(palette()))if(/^#[0-9a-f]{6}$/i.test(profile.colors?.[key]))colors[key]=profile.colors[key];
+   profiles[id]={name:profile.name,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:clubLoadout({...profile.clubStyles,clubs:profile.clubs})};
+  }
+  lobby.setMembers(profiles,showFriendsError);
+  if(joined&&room.role==='guest'){
+   joiningInvite=false;onlinePanel.classList.add('hidden');if(page!=='home')showPage('home');
+  }
   renderFriends();
  },
  onHosted:(code,course)=>friends.host(code,course,inviteTo).then(()=>{onlineStatus.textContent=inviteTo?'Party invite sent.':'Party open. Share the invite link or code.'}).catch(err=>onlineStatus.textContent=err.message),
  onStatus:message=>{if(!room.room||message.startsWith('Connection failed')||message.startsWith('Cannot join'))joiningInvite=false;refreshTags();onlineCode.hidden=$('onlineCopy').hidden=room.role!=='host'||!room.room;onlineStatus.textContent=message;onlineCode.textContent=room.role==='host'&&room.room?'ROOM CODE: '+room.room:'';},
- onStart:async(course,opponent)=>{
+ onStart:async course=>{
+  if(room.role==='host')friends.unhost().catch(()=>{});
   onlineActive=true;onlinePanel.classList.add('hidden');
-  $('rivalName').textContent=opponent.toUpperCase();rivalStats.hidden=false;
+  $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;
   const session=match=new Match(game,room,lobby);
   await start(course,false);
   if(match===session&&game.started)session.start();
@@ -289,7 +299,7 @@ const room=new OnlineRoom({
  onDisconnect:()=>{
   if(match?.complete){joiningInvite=false;return}
   const wasPlaying=onlineActive;
-  onlineActive=false;match?.stop();match=null;joiningInvite=false;lobby.member(null);renderFriends();
+  onlineActive=false;match?.stop();match=null;joiningInvite=false;lobby.setMembers({},showFriendsError);renderFriends();
   rivalStats.hidden=true;
   if(wasPlaying){showPage('home');onlinePanel.classList.remove('hidden');onlineStatus.textContent='Your friend disconnected. The match has ended.'}
  }
@@ -314,7 +324,7 @@ function renderFriends(){
   const item=document.createElement('div');item.className='friend-row';
   const name=document.createElement('span');name.textContent='@'+friend.username+' · '+(isOnline(friend)?friend.hosting?'IN LOBBY':'ONLINE':'OFFLINE');
   item.append(name);
-  if(!room.connected&&!joiningInvite){
+  if((!room.room||room.canInvite)&&!joiningInvite&&!Object.values(room.players).some(player=>player.name.toLowerCase()===friend.username.toLowerCase())){
    const invite=document.createElement('button');const outgoing=friends.profile.invited===friend.uid&&friends.profile.hosting===room.room&&room.room&&room.role==='host'&&Date.now()-friends.profile.inviteTime?.toMillis?.()<120000;
    const declined=outgoing&&friend.partyReplies?.[friends.user.uid]?.id===friends.profile.inviteId&&friend.partyReplies[friends.user.uid].answer==='declined';
    invite.textContent=declined?'Invite again':outgoing?'Invite sent':'Invite to party';invite.disabled=!!outgoing&&!declined;
@@ -323,7 +333,7 @@ function renderFriends(){
   }
   if(!room.connected&&friend.hosting&&isOnline(friend)&&!friend.invited){
    const join=document.createElement('button');join.textContent=friend.invited?'ACCEPT INVITE':'JOIN PARTY';
-   join.onclick=()=>room.join(friend.hosting,friends.profile.username);
+   join.onclick=()=>room.join(friend.hosting);
    item.append(join);
   }
   list.append(item);
@@ -348,24 +358,24 @@ function connectFriends(){
  return connectingFriends;
 }
 async function hostParty(uid=null){
- if(room.connected)return;
+ if(room.connected&&!room.canInvite)return;
  inviteTo=uid;
  if(room.role==='host'&&!room.peer?.open&&room.peer&&!room.peer.destroyed&&!room.peer.disconnected)return;
  if(room.role==='host'&&room.peer?.open){
   try{await friends.host(room.room,null,uid);onlineStatus.textContent=uid?'Party invite sent':'Party is open'}catch(e){showFriendsError(e)}
- }else await room.host(null,playerCard().name);
+ }else await room.host(null);
 }
 $('homeRange').onclick=()=>$('rangeTab').click();
-$('inviteFriend').onclick=openFriends;
+$('inviteFriend').onclick=()=>{if(room.role==='host')$('inviteOptions').open=true;openFriends()};
 $('multiplayer').onclick=()=>room.connected?room.beginVote():openFriends();
 $('cancelVote').onclick=()=>{
- if(room.ballot?.[room.role]){endOnline();$('courseVote').close()}else room.cancelVote();
+ if(room.ballot?.picks[room.id]){endOnline();$('courseVote').close()}else room.cancelVote();
 };
-$('courseVote').addEventListener('cancel',event=>{event.preventDefault();room.cancelVote()});
+$('courseVote').addEventListener('cancel',event=>{event.preventDefault();$('cancelVote').click()});
 for(const button of document.querySelectorAll('[data-vote]'))button.onclick=()=>room.vote(button.dataset.vote);
 $('leaveParty').onclick=()=>{endOnline();refreshTags()};
 $('createParty').onclick=()=>hostParty();
-$('onlineJoin').onclick=()=>room.join($('onlineJoinCode').value,playerCard().name);
+$('onlineJoin').onclick=()=>room.join($('onlineJoinCode').value);
 $('onlineCopy').onclick=async()=>{const url=new URL(location.href);url.search='';url.searchParams.set('party',room.room);try{await navigator.clipboard.writeText(url.href);onlineStatus.textContent='Invite link copied'}catch{onlineStatus.textContent=url.href}};
 const inviteCode=new URL(location.href).searchParams.get('party');
 if(/^[A-Z0-9]{6}$/i.test(inviteCode||'')){$('inviteOptions').open=true;$('onlineJoinCode').value=inviteCode;onlinePanel.classList.remove('hidden');onlineStatus.textContent='You have a clubhouse invitation. Select Join Party.'}

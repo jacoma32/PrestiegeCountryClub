@@ -1,7 +1,7 @@
 import {setBallFinish} from './golf-ball.js?v=brands1';
 import {itemById,clubLoadout} from './locker.js?v=clubs1';
 
-// One ordered data channel carries the active player's camera, pose and hole result.
+// Every golfer takes one turn per hole. The host relays the active golfer's frames and result.
 const $=id=>document.getElementById(id);
 const COURSE_HOLES=18;
 const validScore=n=>Number.isInteger(n)&&n>0&&n<10000;
@@ -14,15 +14,16 @@ function applyPose(o,p){
 export class Match {
  constructor(game,room,lobby){
   Object.assign(this,{game,room,lobby});this.ballColor=game.ball.material.color.getHex();
-  this.hole=0;this.turn='host';this.points={host:0,guest:0};this.card={};this.lastSend=0;
+  this.order=room.playerIds;this.hole=0;this.turn=this.order[0];
+  this.points=Object.fromEntries(this.order.map(id=>[id,0]));this.card={};this.lastSend=0;
  }
  start(){
-  this.ready=true;this.playTurn(false);
+  this.ready=true;this.lobby.beginRound();this.playTurn(false);
   for(const message of this.pending||[])this.receive(message);
   this.pending=[];
  }
  playTurn(reset){
-  const g=this.game,watch=this.turn!==this.room.role;
+  const g=this.game,watch=this.turn!==this.room.id;
   const localBall=itemById(g.equipment?.ball);
   if(localBall)setBallFinish(g.ball,localBall);else g.ball.material.color.setHex(this.ballColor);
   if(reset)g.startHole(this.hole);
@@ -34,9 +35,9 @@ export class Match {
   $('roundModal').classList.add('hidden');$('nextHole').hidden=true;
   g.golfer.root.visible=!watch;g.ball.visible=!watch;
   if(watch){g.bag.visible=false;g.shotPreview.group.visible=false;g.contactShadow.visible=false}
-  $('rivalScore').textContent=(watch?'WATCHING @'+this.room.remoteName:'YOUR TURN')+' · HOLE '+(this.hole+1)+' OF '+COURSE_HOLES+' · '+this.standings();
+  $('rivalScore').textContent=(watch?'WATCHING '+this.name(this.turn):'YOUR TURN')+' · HOLE '+(this.hole+1)+' OF '+COURSE_HOLES+' · '+this.standings();
   document.body.classList.toggle('watching-golf',watch);
-  if(this.lobby.remote)this.lobby.remote.root.visible=false;
+  this.lobby.hideMembers();
   this.frame=null;this.lastSend=0;
   if(!watch)g.refresh();
  }
@@ -61,7 +62,7 @@ export class Match {
   }
   g.world.waterClock.value+=dt;
   const f=this.frame;if(!f)return;
-  const actor=this.lobby.remote;
+  const actor=this.lobby.actor(this.turn);
   if(actor){
    if(actor.root.parent!==g.scene)g.scene.add(actor.root);
    actor.root.visible=true;applyPose(actor.root,f.root);applyPose(actor.model,f.model);
@@ -99,7 +100,7 @@ export class Match {
   if(!this.ready){(this.pending??=[]).push(m);return}
   if(m.hole!==this.hole||m.turn!==this.turn)return;
   if(m.kind==='next'&&this.room.role==='guest'&&this.result){this.advance();return}
-  if(this.room.role===this.turn||this.result)return;
+  if(this.room.id===this.turn||this.result)return;
   if(m.kind==='finish'&&validScore(m.score)){this.finish(m.score);return}
   if(m.kind==='frame'&&m.camera?.length===10&&m.ball?.length===3&&Array.isArray(m.bones)){
    if(!this.frame)this.snap=true;
@@ -107,24 +108,24 @@ export class Match {
   }
  }
  holed(score){
-  if(this.room.role!==this.turn||this.result||!validScore(score))return;
+  if(this.room.id!==this.turn||this.result||!validScore(score))return;
   this.send({kind:'finish',score});this.finish(score);
  }
  finish(score){
   this.card[this.turn]=score;
-  if(this.turn==='host'){
-   this.turn='guest';this.playTurn(this.room.role==='guest');return;
+  const nextPlayer=this.order[this.order.indexOf(this.turn)+1];
+  if(nextPlayer){
+   this.turn=nextPlayer;this.playTurn(this.turn===this.room.id);return;
   }
-  this.result=true;const {host,guest}=this.card;
-  const winner=host===guest?null:host<guest?'host':'guest';
+  this.result=true;
+  const winner=this.uniqueLeader(this.card,Math.min);
   if(winner)this.points[winner]++;
   this.complete=this.hole+1===COURSE_HOLES;
-  const title=(side,subject)=>side===null?subject+' TIED':side===this.room.role?'YOU WIN THE '+subject:'@'+this.room.remoteName+' WINS THE '+subject;
-  const courseWinner=this.points.host===this.points.guest?null:this.points.host>this.points.guest?'host':'guest';
+  const title=(id,subject)=>!id?subject+' TIED':id===this.room.id?'YOU WIN THE '+subject:this.name(id)+' WINS THE '+subject;
+  const courseWinner=this.uniqueLeader(this.points,Math.max);
   $('roundEyebrow').textContent=this.complete?'COURSE COMPLETE · 18 OF 18':'HOLE '+(this.hole+1)+' OF 18 COMPLETE';
   $('roundTitle').textContent=this.complete?title(courseWinner,'COURSE'):title(winner,'HOLE');
-  const local=this.card[this.room.role],other=this.card[this.room.role==='host'?'guest':'host'];
-  $('roundDescription').textContent='Hole '+(this.hole+1)+' strokes · You '+local+' / @'+this.room.remoteName+' '+other;
+  $('roundDescription').textContent='Hole '+(this.hole+1)+' strokes · '+this.scores(this.card);
   $('scorecard').textContent=this.standings()+(this.complete?'':' · Continuing to hole '+(this.hole+2));
   const next=$('nextHole');
   next.hidden=false;next.disabled=!this.complete&&this.room.role==='guest';
@@ -133,10 +134,14 @@ export class Match {
   $('roundModal').classList.remove('hidden');
   if(!this.complete&&this.room.role==='host')this.timer=setTimeout(()=>this.nextHole(),4500);
  }
- standings(){
-  const me=this.room.role,other=me==='host'?'guest':'host';
-  return 'Holes won · You '+this.points[me]+' / @'+this.room.remoteName+' '+this.points[other];
+ uniqueLeader(scores,compare){
+  const best=compare(...Object.values(scores));
+  const leaders=this.order.filter(id=>scores[id]===best);
+  return leaders.length===1?leaders[0]:null;
  }
+ name(id){return id===this.room.id?'You':'@'+this.room.players[id].name}
+ scores(values){return this.order.map(id=>this.name(id)+' '+values[id]).join(' / ')}
+ standings(){return 'Holes won · '+this.scores(this.points)}
  nextHole(){
   if(!this.result||this.complete||this.room.role!=='host')return;
   this.send({kind:'next'});this.advance();
@@ -144,7 +149,7 @@ export class Match {
  advance(){
   if(!this.result||this.complete)return;
   clearTimeout(this.timer);
-  this.hole++;this.card={};this.result=false;this.turn='host';this.playTurn(true);
+  this.hole++;this.card={};this.result=false;this.turn=this.order[0];this.playTurn(true);
  }
  stop(){
   clearTimeout(this.timer);this.ready=false;this.game.spectating=false;this.game.setCameraFov(this.game.baseCameraFov);this.game.ball.material.color.setHex(this.ballColor);
@@ -154,7 +159,6 @@ export class Match {
    this.game.setBagFinish(itemById(gear.bag),gear);
   }
   document.body.classList.remove('watching-golf');$('nextHole').hidden=false;$('nextHole').disabled=false;$('toClubhouse').hidden=false;
-  const actor=this.lobby.remote;
-  if(actor){this.lobby.scene.add(actor.root);actor.root.visible=true;actor.root.position.set(.79,0,-.95);actor.root.rotation.set(0,-.22,0);actor.club.visible=false;actor.animate('idle',true)}
+  this.lobby.endRound();
  }
 }

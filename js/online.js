@@ -1,108 +1,239 @@
-// Peer-to-peer, private two-player rooms. PeerJS Cloud provides signaling only.
-// No account verification, server-side scoring, persistent matchmaking or reconnection yet.
+// The room host owns the roster and relays PeerJS messages to the other golfers.
 const courses = ['royal', 'ocean', 'summit', 'misty'];
+export const partySlots = ['host', 'guest1', 'guest2', 'guest3'];
+export const partyLimit = partySlots.length;
+const protocol = 2;
+const cleanProfile = profile => typeof profile?.name === 'string'
+ ? {...profile,name:profile.name.trim().slice(0,22)||'Friend'} : null;
+
 export class OnlineRoom {
- constructor({onStatus,onStart,onState,onDisconnect,onHosted,onParty,onVote,profile}) {
-  this.onVote=onVote;this.ballot=null;
-  this.onParty=onParty;this.profile=profile;
-  this.onStatus=onStatus;this.onStart=onStart;this.onState=onState;this.onDisconnect=onDisconnect;this.onHosted=onHosted;
-  this.peer=null;this.connection=null;this.role='';this.room='';this.connected=false;
+ constructor(callbacks) {
+  Object.assign(this,callbacks);
+  this.connections=new Map();
+  this.players={};
+  this.generation=0;
+  this.cleanup();
  }
- status(value){this.onStatus?.(value)}
+
+ get playerIds(){return partySlots.filter(id=>Object.hasOwn(this.players,id))}
+ get connected(){return this.playerIds.length>=2}
+ get canInvite(){return this.role==='host'&&this.connections.size<partyLimit-1&&!this.ballot&&!this.inMatch}
+ status(message){this.onStatus?.(message)}
+
  async peerClass(){
   const module=await import('https://cdn.jsdelivr.net/npm/peerjs@1.5.5/+esm');
   return module.Peer||module.default;
  }
- cleanup(){this.ballot=null;clearTimeout(this.joinTimer);this.generation=(this.generation||0)+1;const c=this.connection,p=this.peer;this.connection=null;this.peer=null;this.connected=false;this.inMatch=false;this.remoteName='';this.role='';this.room='';c?.close();p?.destroy()}
- beginVote(){
-  if(!this.connected||!this.remoteName||this.inMatch||this.ballot)return;
-  if(this.role==='guest'){this.send({type:'requestVote'});return}
-  const id=crypto.randomUUID();this.ballot={id,host:null,guest:null};
-  this.send({type:'ballot',id});this.onVote?.(this.ballot);
+
+ cleanup(){
+  this.generation++;
+  clearTimeout(this.joinTimer);
+  const peer=this.peer, connections=[...this.connections.values()];
+  this.peer=null;this.connections.clear();this.players={};
+  this.role='';this.id='';this.room='';this.ballot=null;this.inMatch=false;
+  for(const connection of connections)connection.close();
+  peer?.destroy();
  }
- vote(course){
-  if(!this.ballot||!courses.includes(course)||this.ballot[this.role])return;
-  this.ballot[this.role]=course;
-  this.send({type:'pick',id:this.ballot.id,course});
-  this.updateVote();
+
+ close(message='Disconnected'){
+  const active=!!this.room;
+  this.cleanup();
+  this.onVote?.(null);
+  if(active)this.onDisconnect?.();
+  this.status(message);
  }
- updateVote(){
-  const {host,guest,id}=this.ballot;
-  this.onVote?.(this.ballot);
-  if(this.role!=='host'||!host||!guest)return;
-  const course=host===guest?host:(Math.random()<.5?host:guest);
-  this.inMatch=true;this.ballot=null;
-  this.send({type:'start',id,course});this.onVote?.(null);this.onStart?.(course,this.remoteName);
- }
- cancelVote(){
-  if(!this.ballot||this.ballot[this.role])return;
-  this.send({type:'cancelVote',id:this.ballot.id});this.ballot=null;this.onVote?.(null);
- }
- close(){const active=!!this.peer;this.cleanup();if(active)this.onDisconnect?.();this.status('Disconnected')}
- async host(course,name){
-  this.cleanup();const generation=this.generation;this.role='host';this.course=course;this.name=name;
-  this.room=Math.random().toString(36).slice(2,8).toUpperCase();
+
+ async host(course){
+  this.cleanup();
+  const generation=this.generation;
+  this.role=this.id='host';
+  this.players.host=cleanProfile(this.profile());
+  this.room=Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[n%36]).join('');
   this.status('Connecting to matchmaking server…');
   try{
-   const Peer=await this.peerClass();if(generation!==this.generation)return;const peer=new Peer('pcc-room-'+this.room.toLowerCase(),{debug:0});this.peer=peer;
-   peer.on('open',()=>{this.status('Hosting — friends can join from your profile');this.onHosted?.(this.room,this.course)});
-   peer.on('connection',connection=>{
-    if(this.connection){connection.on('open',()=>connection.send({type:'error',message:'Room full'}));connection.on('open',()=>connection.close());return}
-    this.attach(connection);
+   const Peer=await this.peerClass();
+   if(generation!==this.generation)return;
+   const peer=this.peer=new Peer('pcc-room-'+this.room.toLowerCase(),{debug:0});
+   peer.on('open',()=>{
+    if(peer!==this.peer)return;
+    this.status('Party open. Invite up to three friends.');
+    this.onHosted?.(this.room,course);
    });
-   peer.on('error',error=>this.status(error.type==='unavailable-id'?'Code collision — try hosting again':'Connection failed: '+error.message));
-   peer.on('disconnected',()=>this.status('Signaling lost — current match may continue'));
-  }catch(error){this.status('Cannot start multiplayer: '+error.message);this.cleanup()}
+   peer.on('connection',connection=>{
+    if(peer!==this.peer){connection.close();return}
+    if(!this.canInvite){
+     connection.on('open',()=>{
+      this.write(connection,{type:'error',message:this.inMatch||this.ballot?'This party has already started.':'Room full.'});
+      setTimeout(()=>connection.close(),2000);
+     });
+     return;
+    }
+    const id=partySlots.slice(1).find(slot=>!this.connections.has(slot));
+    this.attach(id,connection);
+   });
+   peer.on('error',error=>{if(peer===this.peer)this.close('Connection failed: '+error.message)});
+   peer.on('disconnected',()=>{if(peer===this.peer)this.status('Signaling lost — current party may continue')});
+  }catch(error){if(generation===this.generation)this.close('Cannot start multiplayer: '+error.message)}
  }
- async join(room,name){
-  this.cleanup();const generation=this.generation;this.role='guest';this.name=name;this.room=room.trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
-  if(this.room.length!==6){this.status('Enter a six-character room code');return}
-  this.status('Joining '+this.room+'…');
+
+ async join(code){
+  this.cleanup();
+  const room=code.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(room)){this.status('Enter a six-character room code');return}
+  this.role='guest';this.room=room;
+  const generation=this.generation;
+  this.status('Joining '+room+'…');
   this.joinTimer=setTimeout(()=>{
-   if(generation!==this.generation||this.connected)return;
-   this.cleanup();this.status('Could not reach the host. Check that their clubhouse is open, then try again.');
+   if(generation===this.generation&&!this.connected)this.close('Could not reach the host. Check the code and try again.');
   },30000);
   try{
-   const Peer=await this.peerClass();if(generation!==this.generation)return;const peer=new Peer(undefined,{debug:0});this.peer=peer;
-   peer.on('open',()=>this.attach(peer.connect('pcc-room-'+this.room.toLowerCase(),{reliable:true})));
-   peer.on('error',error=>this.status('Connection failed: '+error.message));
-  }catch(error){this.status('Cannot join: '+error.message);this.cleanup()}
+   const Peer=await this.peerClass();
+   if(generation!==this.generation)return;
+   const peer=this.peer=new Peer(undefined,{debug:0});
+   peer.on('open',()=>{
+    if(peer===this.peer)this.attach('host',peer.connect('pcc-room-'+room.toLowerCase(),{reliable:true}));
+   });
+   peer.on('error',error=>{if(peer===this.peer)this.close('Connection failed: '+error.message)});
+  }catch(error){if(generation===this.generation)this.close('Cannot join: '+error.message)}
  }
- attach(connection){
-  this.connection=connection;
+
+ attach(id,connection){
+  this.connections.set(id,connection);
+  const current=()=>this.connections.get(id)===connection;
+  const timeout=setTimeout(()=>{if(current()&&!this.players[id])connection.close()},30000);
   connection.on('open',()=>{
-   if(connection!==this.connection)return;
-   clearTimeout(this.joinTimer);this.connected=true;this.status('Connected to opponent');
-   if(this.role==='guest')this.send({type:'hello',profile:this.profile()});
+   if(current()&&this.role==='guest')this.write(connection,{type:'hello',protocol,profile:this.profile()});
   });
   connection.on('data',data=>{
-   if(!data||typeof data!=='object')return;
-   if(connection!==this.connection)return;
-   if((data.type==='hello'&&this.role==='host')||(data.type==='party'&&this.role==='guest')||data.type==='appearance'){
-    if(!data.profile||typeof data.profile.name!=='string')return;
-    this.remoteName=data.profile.name.slice(0,22)||'Friend';
-    if(data.type==='hello')this.send({type:'party',profile:this.profile()});
-    this.onParty?.(data.profile,data.type!=='appearance');
-   } else if(data.type==='requestVote'&&this.role==='host'){
-    this.beginVote();
-   } else if(data.type==='ballot'&&this.role==='guest'&&!this.ballot&&!this.inMatch&&typeof data.id==='string'){
-    this.ballot={id:data.id,host:null,guest:null};this.onVote?.(this.ballot);
-   } else if(this.ballot&&data.id===this.ballot.id){
-    const other=this.role==='host'?'guest':'host';
-    if(data.type==='cancelVote'){this.ballot=null;this.onVote?.(null)}
-    else if(data.type==='pick'&&!this.ballot[other]&&courses.includes(data.course)){
-     this.ballot[other]=data.course;this.updateVote();
-    }else if(data.type==='start'&&this.role==='guest'&&this.ballot.host&&this.ballot.guest&&[this.ballot.host,this.ballot.guest].includes(data.course)){
-     this.ballot=null;this.inMatch=true;this.onVote?.(null);this.onStart?.(data.course,this.remoteName);
-    }
-   } else if(data.type==='state'&&this.connected)this.onState?.(data);
-   else if(data.type==='error')this.status(String(data.message||'Room unavailable'));
+   if(!current()||!data||typeof data!=='object')return;
+   if(this.role==='host')this.fromGuest(id,data);
+   else this.fromHost(data);
   });
-  connection.on('close',()=>{if(connection!==this.connection)return;this.connection=null;this.ballot=null;this.onVote?.(null);this.remoteName='';this.inMatch=false;this.connected=false;this.status('Opponent disconnected');this.onDisconnect?.()});
-  connection.on('error',error=>this.status('Peer connection: '+error.message));
+  connection.on('close',()=>{
+   clearTimeout(timeout);
+   if(!current())return;
+   this.connections.delete(id);
+   if(this.role==='guest'||this.inMatch){this.close(this.inMatch?'A golfer disconnected. The match has ended.':'The host left the party.');return}
+   if(!this.players[id])return;
+   delete this.players[id];
+   this.cancelVote();
+   this.publishRoster();
+   this.status('A golfer left the party.');
+  });
+  connection.on('error',()=>{if(current())connection.close()});
  }
- send(data){if(this.connection?.open){try{this.connection.send(data)}catch(error){this.status('Unable to send: '+error.message)}}}
- snapshot(game){
-  return {type:'state',hole:game.index,position:[game.position.x,game.position.y,game.position.z],strokes:game.shots,scores:game.scores.slice(0,18),inFlight:game.swinging,finished:game.modal};
+
+ fromGuest(id,data){
+  if(data.type==='hello'&&!this.players[id]){
+   const profile=cleanProfile(data.profile);
+   if(data.protocol!==protocol||!profile||this.ballot||this.inMatch){
+    this.write(this.connections.get(id),{type:'error',message:'Unable to join. Refresh the game or ask the host for a new invite.'});
+    return;
+   }
+   this.players[id]=profile;
+   this.publishRoster(true);
+   return;
+  }
+  if(!this.players[id])return;
+  if(data.type==='appearance'){
+   const profile=cleanProfile(data.profile);
+   if(profile){this.players[id]=profile;this.publishRoster()}
+  }else if(data.type==='requestVote')this.beginVote();
+  else if(data.type==='pick'&&data.id===this.ballot?.id)this.recordPick(id,data.course);
+  else if(data.type==='cancelVote'&&data.id===this.ballot?.id)this.cancelVote();
+  else if(data.type==='state'&&this.inMatch&&data.turn===id&&['frame','finish'].includes(data.kind)){
+   this.broadcast(data,id);
+   this.onState?.(data);
+  }
+ }
+
+ fromHost(data){
+  if(data.type==='error'){this.close(String(data.message||'Room unavailable'));return}
+  if(data.type==='roster'&&data.protocol===protocol&&partySlots.slice(1).includes(data.you)){
+   const players={};
+   for(const id of partySlots){
+    const profile=cleanProfile(data.players?.[id]);
+    if(profile)players[id]=profile;
+   }
+   if(!players.host||!players[data.you])return;
+   const joined=!this.connected;
+   clearTimeout(this.joinTimer);
+   this.id=data.you;this.players=players;this.onParty?.(players,joined);
+  }else if(this.connected&&data.type==='ballot'&&!this.inMatch){
+   this.ballot={id:data.id,picks:data.picks};
+   this.onVote?.(this.ballot);
+  }else if(data.type==='cancelVote'&&data.id===this.ballot?.id){
+   this.ballot=null;this.onVote?.(null);
+  }else if(data.type==='start'&&this.ballot&&this.ballot.id===data.id&&courses.includes(data.course)){
+   this.startMatch(data.course);
+  }else if(data.type==='state'&&this.inMatch)this.onState?.(data);
+ }
+
+ publishRoster(joined=false){
+  for(const id of this.playerIds){
+   if(id!=='host')this.write(this.connections.get(id),{type:'roster',protocol,you:id,players:this.players});
+  }
+  this.onParty?.(this.players,joined);
+ }
+
+ beginVote(){
+  if(!this.connected||this.ballot||this.inMatch)return;
+  if(this.role==='guest'){this.send({type:'requestVote'});return}
+  this.ballot={id:crypto.randomUUID(),picks:Object.fromEntries(this.playerIds.map(id=>[id,null]))};
+  this.publishVote();
+ }
+
+ vote(course){
+  if(!this.ballot||!courses.includes(course)||this.ballot.picks[this.id])return;
+  if(this.role==='host')this.recordPick(this.id,course);
+  else this.send({type:'pick',id:this.ballot.id,course});
+ }
+
+ recordPick(id,course){
+  if(!this.ballot||this.ballot.picks[id]!==null||!courses.includes(course))return;
+  this.ballot.picks[id]=course;
+  this.publishVote();
+  const picks=Object.values(this.ballot.picks);
+  if(picks.some(pick=>pick===null))return;
+  const totals=courses.map(course=>picks.filter(pick=>pick===course).length);
+  const best=courses.filter((_,index)=>totals[index]===Math.max(...totals));
+  const result=best[Math.floor(Math.random()*best.length)];
+  this.broadcast({type:'start',id:this.ballot.id,course:result});
+  this.startMatch(result);
+ }
+
+ publishVote(){
+  this.broadcast({type:'ballot',...this.ballot});
+  this.onVote?.(this.ballot);
+ }
+
+ cancelVote(){
+  if(!this.ballot)return;
+  const message={type:'cancelVote',id:this.ballot.id};
+  if(this.role==='guest'){this.send(message);return}
+  this.ballot=null;this.broadcast(message);this.onVote?.(null);
+ }
+
+ startMatch(course){
+  this.inMatch=true;this.ballot=null;
+  this.onVote?.(null);this.onStart?.(course);
+ }
+
+ write(connection,data){
+  if(!connection?.open)return;
+  try{connection.send(data)}catch(error){this.status('Unable to send: '+error.message)}
+ }
+
+ broadcast(data,except){
+  for(const id of this.playerIds){
+   if(id!==except)this.write(this.connections.get(id),data);
+  }
+ }
+
+ send(data){
+  if(this.role==='guest')this.write(this.connections.get('host'),data);
+  else if(data.type==='appearance'){
+   this.players.host=cleanProfile(data.profile);this.publishRoster();
+  }else this.broadcast(data);
  }
 }
