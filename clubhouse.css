@@ -50,3 +50,16 @@
  .touch-golf .game-bottom .wind-box{display:flex;grid-column:3;grid-row:1}
  .touch-golf .game-bottom .aim-panel{display:flex;grid-column:3;grid-row:2}
 }
+
+body:not(.touch-golf) .game-footer{
+ display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;
+ bottom:8px;padding:4px 8px;font:500 11px/1.4 Outfit,sans-serif;letter-spacing:0;
+ background:#08140fe6;color:#f5f0e3;
+}
+.game-footer span{margin:0;color:inherit;white-space:nowrap}
+.game-footer kbd{font:700 1em Outfit,sans-serif;color:var(--gold)}
+.at-bag:not(.touch-golf) .game-footer{visibility:visible}
+body:not(.touch-golf) .game-hud .game-bottom{bottom:38px}
+@media(max-width:920px){
+ body:not(.touch-golf) .game-hud .game-bottom{bottom:76px}
+}
