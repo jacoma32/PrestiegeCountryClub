@@ -16,7 +16,7 @@
     const party = new URLSearchParams(location.search).get('party');
     if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
   </script>
-  <script type="module" src="./js/homepage.js?v=supabase1"></script>
+  <script type="module" src="./js/homepage.js?v=supabase2"></script>
 </head>
 <body>
   <header class="site-header">
@@ -63,6 +63,11 @@
       <p id="memberError" class="status" role="alert"></p>
       <button class="button gold" id="memberSubmit" type="submit">Sign in</button>
     </form>
+  </dialog>
+  <dialog id="verifyEmail" aria-labelledby="verifyTitle" aria-describedby="verifyInstructions">
+    <h2 id="verifyTitle" style="font-size:3rem;margin:0 0 .75rem;color:var(--gold)">Check your email</h2>
+    <p id="verifyInstructions">Look for a verification email from Supabase and click the link to confirm your Prestige Country Club account. If it doesn’t show up, check your spam folder.</p>
+    <form method="dialog"><button class="button gold" autofocus>Got it</button></form>
   </dialog>
 </body>
 </html>

@@ -39,9 +39,6 @@ function sizeCanvas() {
 new ResizeObserver(sizeCanvas).observe(preview);new ResizeObserver(sizeCanvas).observe(stage);
 const showPage=id=>{if(id!=='playing'&&page==='playing'&&onlineActive)endOnline();if(page==='home')scene.add(game.golfer.root);page=id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('selected',b.dataset.page===id));document.body.classList.toggle('is-playing',id==='playing');(id==='home'?stage:id==='golfer'?preview:$('viewport')).appendChild(renderer.domElement);sizeCanvas();if(id==='store'||id==='locker')renderGear();if(id!=='playing'){game.enterMenu();if(id==='golfer')game.enterPreview();if(id==='home'){lobby.enter();refreshTags();if(room.connected)room.send({type:'appearance',profile:playerCard()})}}};
 function readAccount(){try{return JSON.parse(localStorage.getItem('prestiege-account')||'null')}catch{return null}}
-function enterClub(user){activeUser=user;$('accountGate').classList.add('hidden');document.body.classList.remove('gated');$('accountBtn').textContent=user.username.toUpperCase();const saved=(()=>{try{return JSON.parse(localStorage.getItem('prestiege-golfer'))||null}catch{return null}})();if(!saved){showPage('golfer');game.enterPreview()}else showPage('home')}
-window.addEventListener('pcc-account-ready',event=>enterClub(event.detail));
-$('accountBtn').onclick=()=>{$('accountGate').classList.remove('hidden');document.body.classList.add('gated');window.dispatchEvent(new CustomEvent('pcc-account-mode',{detail:readAccount()?'signin':'create'}))};
 const lessons=[
  ['WELCOME TO PRESTIGE','I’m Coach Timmy. Welcome to the club! I’ll show you how to set up, aim, swing and putt.','talk'],
  ['SET UP YOUR BALL','First, place your tee and ball. Watch me demonstrate the setup.','tee'],
@@ -444,4 +441,4 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelt
  const lightTarget=game.spectating?game.ball.position:game.position;
  sun.target.position.copy(lightTarget);sun.position.copy(lightTarget).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();
 window.dispatchEvent(new Event('pcc-game-ready'));
-(async()=>{$('loader').classList.add('hidden');const account=readAccount();if(account){activeUser=account;$('accountBtn').textContent=account.username.toUpperCase()}$('accountGate').classList.add('hidden');document.body.classList.remove('gated');refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();
+(async()=>{$('loader').classList.add('hidden');const account=readAccount();activeUser=account;refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();

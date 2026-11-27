@@ -34,9 +34,7 @@
   </div>
   <form method="dialog"><button type="submit" class="glass">Cancel</button></form>
 </dialog>
-<div id="accountGate" class="account-gate hidden"><div class="account-card"><img class="account-crest" src="./assets/prestige-crest.webp" width="72" height="72" alt=""><div class="eyebrow">PRESTIGE COUNTRY CLUB · MEMBER ACCESS</div><h1 id="accountModeTitle">CREATE YOUR CLUB ACCOUNT</h1><p class="account-intro">Create your player profile before stepping onto the course.</p><form id="accountForm"><label id="accountNameWrap">USERNAME<input id="accountName" maxlength="22" minlength="2" autocomplete="username" placeholder="Your golfer username" required></label><label>PASSWORD<input id="accountPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required></label><div id="accountFeedback" class="account-feedback hidden"></div><button id="accountSubmit" class="cta" type="submit">CREATE ACCOUNT <b>↗</b></button></form><button id="accountModeToggle" class="text-button" type="button">Already a member? Sign in</button><p class="account-note">No email needed. This club login is saved on this browser. Online Friends uses a separate username; password recovery and cross-device sign-in are not available yet.</p></div></div>
-
-<div id="topbar"><div class="player-menu"><button id="onlineOpen" class="smallbtn">Friends <span id="inviteDot" hidden>●</span></button><button class="smallbtn" id="myPlay" data-page="golfer">My Player</button><a class="game-brand" href="./" aria-label="Prestige Country Club homepage"><img src="./assets/prestige-crest.webp" alt=""></a></div><div class="topmeta">EST. 2026 <span class="dot"></span> THE WORLD IS YOUR FAIRWAY</div><div class="top-actions"><span id="headerTag"></span><button class="smallbtn" id="creditBalance" data-page="store" aria-label="Open Pro Shop">0 COINS</button><button id="soundBtn" class="smallbtn">SOUND OFF</button><button id="accountBtn" class="smallbtn">ACCOUNT</button></div></div>
+<div id="topbar"><div class="player-menu"><button id="onlineOpen" class="smallbtn">Friends <span id="inviteDot" hidden>●</span></button><button class="smallbtn" id="myPlay" data-page="golfer">My Player</button><a class="game-brand" href="./" aria-label="Prestige Country Club homepage"><img src="./assets/prestige-crest.webp" alt=""></a></div><div class="topmeta">EST. 2026 <span class="dot"></span> THE WORLD IS YOUR FAIRWAY</div><div class="top-actions"><span id="headerTag"></span><button class="smallbtn" id="creditBalance" data-page="store" aria-label="Open Pro Shop">0 COINS</button><button id="soundBtn" class="smallbtn">SOUND OFF</button></div></div>
 <section id="home" class="page active" aria-label="Clubhouse">
 <div class="home-actions"><div class="club-title"><img src="./assets/prestige-crest.webp" alt=""><div><span>PRESTIGE COUNTRY CLUB</span><h1>The Clubhouse</h1></div></div>
 <button id="heroPlay" class="round-feature"><small>CHAMPIONSHIP GOLF</small><strong>Play Now</strong><span>5 courses &nbsp; / &nbsp; 90 holes</span><b aria-hidden="true" class="play-arrow"></b></button>
@@ -65,56 +63,6 @@
   <span>Drag mouse to rotate camera</span>
 </div></div><aside id="bagPanel" aria-label="Choose a club" hidden><button id="closeBag">Return to ball</button><div id="bagContents"></div></aside><div id="roundModal" class="modal hidden"><div><div id="roundEyebrow" class="eyebrow">HOLE COMPLETE</div><h2 id="roundTitle">PAR</h2><p id="roundDescription"></p><div id="scorecard"></div><div class="modal-actions"><button id="nextHole" class="cta">NEXT HOLE <b>→</b></button><button id="toClubhouse" class="glass">CLUBHOUSE</button></div></div></div><div id="tutorialOverlay" class="tutorial-overlay hidden"><div class="coach-panel"><div class="coach-kicker">PCC GOLF ACADEMY · COACH TIMMY</div><h2 id="coachTitle">WELCOME TO YOUR FIRST LESSON</h2><p id="coachText">I’ll show you how the game works.</p><div class="coach-progress" id="coachProgress">LESSON 1 / 7</div><div class="coach-actions"><button id="coachSkip" class="glass">SKIP TUTORIAL</button><button id="coachNext" class="cta">NEXT →</button></div></div></div></section>
 <nav id="bottomNav" aria-label="Main menu"><button data-page="home" class="selected"><span>⌂</span>HOME</button><button id="playGolf" data-page="courses"><span>⚑</span>PLAY GOLF</button><button id="rangeTab"><span>⚑</span>DRIVING RANGE</button><button data-page="store"><span>◇</span>PRO SHOP</button><button data-page="locker"><span>▤</span>LOCKER</button><button data-page="about"><span>≡</span>ABOUT</button></nav><div id="loader" class="hidden"><div class="loader-mark">PCC</div><div class="loader-line"><div></div></div><p>PREPARING YOUR EXPERIENCE</p></div><div id="error" class="hidden" role="alert"></div><script>
-/* Standalone username/password account controller — local device login, no email required. */
-(function(){
-const field=id=>document.getElementById(id),form=field('accountForm'),feedback=field('accountFeedback');
-const report=message=>{feedback.textContent=message;feedback.classList.remove('hidden')};
-const read=()=>{try{return JSON.parse(localStorage.getItem('prestiege-account')||'null')}catch{return null}};
-let mode=read()?'signin':'create';
-function render(){
- const create=mode==='create';
- field('accountModeTitle').textContent=create?'CREATE YOUR CLUB ACCOUNT':'WELCOME BACK';
- field('accountSubmit').textContent=create?'CREATE ACCOUNT':'SIGN IN';
- field('accountModeToggle').textContent=create?'Already a member? Sign in':'New to the club? Create account';
- field('accountNameWrap').classList.remove('hidden');
- feedback.classList.add('hidden');
-}
-field('accountModeToggle').addEventListener('click',()=>{mode=mode==='create'?'signin':'create';render()});
-window.addEventListener('pcc-account-mode',event=>{mode=event.detail==='signin'?'signin':'create';render()});
-async function digest(password){
- if(!crypto?.subtle)throw Error('Use the secure HTTPS game website to sign in.');
- const bytes=new TextEncoder().encode(password);
- return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
-}
-form.addEventListener('submit',async event=>{
- event.preventDefault();event.stopImmediatePropagation();feedback.classList.add('hidden');
- const button=field('accountSubmit');button.disabled=true;
- try{
-  const username=field('accountName').value.trim(),password=field('accountPassword').value;
-  if(username.length<2||username.length>22)throw Error('Choose a username with 2–22 characters.');
-  if(password.length<6)throw Error('Password must have at least 6 characters.');
-  const stored=read(),hashed=await digest(password);
-  let user;
-  if(mode==='create'){
-   if(stored)throw Error('An account already exists in this browser. Choose Sign in.');
-   user={username,passwordHash:hashed,createdAt:new Date().toISOString()};
-   localStorage.setItem('prestiege-account',JSON.stringify(user));
-  }else{
-   if(!stored||stored.username?.toLowerCase()!==username.toLowerCase()||stored.passwordHash!==hashed)
-    throw Error('Username or password incorrect for this browser. Accounts are not shared between devices yet.');
-   user=stored;
-  }
-  window.dispatchEvent(new CustomEvent('pcc-account-ready',{detail:user}));
-  if(!document.body.classList.contains('gated')){form.reset();return}
-  report('Account saved. Game is still starting; refresh if this message remains.');
- }catch(error){report(error.message||'Could not sign in. Check browser storage settings.')}
- finally{button.disabled=false}
-});
-render();
-window.addEventListener('error',event=>{if(document.body.classList.contains('gated'))report('Game startup error: '+event.message)});
-window.addEventListener('unhandledrejection',event=>{if(document.body.classList.contains('gated'))report('Game loading failed: '+(event.reason?.message||'Please refresh'))});
-})();
-</script><script>
 /* Boot watchdog: the menu must remain accessible if the 3D module fails. */
 (function(){
   const loader=document.getElementById('loader');
@@ -124,8 +72,6 @@ window.addEventListener('unhandledrejection',event=>{if(document.body.classList.
     loader.classList.add('hidden');
     error.textContent=message;
     error.classList.remove('hidden');
-    document.body.classList.remove('gated');
-    document.getElementById('accountGate').classList.add('hidden');
   }
   window.addEventListener('pcc-game-ready',()=>{ready=true;loader.classList.add('hidden');});
   window.addEventListener('error',event=>{
@@ -138,4 +84,4 @@ window.addEventListener('unhandledrejection',event=>{if(document.body.classList.
     if(!ready)issue('The 3D engine did not finish starting. You can still use the menu; the game needs a startup repair.');
   },10000);
 })();
-</script><script type="module" src="./js/main.js?v=coursefirst1"></script></body></html>
+</script><script type="module" src="./js/main.js?v=authcleanup1"></script></body></html>

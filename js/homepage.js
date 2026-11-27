@@ -31,6 +31,7 @@ function loadMembership() {
 
 const errors = {
   invalid_credentials: 'That email and password didn’t match.',
+  email_address_not_authorized: 'This email can’t receive verification yet. Public email delivery still needs to be set up.',
   email_not_confirmed: 'Open the confirmation email before signing in.',
   weak_password: 'Choose a stronger password.',
   provider_disabled: 'Google sign-in hasn’t been enabled in Supabase yet.',
@@ -67,6 +68,7 @@ form.addEventListener('submit', async (event) => {
   try {
     const { auth } = await loadMembership();
     const email = byId('memberEmail').value.trim();
+    let needsVerification = false;
     if (creating) {
       const name = byId('memberName').value.trim();
       if (!name) {
@@ -79,13 +81,14 @@ form.addEventListener('submit', async (event) => {
         options: { emailRedirectTo: redirectTo, data: { display_name: name } },
       });
       if (error) throw error;
-      if (!data.session) mainStatus.textContent = 'Check your email for a confirmation link before signing in.';
+      needsVerification = !data.session;
     } else {
       const { error } = await auth.signInWithPassword({ email, password: password.value });
       if (error) throw error;
     }
     form.reset();
     dialog.close();
+    if (needsVerification) byId('verifyEmail').showModal();
   } catch (error) {
     formError.textContent = message(error);
   } finally {

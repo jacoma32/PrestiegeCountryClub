@@ -37,7 +37,7 @@ These are individually below GitHub's 25 MB browser-upload limit. Do not upload 
 
 ## School-project limitations
 
-- Scores, equipment, and local golfer profiles are saved in this browser. The legacy in-game Account button is still available until the homepage sign-in methods are enabled and verified.
+- Scores, equipment, and local golfer profiles are saved in this browser. Manage membership from the homepage.
 - 3D golfer model quality and material customization are limited by the source assets. Hair/eye tint changes only work on identifiable model materials.
 - Timmy has on-screen tutorial dialogue and animation gestures, but no spoken voice narration.
 - A browser gameplay pass on GitHub Pages and final animation rig testing are still required before a public presentation.
