@@ -35,6 +35,7 @@ COURSES.range={...COURSES.royal,name:'DRIVING RANGE',wind:0,holes:[{
 }]};
 const clamp=THREE.MathUtils.clamp;
 const rand=(n)=>{const x=Math.sin(n*178.126+78.77)*42375.935;return x-Math.floor(x)};
+let flagCrest;
 const FRINGE_WIDTH=1.25,FRINGE_LIFT=.046,GREEN_LIFT=.055;
 export class World{
  constructor(scene){this.waterClock={value:0};this.scene=scene;this.root=new THREE.Group();scene.add(this.root);this.tmp=new THREE.Vector3();this.current='royal';this.holeIndex=0;this.hole={yards:278,par:4,curve:0};this.length=158;this.holePosition=new THREE.Vector3(0,0,0);this.teePosition=new THREE.Vector3(0,0,0);this.fairways=[];this.bunkers=[];this.water=[];this.green=null;this.flag=null;this.grassTexture=this.makeGrassTexture(false);this.fairwayTexture=this.makeGrassTexture(true);this.create('royal',0)}
@@ -174,9 +175,23 @@ export class World{
  if(name!=='range')cartPath(this);
  const planting=landscape(this);
  this.flag=new THREE.Group();const pole=this.mesh(new THREE.CylinderGeometry(.035,.045,5,8),this.mat(0xf1f1df),this.flag);pole.position.y=2.5;const flagMaterial=this.mat(name==='ocean'?0xf3cd73:name==='misty'?0xe78968:0xd8bb71);
+ if(!flagCrest){
+  flagCrest=new THREE.TextureLoader().load(new URL('../assets/prestige-crest.webp',import.meta.url).href);
+  flagCrest.colorSpace=THREE.SRGBColorSpace;
+ }
  flagMaterial.side=THREE.DoubleSide;
+ flagMaterial.map=flagCrest;
  flagMaterial.onBeforeCompile=shader=>{
   shader.uniforms.flagTime=this.waterClock;
+  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
+   // Keep the square crest centered on the cloth and readable from both sides.
+   vec2 crestUv=(vMapUv-.5)/vec2(.43,.855)+.5;
+   if(!gl_FrontFacing)crestUv.x=1.-crestUv.x;
+   if(all(greaterThanEqual(crestUv,vec2(0.)))&&all(lessThanEqual(crestUv,vec2(1.)))){
+    vec4 crest=texture2D(map,crestUv);
+    diffuseColor.rgb=mix(diffuseColor.rgb,crest.rgb,crest.a);
+   }
+  `);
   shader.vertexShader='uniform float flagTime;\n'+shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
    float sail=uv.x;transformed.z+=sail*(.18*sin(8.*sail-4.*flagTime)+.065*sin(17.*sail-5.3*flagTime+uv.y));transformed.y-=.17*sail*sail;`);
  };
