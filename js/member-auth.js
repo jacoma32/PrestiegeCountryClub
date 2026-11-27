@@ -1,6 +1,17 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { firebaseConfig } from './firebase-config.js';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm';
 
-// Keep membership separate from the existing device-based Friends identity.
-export const auth = getAuth(initializeApp(firebaseConfig, 'prestige-members'));
+const projectUrl = 'https://bsslcrkfldoapjlzpxig.supabase.co';
+const publishableKey = 'sb_publishable_I_T71j3hS2e9kZQ7jbLgfQ_RNuCXyQ5';
+
+export const auth = createClient(projectUrl, publishableKey, {
+  auth: { flowType: 'pkce' },
+}).auth;
+
+export async function googleEnabled() {
+  const response = await fetch(projectUrl + '/auth/v1/settings', {
+    headers: { apikey: publishableKey },
+  });
+  if (!response.ok) throw new Error('Could not check sign-in settings.');
+  const settings = await response.json();
+  return settings.external.google === true;
+}

@@ -11,31 +11,31 @@ const submit = byId('memberSubmit');
 const password = byId('memberPassword');
 let creating = false;
 
-const sdkUrl = 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+const redirectTo = new URL('./', location.href).href;
 let membership;
 function loadMembership() {
-  membership ??= Promise.all([import('./member-auth.js'), import(sdkUrl)])
-    .then(([{ auth }, sdk]) => {
-      sdk.onAuthStateChanged(auth, (user) => {
-        signIn.hidden = signUp.hidden = googleSignIn.hidden = Boolean(user);
-        signOut.hidden = !user;
-        mainStatus.textContent = user ? 'Signed in. You’re ready to play.' : '';
-      });
-      return { auth, sdk };
+  membership ??= import('./member-auth.js?v=supabase1').then(({ auth, googleEnabled }) => {
+    auth.onAuthStateChange((event, session) => {
+      signIn.hidden = signUp.hidden = googleSignIn.hidden = Boolean(session);
+      signOut.hidden = !session;
+      if (session) mainStatus.textContent = 'Signed in. You’re ready to play.';
+      else if (event === 'SIGNED_OUT') mainStatus.textContent = 'Signed out.';
     });
+    return { auth, googleEnabled };
+  }).catch(error => {
+    membership = undefined;
+    throw error;
+  });
   return membership;
 }
 
 const errors = {
-  'auth/invalid-credential': 'That email and password didn’t match.',
-  'auth/email-already-in-use': 'That email already has an account. Try signing in.',
-  'auth/weak-password': 'Choose a password with at least six characters.',
-  'auth/operation-not-allowed': 'This sign-in method hasn’t been enabled in Firebase.',
-  'auth/unauthorized-domain': 'This site address hasn’t been approved in Firebase for Google sign-in.',
-  'auth/popup-blocked': 'Allow pop-ups for this site and try again.',
-  'auth/popup-closed-by-user': 'The Google sign-in window was closed.',
-  'auth/account-exists-with-different-credential': 'This email already uses a different sign-in method.',
-  'auth/too-many-requests': 'Too many attempts. Wait a moment before trying again.',
+  invalid_credentials: 'That email and password didn’t match.',
+  email_not_confirmed: 'Open the confirmation email before signing in.',
+  weak_password: 'Choose a stronger password.',
+  provider_disabled: 'Google sign-in hasn’t been enabled in Supabase yet.',
+  over_email_send_rate_limit: 'Too many emails were requested. Try again later.',
+  over_request_rate_limit: 'Too many attempts. Try again in a moment.',
 };
 function message(error) {
   return errors[error.code] || 'Sign-in is temporarily unavailable. Try again in a moment.';
@@ -65,7 +65,7 @@ form.addEventListener('submit', async (event) => {
   formError.textContent = '';
   submit.disabled = byId('closeDialog').disabled = true;
   try {
-    const { auth, sdk } = await loadMembership();
+    const { auth } = await loadMembership();
     const email = byId('memberEmail').value.trim();
     if (creating) {
       const name = byId('memberName').value.trim();
@@ -73,12 +73,16 @@ form.addEventListener('submit', async (event) => {
         formError.textContent = 'Enter your player name.';
         return;
       }
-      const { user } = await sdk.createUserWithEmailAndPassword(auth, email, password.value);
-      await sdk.updateProfile(user, { displayName: name }).catch(() => {
-        mainStatus.textContent = 'Your account is ready. You can set your player name in My Player.';
+      const { data, error } = await auth.signUp({
+        email,
+        password: password.value,
+        options: { emailRedirectTo: redirectTo, data: { display_name: name } },
       });
+      if (error) throw error;
+      if (!data.session) mainStatus.textContent = 'Check your email for a confirmation link before signing in.';
     } else {
-      await sdk.signInWithEmailAndPassword(auth, email, password.value);
+      const { error } = await auth.signInWithPassword({ email, password: password.value });
+      if (error) throw error;
     }
     form.reset();
     dialog.close();
@@ -93,10 +97,16 @@ googleSignIn.addEventListener('click', async () => {
   googleSignIn.disabled = true;
   mainStatus.textContent = '';
   try {
-    const { auth, sdk } = await loadMembership();
-    await sdk.signInWithPopup(auth, new sdk.GoogleAuthProvider());
+    const { auth, googleEnabled } = await loadMembership();
+    if (!await googleEnabled()) {
+      mainStatus.textContent = errors.provider_disabled;
+      return;
+    }
+    const { error } = await auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+    if (error) throw error;
   } catch (error) {
-    mainStatus.textContent = message(error);
+    mainStatus.textContent = error.status === 400 && /provider.*(disabled|not enabled)/i.test(error.message)
+      ? errors.provider_disabled : message(error);
   } finally {
     googleSignIn.disabled = false;
   }
@@ -105,8 +115,9 @@ googleSignIn.addEventListener('click', async () => {
 signOut.addEventListener('click', async () => {
   signOut.disabled = true;
   try {
-    const { auth, sdk } = await loadMembership();
-    await sdk.signOut(auth);
+    const { auth } = await loadMembership();
+    const { error } = await auth.signOut({ scope: 'local' });
+    if (error) throw error;
     mainStatus.textContent = 'Signed out.';
   } catch {
     mainStatus.textContent = 'Couldn’t sign out. Please try again.';
