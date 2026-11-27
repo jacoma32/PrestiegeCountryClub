@@ -97,14 +97,14 @@ export class GolfGame{
   velocity.y = this.club === 'putter' ? 0 : speed * club.loft;
   return velocity;
  }
- advanceFlight(position, velocity, dt, airborne) {
+ advanceFlight(position, velocity, dt, airborne, shape=this.flightShape) {
   const driving = (this.club==='driver'||this.club==='wood') && airborne;
   if (driving) {
    const drag = Math.exp(-.145 * dt);
    velocity.x *= drag;
    velocity.z *= drag;
   }
-  if (airborne&&this.club!=='putter'){velocity.x+=this.wind*.18*dt;const lateral=curveAcceleration(this.flightShape,velocity);velocity.x+=lateral.x*dt;velocity.z+=lateral.z*dt;}
+  if (airborne&&this.club!=='putter'){velocity.x+=this.wind*.18*dt;const lateral=curveAcceleration(shape,velocity);velocity.x+=lateral.x*dt;velocity.z+=lateral.z*dt;}
   velocity.y -= (driving ? 6.4 : 9.81) * dt;
   if(!this.world.treeContact?.deflect(position,velocity,dt))position.addScaledVector(velocity,dt);
  }
@@ -114,24 +114,29 @@ export class GolfGame{
   if (!group.visible) return;
   const putting=this.club==='putter';
   const power=this.charging?clamp(this.charge,putting?.02:.11,1):1;
-  const velocity = this.launchVelocity(power), point = this.position.clone();const priorShape=this.flightShape;this.flightShape=this.shotShape;
-  const points = [point.clone()];
-  const dt=putting?1/60:1/120;
-  for(let step=0;step<(putting?480:960);step++){
-   if(putting)point.addScaledVector(velocity,dt);
-   else this.advanceFlight(point,velocity,dt,true);
-   const ground=this.world.ground(point.x,point.z)+BALL_RADIUS;
-   if(putting){
-    point.y=ground;
-    const lie=this.world.lie(point.x,point.z),speed=velocity.length();
-    if(lie==='WATER'||speed<BALL_STOP_SPEED)break;
-    velocity.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
-   }else if(point.y<=ground){point.y=ground;break}
-   if(step%12===0)points.push(point.clone());
+  const key=[this.club,power,this.aim,this.shotShape,this.wind,this.position.x,this.position.y,this.position.z].join(',');
+  if(this.previewKey===key&&this.previewHole===this.world.hole)return;
+  const state={
+   position:this.position.clone(),vel:this.launchVelocity(power),flightShape:this.shotShape,
+   carryYards:null,shotOrigin:this.position,biteTimer:0,impactSpin:CLUBS[this.club].spin??0,
+  };
+  const points=[state.position.clone()];
+  let carryPoint,carryIndex;
+  for(let step=0;step<2400;step++){
+   const outcome=this.advanceBall(state,1/120);
+   if(!carryPoint&&state.carryYards!==null){
+    carryPoint=state.position.clone();
+    carryIndex=points.push(carryPoint);
+   }else if(step%8===0)points.push(state.position.clone());
+   if(outcome==='water'||outcome==='cup'||outcome==='rest')break;
   }
-  points.push(point.clone());this.flightShape=priorShape;
+  points.push(state.position.clone());
+  this.predictedPath=points;
+  this.previewKey=key;this.previewHole=this.world.hole;
+  const point=!putting&&carryPoint?carryPoint:points.at(-1);
+  const displayedPoints=!putting&&carryIndex?points.slice(0,carryIndex):points;
   line.geometry.dispose();
-  line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+  line.geometry = new THREE.BufferGeometry().setFromPoints(displayedPoints);
   marker.position.copy(point);
   marker.position.y += .07;
   const carry = Math.round(Math.hypot(point.x-this.position.x,point.z-this.position.z)*1.75);
@@ -425,50 +430,76 @@ export class GolfGame{
   for(let left=flightTime;left>1e-8&&this.swinging&&!this.waterWait;left-=1/120)this.stepBall(Math.min(left,1/120))}
   if(this.swinging)this.golfer.watchFlight(this.position,this.swingTimer-this.ballLaunchDelay);
   this.moveCamera(dt)}else this.menuCamera(dt);this.updateContactShadow()}
- groundContact(lie,dt){
-  const first=this.carryYards===null;
-  if(first)this.carryYards=this.travelYards();
+ groundContact(state,lie,dt){
+  const first=state.carryYards===null;
+  if(first)state.carryYards=this.travelYards(state);
   const sand=lie==='BUNKER',green=lie==='GREEN',fairway=lie==='FAIRWAY',club=CLUBS[this.club];
   if(this.club==='putter'){
-   const speed=Math.hypot(this.vel.x,this.vel.z);
-   this.vel.y=0;
-   if(speed>0)this.vel.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
+   const speed=Math.hypot(state.vel.x,state.vel.z);
+   state.vel.y=0;
+   if(speed>0)state.vel.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
    return;
   }
-  const descent=Math.max(0,-this.vel.y);
+  const descent=Math.max(0,-state.vel.y);
   if(descent>(fairway?.85:1.7)){
-   this.onSfx('land');
+   if(state===this)this.onSfx('land');
    const turfRetention=club.stop??(this.club==='driver'?.64:.75);
    const retention=fairway&&!first?.87:turfRetention*(sand?.23:green?.70:1);
-   this.vel.x*=retention;this.vel.z*=retention;
-   this.vel.y=descent*(sand?.045:green?.14:fairway?(first?.34:.30):.24);
-   if(this.vel.y<(fairway?.22:.45))this.vel.y=0;
-   if(club.isIron)this.biteTimer=.65;
+   state.vel.x*=retention;state.vel.z*=retention;
+   state.vel.y=descent*(sand?.045:green?.14:fairway?(first?.34:.30):.24);
+   if(state.vel.y<(fairway?.22:.45))state.vel.y=0;
+   if(club.isIron)state.biteTimer=.65;
    return;
   }
   // Catch shallow arrivals too, without applying the impact loss on every roll step.
   const shallowRetention=WEDGES[this.club]?.stop??.78;
   const skid=first?(sand?.24:green?shallowRetention:1):1;
   const friction=sand?10:green?2.04:fairway?2.8:lie==='FRINGE'?3.65:5.5;
-  const bite=club.isIron&&this.biteTimer>0?this.impactSpin/1700:0;
-  this.biteTimer=Math.max(0,this.biteTimer-dt);
+  const bite=club.isIron&&state.biteTimer>0?state.impactSpin/1700:0;
+  state.biteTimer=Math.max(0,state.biteTimer-dt);
   const drag=skid*Math.exp(-(friction+bite)*dt);
-  this.vel.x*=drag;this.vel.z*=drag;this.vel.y=0;
+  state.vel.x*=drag;state.vel.z*=drag;state.vel.y=0;
  }
- stepBall(dt){const airborne=this.carryYards===null||this.vel.y!==0||this.position.y>this.world.ground(this.position.x,this.position.z)+BALL_RADIUS+.015;this.advanceFlight(this.position,this.vel,dt,airborne);const g=this.world.ground(this.position.x,this.position.z)+BALL_RADIUS,lie=this.world.lie(this.position.x,this.position.z);if(lie==='WATER'&&this.position.y<=g+.015){this.position.y=g;this.ball.position.copy(this.position);this.splash.start(this.position,this.vel);
-  this.onSfx('hazard',{speed:this.vel.length()});this.vel.set(0,0,0);this.ball.visible=false;this.waterWait=1.45;
-  return}if(this.position.y<=g||(!airborne&&this.position.y-g<.06)){this.position.y=g;this.groundContact(lie,dt)}this.ball.position.copy(this.position);this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;const dist=Math.hypot(this.position.x-this.world.holePosition.x,this.position.z-this.world.holePosition.z);if(this.course!=='range'&&dist<.38&&this.position.y<g+.4&&this.vel.length()<9){this.finishHole();return}if(this.vel.length()<BALL_STOP_SPEED&&Math.abs(this.position.y-g)<.015){this.vel.set(0,0,0);this.swinging=false;this.position.y=g;this.onSfx('land');
+ advanceBall(state,dt){
+  const {position,vel}=state;
+  const airborne=state.carryYards===null||vel.y!==0||position.y>this.world.ground(position.x,position.z)+BALL_RADIUS+.015;
+  this.advanceFlight(position,vel,dt,airborne,state.flightShape);
+  const ground=this.world.ground(position.x,position.z)+BALL_RADIUS;
+  const lie=this.world.lie(position.x,position.z);
+  if(lie==='WATER'&&position.y<=ground+.015){position.y=ground;return 'water'}
+  if(position.y<=ground||(!airborne&&position.y-ground<.06)){
+   position.y=ground;this.groundContact(state,lie,dt);
+  }
+  const pin=this.world.holePosition;
+  if(this.course!=='range'&&Math.hypot(position.x-pin.x,position.z-pin.z)<.38&&position.y<ground+.4&&vel.length()<9)return 'cup';
+  if(vel.length()<BALL_STOP_SPEED&&Math.abs(position.y-ground)<.015){
+   position.y=ground;return 'rest';
+  }
+ }
+ stepBall(dt){
+  const outcome=this.advanceBall(this,dt);
+  this.ball.position.copy(this.position);
+  if(outcome==='water'){
+   this.splash.start(this.position,this.vel);
+   this.onSfx('hazard',{speed:this.vel.length()});this.vel.set(0,0,0);this.ball.visible=false;this.waterWait=1.45;
+   return;
+  }
+  this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;
+  if(outcome==='cup'){this.finishHole();return}
+  if(outcome!=='rest')return;
+  this.vel.set(0,0,0);this.swinging=false;this.onSfx('land');
  if(this.course==='range'){
   const total=this.travelYards();this.resetBallToTee();this.charge=0;
   this.placeGolfer();this.refresh();this.moveCamera(0,true);
   this.notify('BALL '+this.shots+' · '+this.carryYards+' YDS CARRY · '+total+' YDS TOTAL');return;
  }
+ const lie=this.world.lie(this.position.x,this.position.z);
  const message=this.club==='driver'?this.carryYards+' YDS CARRY · '+this.travelYards()+' YDS TOTAL · '+lie:
   lie==='BUNKER'?'SAND TRAP · PLAY IT WHERE IT LIES':lie==='GREEN'?'ON THE GREEN':`BALL AT REST · ${lie}`;
  this.applyClub(this.suggestClub(lie));
  this.placeGolfer();this.refresh();this.notify(message);
- }}
- travelYards(){return Math.round(Math.hypot(this.position.x-this.shotOrigin.x,this.position.z-this.shotOrigin.z)*1.75)}
+ }
+ travelYards(state=this){return Math.round(Math.hypot(state.position.x-state.shotOrigin.x,state.position.z-state.shotOrigin.z)*1.75)}
  addressCamera(line,orbit,desired,target){
   if(this.club==='putter'){
    const cup=this.world.holePosition;

@@ -48,20 +48,18 @@ export class HoleMap {
   if(this.hole!==game.world.hole)this.build(game.world);
   const position=game.spectating?game.ball.position:game.position;
   const [x,y]=this.project(position.x,position.z);
-  const aim=game.spectating||game.swinging||game.modal?null:game.aim;
-  if(x===this.lastX&&y===this.lastY&&aim===this.lastAim&&this.drawnHole===this.hole)return;
-  this.lastX=x;this.lastY=y;this.lastAim=aim;this.drawnHole=this.hole;
+  const path=game.spectating||game.swinging||game.modal?null:game.predictedPath;
+  if(x===this.lastX&&y===this.lastY&&path===this.lastPath&&this.drawnHole===this.hole)return;
+  this.lastX=x;this.lastY=y;this.lastPath=path;this.drawnHole=this.hole;
   const ctx=this.context;
   ctx.drawImage(this.base,0,0,this.canvas.width,this.canvas.height);
   const [pinX,pinY]=this.pin;
   const ballX=Math.max(5,Math.min(this.canvas.width-5,x));
   const ballY=Math.max(5,Math.min(this.canvas.height-5,y));
-  if(aim!==null){
-   const direction=game.shotDirection();
-   const length=Math.max(18,Math.hypot(pinX-x,pinY-y));
+  if(path?.length){
    ctx.beginPath();
-   ctx.moveTo(ballX,ballY);
-   ctx.lineTo(ballX+direction.x*length,ballY+direction.z*length);
+   ctx.moveTo(...this.project(path[0].x,path[0].z));
+   for(const point of path.slice(1))ctx.lineTo(...this.project(point.x,point.z));
    ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.stroke();
   }
   ctx.fillStyle='#ffe2a0';ctx.strokeStyle='#17261d';ctx.lineWidth=2;
