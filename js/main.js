@@ -59,10 +59,10 @@ const start=async(name='royal',tutorial=false,length=18)=>{
  showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial,length);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
 document.querySelectorAll('[data-page]:not(#playGolf)').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
 const playMode=$('playMode'),inviteMethod=$('inviteMethod'),invitePrompt=$('partyPrompt');
-let selectedCourse='',selectedLength=18,playWithFriends=false,checkingInvite=false,offeredInvite=null;
-function chooseRound(){
- selectedCourse='';playWithFriends=false;
- $('playModeCourse').textContent='';
+let selectedCourse='',selectedLength=18,checkingInvite=false,offeredInvite=null;
+function chooseRound(button){
+ selectedCourse=button.dataset.course;
+ $('playModeCourse').textContent=button.querySelector('h3').textContent;
  $('playModeTitle').textContent='How many holes do you want to play?';
  $('roundLengths').hidden=false;
  $('playChoices').hidden=true;
@@ -82,7 +82,7 @@ async function openPlayGolf(){
    offeredInvite=invite;
    $('partyMessage').textContent='Play golf with @'+invite.username+'?';
    invitePrompt.showModal();
-  }else if(!room.connected&&!joiningInvite)chooseRound();
+  }else if(!room.connected&&!joiningInvite)showPage('courses');
  }finally{clearTimeout(timer);checkingInvite=false}
 }
 $('heroPlay').onclick=$('playGolf').onclick=openPlayGolf;
@@ -95,18 +95,17 @@ for(const button of document.querySelectorAll('[data-round-length]')){
   $('playSolo').focus();
  };
 }
-function showCoursePicker(withFriends){
- playWithFriends=withFriends;playMode.close();showPage('courses');
-}
-$('playSolo').onclick=()=>showCoursePicker(false);
-$('playWithFriend').onclick=()=>showCoursePicker(true);
+$('playSolo').onclick=()=>{
+ playMode.close();
+ if(room.room)endOnline();
+ start(selectedCourse,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
+};
+$('playWithFriend').onclick=()=>{
+ playMode.close();
+ inviteMethod.showModal();
+};
 for(const button of document.querySelectorAll('[data-course]')){
- button.onclick=()=>{
-  selectedCourse=button.dataset.course;
-  if(playWithFriends){inviteMethod.showModal();return}
-  if(room.room)endOnline();
-  start(selectedCourse,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
- };
+ button.onclick=()=>chooseRound(button);
 }
 $('rangeTab').onclick=()=>{if(room.room)endOnline();start('range',false)};$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
 $('closeBag').onclick=()=>game.returnFromBag(game.club);
@@ -303,7 +302,7 @@ async function answerInvite(join){
    if(room.role==='host')await friends.unhost().catch(()=>{});
    openPartyPanel('code');await room.join(invite.hosting);
   }else{
-   invitePrompt.close();chooseRound();
+   invitePrompt.close();showPage('courses');
   }
  }catch(error){invitePrompt.close();openPartyPanel('friends');showFriendsError(error)}
  finally{
