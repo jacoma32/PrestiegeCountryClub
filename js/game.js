@@ -8,7 +8,7 @@ import {buildBag} from './golf-bag.js?v=clubs1';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
-import {World,COURSES} from './world.js?v=roundtools1';
+import {World,COURSES} from './world.js?v=friendflow1';
 import {Golfer} from './actors.js?v=clubs1';
 const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
@@ -425,6 +425,7 @@ export class GolfGame{
     this.shots++;this.position.copy(this.shotOrigin);this.ball.position.copy(this.position);
     this.swinging=false;this.ball.visible=true;this.placeGolfer();this.refresh();this.moveCamera(0,true);
     this.notify('WATER · +1 PENALTY · REPLAY FROM LAST SPOT');
+    this.onShotSettled?.(this.shots);
    }
    return;
   }
@@ -509,6 +510,7 @@ export class GolfGame{
   lie==='BUNKER'?'SAND TRAP · PLAY IT WHERE IT LIES':lie==='GREEN'?'ON THE GREEN':`BALL AT REST · ${lie}`;
  this.applyClub(this.suggestClub(lie));
  this.placeGolfer();this.refresh();this.notify(message);
+ this.onShotSettled?.(this.shots);
  }
  travelYards(state=this){return Math.round(Math.hypot(state.position.x-state.shotOrigin.x,state.position.z-state.shotOrigin.z)*1.75)}
  addressCamera(line,orbit,desired,target){
@@ -571,7 +573,7 @@ export class GolfGame{
  listeners(){
   let keyboardCharging=false;
   window.addEventListener('keydown',event=>{
-   if(!this.started||this.modal||event.defaultPrevented||event.target.closest?.('input,select,textarea,dialog,#touchSwing')||$('tutorialOverlay')?.matches(':not(.hidden)'))return;
+   if(!this.started||this.spectating||this.modal||event.defaultPrevented||event.target.closest?.('input,select,textarea,dialog,#touchSwing')||$('tutorialOverlay')?.matches(':not(.hidden)'))return;
    if(['Space','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();
    if(event.code==='Space'&&!event.repeat)keyboardCharging=this.startCharge();
    if(event.code==='ArrowLeft'||event.code==='KeyA')this.aimDelta(-2);

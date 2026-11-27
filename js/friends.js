@@ -94,6 +94,19 @@ export class FriendsService {
    if(snap.exists())this.friends.push({uid,...snap.data()});this.emit();
   }));
  }
+ async findInvite(){
+  const current=this.friends.find(friend=>this.pendingInvite(friend));
+  const known=new Set(this.friends.map(friend=>friend.uid));
+  const ids=(this.profile?.friends?.slice(0,100)||[]).filter(uid=>!known.has(uid));
+  if(current||!ids.length)return current;
+  const {getDoc,doc}=this.api;
+  const updates=await Promise.allSettled(ids.map(uid=>getDoc(doc(this.db,'players',uid))));
+  for(const [index,result] of updates.entries()){
+   if(result.status!=='fulfilled'||!result.value.exists())continue;
+   const friend={uid:ids[index],...result.value.data()};
+   if(this.pendingInvite(friend))return friend;
+  }
+ }
  pendingInvite(friend){
   if(!friend || friend.invited!==this.user?.uid || !friend.hosting || !friend.inviteId)return false;
   const issued=friend.inviteTime?.toMillis?.();

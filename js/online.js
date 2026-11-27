@@ -2,7 +2,7 @@
 const courses = ['royal', 'ocean', 'summit', 'misty', 'dunes'];
 export const partySlots = ['host', 'guest1', 'guest2', 'guest3'];
 export const partyLimit = partySlots.length;
-const protocol = 3;
+const protocol = 4;
 const cleanProfile = profile => typeof profile?.name === 'string'
  ? {...profile,name:profile.name.trim().slice(0,22)||'Friend'} : null;
 
@@ -17,7 +17,7 @@ export class OnlineRoom {
 
  get playerIds(){return partySlots.filter(id=>Object.hasOwn(this.players,id))}
  get connected(){return this.playerIds.length>=2}
- get canInvite(){return this.role==='host'&&this.connections.size<partyLimit-1&&!this.ballot&&!this.inMatch}
+ get canInvite(){return this.role==='host'&&this.connections.size<partyLimit-1&&!this.inMatch}
  status(message){this.onStatus?.(message)}
 
  async peerClass(){
@@ -30,7 +30,7 @@ export class OnlineRoom {
   clearTimeout(this.joinTimer);
   const peer=this.peer, connections=[...this.connections.values()];
   this.peer=null;this.connections.clear();this.players={};
-  this.role='';this.id='';this.room='';this.ballot=null;this.inMatch=false;
+  this.role='';this.id='';this.room='';this.settings=null;this.inMatch=false;
   for(const connection of connections)connection.close();
   peer?.destroy();
  }
@@ -38,15 +38,16 @@ export class OnlineRoom {
  close(message='Disconnected'){
   const active=!!this.room;
   this.cleanup();
-  this.onVote?.(null);
   if(active)this.onDisconnect?.();
   this.status(message);
  }
 
- async host(course){
+ async host(course,length=18){
+  if(!courses.includes(course))return;
   this.cleanup();
   const generation=this.generation;
   this.role=this.id='host';
+  this.settings={course,length:length===9?9:18};
   this.players.host=cleanProfile(this.profile());
   this.room=Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[n%36]).join('');
   this.status('Connecting to matchmaking server…');
@@ -63,7 +64,7 @@ export class OnlineRoom {
     if(peer!==this.peer){connection.close();return}
     if(!this.canInvite){
      connection.on('open',()=>{
-      this.write(connection,{type:'error',message:this.inMatch||this.ballot?'This party has already started.':'Room full.'});
+      this.write(connection,{type:'error',message:this.inMatch?'This party has already started.':'Room full.'});
       setTimeout(()=>connection.close(),2000);
      });
      return;
@@ -116,7 +117,6 @@ export class OnlineRoom {
    if(this.role==='guest'||this.inMatch){this.close(this.inMatch?'A golfer disconnected. The match has ended.':'The host left the party.');return}
    if(!this.players[id])return;
    delete this.players[id];
-   this.cancelVote();
    this.publishRoster();
    this.status('A golfer left the party.');
   });
@@ -126,7 +126,7 @@ export class OnlineRoom {
  fromGuest(id,data){
   if(data.type==='hello'&&!this.players[id]){
    const profile=cleanProfile(data.profile);
-   if(data.protocol!==protocol||!profile||this.ballot||this.inMatch){
+   if(data.protocol!==protocol||!profile||this.inMatch){
     this.write(this.connections.get(id),{type:'error',message:'Unable to join. Refresh the game or ask the host for a new invite.'});
     return;
    }
@@ -138,10 +138,7 @@ export class OnlineRoom {
   if(data.type==='appearance'){
    const profile=cleanProfile(data.profile);
    if(profile){this.players[id]=profile;this.publishRoster()}
-  }else if(data.type==='requestVote')this.beginVote(data.length);
-  else if(data.type==='pick'&&data.id===this.ballot?.id)this.recordPick(id,data.course);
-  else if(data.type==='cancelVote'&&data.id===this.ballot?.id)this.cancelVote();
-  else if(data.type==='state'&&this.inMatch&&data.turn===id&&['frame','finish'].includes(data.kind)){
+  }else if(data.type==='state'&&this.inMatch&&data.turn===id&&['frame','stroke','finish'].includes(data.kind)){
    this.broadcast(data,id);
    this.onState?.(data);
   }
@@ -158,65 +155,44 @@ export class OnlineRoom {
    if(!players.host||!players[data.you])return;
    const joined=!this.connected;
    clearTimeout(this.joinTimer);
-   this.id=data.you;this.players=players;this.onParty?.(players,joined);
-  }else if(this.connected&&data.type==='ballot'&&!this.inMatch){
-   this.ballot={id:data.id,picks:data.picks,length:data.length===9?9:18};
-   this.onVote?.(this.ballot);
-  }else if(data.type==='cancelVote'&&data.id===this.ballot?.id){
-   this.ballot=null;this.onVote?.(null);
-  }else if(data.type==='start'&&this.ballot&&this.ballot.id===data.id&&courses.includes(data.course)){
-   this.startMatch(data.course,this.ballot.length);
+   this.id=data.you;this.players=players;
+   if(courses.includes(data.settings?.course))this.settings={course:data.settings.course,length:data.settings.length===9?9:18};
+   this.onParty?.(players,joined);
+  }else if(this.connected&&!this.inMatch&&data.type==='start'&&courses.includes(data.course)){
+   const ids=this.playerIds;
+   if(!Array.isArray(data.order)||new Set(data.order).size!==ids.length||data.order.length!==ids.length||!data.order.every(id=>ids.includes(id)))return;
+   this.startMatch(data);
   }else if(data.type==='state'&&this.inMatch)this.onState?.(data);
  }
 
  publishRoster(joined=false){
   for(const id of this.playerIds){
-   if(id!=='host')this.write(this.connections.get(id),{type:'roster',protocol,you:id,players:this.players});
+   if(id!=='host')this.write(this.connections.get(id),{type:'roster',protocol,you:id,players:this.players,settings:this.settings});
   }
   this.onParty?.(this.players,joined);
  }
 
- beginVote(length=18){
-  if(!this.connected||this.ballot||this.inMatch)return;
-  if(this.role==='guest'){this.send({type:'requestVote',length});return}
-  this.ballot={id:crypto.randomUUID(),length:length===9?9:18,picks:Object.fromEntries(this.playerIds.map(id=>[id,null]))};
-  this.publishVote();
+ configure(course,length){
+  if(this.role!=='host'||this.inMatch||!courses.includes(course))return;
+  this.settings={course,length:length===9?9:18};
+  this.publishRoster();
  }
 
- vote(course){
-  if(!this.ballot||!courses.includes(course)||this.ballot.picks[this.id])return;
-  if(this.role==='host')this.recordPick(this.id,course);
-  else this.send({type:'pick',id:this.ballot.id,course});
+ beginRound(){
+  if(this.role!=='host'||!this.connected||this.inMatch||!this.settings)return;
+  const order=this.playerIds;
+  for(let index=order.length-1;index>0;index--){
+   const swap=Math.floor(Math.random()*(index+1));
+   [order[index],order[swap]]=[order[swap],order[index]];
+  }
+  const round={type:'start',...this.settings,order,wind:Array.from({length:this.settings.length},()=>Math.random()-.5)};
+  this.broadcast(round);
+  this.startMatch(round);
  }
 
- recordPick(id,course){
-  if(!this.ballot||this.ballot.picks[id]!==null||!courses.includes(course))return;
-  this.ballot.picks[id]=course;
-  this.publishVote();
-  const picks=Object.values(this.ballot.picks);
-  if(picks.some(pick=>pick===null))return;
-  const totals=courses.map(course=>picks.filter(pick=>pick===course).length);
-  const best=courses.filter((_,index)=>totals[index]===Math.max(...totals));
-  const result=best[Math.floor(Math.random()*best.length)];
-  this.broadcast({type:'start',id:this.ballot.id,course:result});
-  this.startMatch(result,this.ballot.length);
- }
-
- publishVote(){
-  this.broadcast({type:'ballot',...this.ballot});
-  this.onVote?.(this.ballot);
- }
-
- cancelVote(){
-  if(!this.ballot)return;
-  const message={type:'cancelVote',id:this.ballot.id};
-  if(this.role==='guest'){this.send(message);return}
-  this.ballot=null;this.broadcast(message);this.onVote?.(null);
- }
-
- startMatch(course,length){
-  this.inMatch=true;this.ballot=null;
-  this.onVote?.(null);this.onStart?.(course,length);
+ startMatch({course,length,order,wind}){
+  this.inMatch=true;
+  this.onStart?.(course,length===9?9:18,order,wind);
  }
 
  write(connection,data){

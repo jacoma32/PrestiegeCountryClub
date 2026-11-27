@@ -1,16 +1,16 @@
 import {setHatFinish} from './gear-logos.js';
 import {gearImage} from './gear-preview.js?v=putts1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=roundtools1';
+import {Match} from './match.js?v=friendflow1';
 import {Clubhouse} from './clubhouse.js?v=party4';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=sand1';
+import {GolfGame} from './game.js?v=friendflow1';
 import {SoundEngine} from './sound.js?v=strikefield';
-import {OnlineRoom,partyLimit} from './online.js?v=roundtools1';
-import {FriendsService,isOnline} from './friends.js?v=invite2';
+import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
+import {FriendsService,isOnline} from './friends.js?v=friendflow1';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=coins1';
 import {HoleMap} from './hole-map.js?v=shotpath2';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
@@ -56,53 +56,59 @@ const closeTutorial=()=>{$('tutorialOverlay').classList.add('hidden');try{localS
 const openTutorial=()=>{lessonIndex=0;$('tutorialOverlay').classList.remove('hidden');renderLesson()};
 $('coachNext').onclick=()=>{if(++lessonIndex>=lessons.length)closeTutorial();else renderLesson()};$('coachSkip').onclick=closeTutorial;
 const start=async(name='royal',tutorial=false,length=18)=>{
- if(room.connected&&!room.inMatch){
-  showPage('home');room.beginVote(length);return;
- }
  showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial,length);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
-document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
-const playMode=$('playMode');
-let selectedCourse='',selectedLength=18,friendRound=false;
-function chooseRound(course='',label='Friend round',friendsOnly=false){
- selectedCourse=course;
- friendRound=friendsOnly;
- $('playModeCourse').textContent=label;
+document.querySelectorAll('[data-page]:not(#playGolf)').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
+const playMode=$('playMode'),inviteMethod=$('inviteMethod'),invitePrompt=$('partyPrompt');
+let selectedCourse='',selectedLength=18,playWithFriends=false,checkingInvite=false,offeredInvite=null;
+function chooseRound(){
+ selectedCourse='';playWithFriends=false;
+ $('playModeCourse').textContent='';
  $('playModeTitle').textContent='How many holes do you want to play?';
  $('roundLengths').hidden=false;
  $('playChoices').hidden=true;
  playMode.showModal();
 }
-for(const button of document.querySelectorAll('[data-course]')){
- button.onclick=()=>chooseRound(button.dataset.course,button.querySelector('h3').textContent);
+async function openPlayGolf(){
+ if(checkingInvite||playMode.open||invitePrompt.open)return;
+ if(room.connected){showPage('home');return}
+ checkingInvite=true;
+ let timer;
+ try{
+  const invite=displayedInvite||await Promise.race([
+   connectFriends().then(()=>friends.findInvite()).catch(()=>null),
+   new Promise(resolve=>{timer=setTimeout(resolve,2500)}),
+  ]);
+  if(invite&&!room.connected&&!joiningInvite){
+   offeredInvite=invite;
+   $('partyMessage').textContent='Play golf with @'+invite.username+'?';
+   invitePrompt.showModal();
+  }else if(!room.connected&&!joiningInvite)chooseRound();
+ }finally{clearTimeout(timer);checkingInvite=false}
 }
+$('heroPlay').onclick=$('playGolf').onclick=openPlayGolf;
 for(const button of document.querySelectorAll('[data-round-length]')){
  button.onclick=()=>{
   selectedLength=Number(button.dataset.roundLength);
-  if(friendRound){playMode.close('friends');room.beginVote(selectedLength);return}
   $('playModeTitle').textContent='Are you playing by yourself or with friends?';
   $('roundLengths').hidden=true;
   $('playChoices').hidden=false;
   $('playSolo').focus();
  };
 }
-$('playSolo').onclick=()=>{
- playMode.close();
- const course=selectedCourse;
- selectedCourse='';
- if(room.room)endOnline();
- start(course,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
-};
-$('playWithFriend').onclick=()=>{
- playMode.close('friends');
- if(room.connected)room.beginVote(selectedLength);
- else{$('inviteOptions').open=true;openFriends()}
-};
-playMode.addEventListener('close',()=>{
- if(playMode.returnValue!=='friends')selectedCourse='';
- playMode.returnValue='';
-});
-$('heroPlay').onclick=()=>showPage('courses');
-$('rangeTab').onclick=()=>start('range',false);$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
+function showCoursePicker(withFriends){
+ playWithFriends=withFriends;playMode.close();showPage('courses');
+}
+$('playSolo').onclick=()=>showCoursePicker(false);
+$('playWithFriend').onclick=()=>showCoursePicker(true);
+for(const button of document.querySelectorAll('[data-course]')){
+ button.onclick=()=>{
+  selectedCourse=button.dataset.course;
+  if(playWithFriends){inviteMethod.showModal();return}
+  if(room.room)endOnline();
+  start(selectedCourse,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
+ };
+}
+$('rangeTab').onclick=()=>{if(room.room)endOnline();start('range',false)};$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
 $('closeBag').onclick=()=>game.returnFromBag(game.club);
 $('bagContents').addEventListener('click',event=>{
  const button=event.target.closest('[data-pick]');
@@ -231,6 +237,10 @@ function renderGear(){
   card.append(preview,name,action);list.append(card);gearPreviews.observe(preview);
  }
 }
+game.onShotSettled=()=>{
+ const session=match;
+ if(session)queueMicrotask(()=>{if(match===session)session.strokeSettled()});
+};
 game.onHoleComplete=async(round,hole,shots)=>{
  const session=match;if(session)queueMicrotask(()=>{if(match===session)session.holed(shots)});
  const sameHole=()=>game.roundId===round&&game.index===hole&&game.modal;
@@ -250,7 +260,7 @@ $('soundBtn').onclick=async()=>{const on=await sound.toggle();$('soundBtn').text
 
 const onlinePanel=$('onlinePanel'),onlineStatus=$('onlineStatus'),onlineCode=$('onlineCode'),rivalStats=$('rivalStats');
 let onlineActive=false,match=null;
-let friendsReady=false,connectingFriends=null,inviteTo=null;
+let friendsReady=false,connectingFriends=null;
 function playerCard(){
  const {equipped}=wallet();
  return {name:friends.profile?.username||activeUser?.username||$('golferName').value||'Rookie',frame:$('golferFrame').value,colors:palette(),pattern:equipped.shirt,hat:equipped.hat,clubs:equipped.clubs,clubStyles:clubLoadout(equipped)};
@@ -259,11 +269,15 @@ function refreshTags(){
  const name=playerCard().name;
  $('localName').textContent='@'+name;$('headerTag').textContent='@'+name;
  const party=room.connected;
- $('partyCount').textContent='PARTY · '+Math.max(1,room.playerIds.length)+' / '+partyLimit;
- $('inviteFriend').hidden=party&&!room.canInvite;$('leaveParty').hidden=!room.room;
+ const course=Array.from(document.querySelectorAll('[data-course]')).find(button=>button.dataset.course===room.settings?.course);
+ const round=course?course.querySelector('h3').textContent+' · '+room.settings.length+' HOLES · ':'';
+ $('partyCount').textContent=round+Math.max(1,room.playerIds.length)+' / '+partyLimit+' GOLFERS';
+ $('inviteFriend').hidden=!room.canInvite;$('leaveParty').hidden=!room.room;
  $('heroPlay').hidden=party;
- $('onlineJoin').disabled=$('createParty').disabled=party;
- $('multiplayer').querySelector('span').textContent=party?'Vote for course →':'Party play →';
+ $('startFriendRound').hidden=room.role!=='host'||!party||room.inMatch;
+ $('onlineJoin').disabled=party;
+ $('createParty').hidden=!selectedCourse||Boolean(room.room);
+
  refreshInvite();
 
 }
@@ -273,50 +287,35 @@ function refreshInvite(){
  const incoming=friends.friends.find(friend=>friends.pendingInvite(friend));
  displayedInvite=!room.connected&&!joiningInvite?incoming:null;
  $('inviteDot').hidden=!displayedInvite;
- $('partyPrompt').hidden=!displayedInvite;
  if(!displayedInvite)return;
- $('partyMessage').textContent='@'+displayedInvite.username+' invited you to their party.'+(page==='playing'?' Joining leaves this round.':'');
  $('partyJoin').disabled=$('partyDecline').disabled=replyBusy;
  inviteTimer=setTimeout(refreshInvite,Math.max(1,displayedInvite.inviteTime.toMillis()+120000-Date.now()));
 }
 async function answerInvite(join){
- const invite=displayedInvite;
+ const invite=offeredInvite;
  if(replyBusy||!invite)return;
- replyBusy=true;refreshInvite();
+ replyBusy=true;$('partyJoin').disabled=$('partyDecline').disabled=true;
  try{
   const accepted=await friends.reply(invite,join?'joined':'declined');
   if(join&&accepted){
    joiningInvite=true;
-   if(room.role==='host')await friends.unhost();
-   onlinePanel.classList.remove('hidden');
-   await room.join(invite.hosting);
+   invitePrompt.close();
+   if(room.role==='host')await friends.unhost().catch(()=>{});
+   openPartyPanel('code');await room.join(invite.hosting);
+  }else{
+   invitePrompt.close();chooseRound();
   }
- }catch(error){onlinePanel.classList.remove('hidden');showFriendsError(error)}
- finally{replyBusy=false;refreshInvite()}
+ }catch(error){invitePrompt.close();openPartyPanel('friends');showFriendsError(error)}
+ finally{
+  offeredInvite=null;replyBusy=false;$('partyJoin').disabled=$('partyDecline').disabled=false;refreshInvite();
+ }
 }
 $('partyJoin').onclick=()=>answerInvite(true);
 $('partyDecline').onclick=()=>answerInvite(false);
+invitePrompt.addEventListener('cancel',event=>{event.preventDefault();answerInvite(false)});
 const friends=new FriendsService(()=>renderFriends());
 const room=new OnlineRoom({
  profile:playerCard,
- onVote:ballot=>{
-  const dialog=$('courseVote');
-  if(!ballot){if(dialog.open)dialog.close();return}
-  onlinePanel.classList.add('hidden');
-  if(!dialog.open){
-   dialog.showModal();
-   const selected=Array.from(dialog.querySelectorAll('[data-vote]')).find(button=>button.dataset.vote===selectedCourse);
-   selected?.focus();
-  }
-  $('voteTitle').textContent='Vote for a course · '+ballot.length+' holes';
-  const picked=ballot.picks[room.id];
-  const remaining=Object.values(ballot.picks).filter(pick=>!pick).length;
-  $('cancelVote').textContent=picked?'Leave party':'Back to lobby';
-  for(const button of dialog.querySelectorAll('[data-vote]')){
-   button.disabled=!!picked;button.setAttribute('aria-pressed',String(button.dataset.vote===picked));
-  }
-  $('voteStatus').textContent=picked?(remaining?'Vote locked. Waiting for '+remaining+' more.':'Votes are in.'):'Choose your course.';
- },
  onParty:(players,joined)=>{
   const profiles={};
   for(const [id,profile] of Object.entries(players)){
@@ -325,19 +324,19 @@ const room=new OnlineRoom({
    profiles[id]={name:profile.name,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:clubLoadout({...profile.clubStyles,clubs:profile.clubs})};
   }
   lobby.setMembers(profiles,showFriendsError);
-  if(joined&&room.role==='guest'){
+  if(joined){
    joiningInvite=false;onlinePanel.classList.add('hidden');if(page!=='home')showPage('home');
   }
   renderFriends();
  },
- onHosted:(code,course)=>friends.host(code,course,inviteTo).then(()=>{onlineStatus.textContent=inviteTo?'Party invite sent.':'Party open. Share the invite link or code.'}).catch(err=>onlineStatus.textContent=err.message),
+ onHosted:()=>renderFriends(),
  onStatus:message=>{if(!room.room||message.startsWith('Connection failed')||message.startsWith('Cannot join'))joiningInvite=false;refreshTags();onlineCode.hidden=$('onlineCopy').hidden=room.role!=='host'||!room.room;onlineStatus.textContent=message;onlineCode.textContent=room.role==='host'&&room.room?'ROOM CODE: '+room.room:'';},
- onStart:async (course,length)=>{
+ onStart:async (course,length,order,wind)=>{
   if(room.role==='host')friends.unhost().catch(()=>{});
   selectedCourse='';
   onlineActive=true;onlinePanel.classList.add('hidden');
-  $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;
-  const session=match=new Match(game,room,lobby,length);
+  $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;document.body.classList.add('friend-round');
+  const session=match=new Match(game,room,lobby,length,order,wind);
   await start(course,false,length);
   if(match===session&&game.started)session.start();
  },
@@ -346,11 +345,11 @@ const room=new OnlineRoom({
   if(match?.complete){joiningInvite=false;return}
   const wasPlaying=onlineActive;
   onlineActive=false;match?.stop();match=null;joiningInvite=false;lobby.setMembers({},showFriendsError);renderFriends();
-  rivalStats.hidden=true;
+  rivalStats.hidden=true;document.body.classList.remove('friend-round');
   if(wasPlaying){showPage('home');onlinePanel.classList.remove('hidden');onlineStatus.textContent='Your friend disconnected. The match has ended.'}
  }
 });
-function endOnline(){onlineActive=false;match?.stop();match=null;rivalStats.hidden=true;room.close();friends.unhost().catch(()=>{})}
+function endOnline(){onlineActive=false;match?.stop();match=null;rivalStats.hidden=true;document.body.classList.remove('friend-round');room.close();friends.unhost().catch(()=>{})}
 function renderFriends(){
  $('friendCount').textContent=friendsReady?' / '+friends.friends.length:'';refreshTags();const login=$('friendsLogin'),content=$('friendsContent'),status=$('onlineStatus'),list=$('friendsList'),inbox=$('friendsInbox');
  if(!friendsReady){login.hidden=false;content.hidden=true;return}
@@ -370,29 +369,35 @@ function renderFriends(){
   const item=document.createElement('div');item.className='friend-row';
   const name=document.createElement('span');name.textContent='@'+friend.username+' · '+(isOnline(friend)?friend.hosting?'IN LOBBY':'ONLINE':'OFFLINE');
   item.append(name);
-  if((!room.room||room.canInvite)&&!joiningInvite&&!Object.values(room.players).some(player=>player.name.toLowerCase()===friend.username.toLowerCase())){
+  if(room.canInvite&&room.peer?.open&&!joiningInvite&&!Object.values(room.players).some(player=>player.name.toLowerCase()===friend.username.toLowerCase())){
    const invite=document.createElement('button');const outgoing=friends.profile.invited===friend.uid&&friends.profile.hosting===room.room&&room.room&&room.role==='host'&&Date.now()-friends.profile.inviteTime?.toMillis?.()<120000;
    const declined=outgoing&&friend.partyReplies?.[friends.user.uid]?.id===friends.profile.inviteId&&friend.partyReplies[friends.user.uid].answer==='declined';
    invite.textContent=declined?'Invite again':outgoing?'Invite sent':'Invite to party';invite.disabled=!!outgoing&&!declined;
    if(declined)name.textContent+=' · Declined';
-   invite.onclick=()=>hostParty(friend.uid);item.append(invite);
-  }
-  if(!room.connected&&friend.hosting&&isOnline(friend)&&!friend.invited){
-   const join=document.createElement('button');join.textContent=friend.invited?'ACCEPT INVITE':'JOIN PARTY';
-   join.onclick=()=>room.join(friend.hosting);
-   item.append(join);
+   invite.onclick=async()=>{
+    invite.disabled=true;
+    try{await friends.host(room.room,room.settings.course,friend.uid);onlineStatus.textContent='Invite sent to @'+friend.username+'. They can accept from Play Golf.'}
+    catch(error){showFriendsError(error);invite.disabled=false}
+   };item.append(invite);
   }
   list.append(item);
  }
  if(!friends.friends.length)list.textContent='Your friends will appear here';
 }
 function showFriendsError(error){onlineStatus.textContent=error.message||String(error)}
-async function openFriends(){
+function openPartyPanel(mode){
+ onlinePanel.dataset.mode=mode;
+ $('createParty').hidden=!selectedCourse||Boolean(room.room);
  onlinePanel.classList.remove('hidden');
+ $('inviteOptions').open=mode==='code';
+}
+async function openFriends(){
+ openPartyPanel('friends');
  try{
   await connectFriends()
-  renderFriends();onlineStatus.textContent=friends.profile?.username?'Search for a gamertag or invite a friend.':'Choose your online username';
- }catch(error){onlineStatus.textContent='Friends list unavailable. You can still create an invite link or join by code.';friendsReady=false}
+  renderFriends();if(onlinePanel.dataset.mode!=='friends')return;
+  onlineStatus.textContent=friends.profile?.username?'Search for a gamertag or invite a friend.':'Choose your online username';
+ }catch(error){if(onlinePanel.dataset.mode==='friends')onlineStatus.textContent='Friends list unavailable. You can use a party code from Play Golf.';friendsReady=false}
 }
 $('friendsRegister').onclick=async()=>{try{await friends.register($('friendsUsername').value);renderFriends();onlineStatus.textContent='Username registered — add your first friend!'}catch(error){showFriendsError(error)}};
 $('friendsSearch').addEventListener('keydown',event=>{if(event.key==='Enter')$('friendsAdd').click()});
@@ -403,28 +408,29 @@ function connectFriends(){
  if(!connectingFriends)connectingFriends=friends.init().then(()=>{friendsReady=true;renderFriends()}).catch(err=>{connectingFriends=null;throw err});
  return connectingFriends;
 }
-async function hostParty(uid=null){
- if(room.connected&&!room.canInvite)return;
- inviteTo=uid;
- if(room.role==='host'&&!room.peer?.open&&room.peer&&!room.peer.destroyed&&!room.peer.disconnected)return;
- if(room.role==='host'&&room.peer?.open){
-  try{await friends.host(room.room,null,uid);onlineStatus.textContent=uid?'Party invite sent':'Party is open'}catch(e){showFriendsError(e)}
- }else await room.host(null);
+async function hostParty(){
+ if(room.role==='host'&&room.room){room.configure(selectedCourse,selectedLength);return}
+ if(selectedCourse)await room.host(selectedCourse,selectedLength);
 }
 $('homeRange').onclick=()=>$('rangeTab').click();
-$('inviteFriend').onclick=()=>{if(room.role==='host')$('inviteOptions').open=true;openFriends()};
-$('multiplayer').onclick=()=>room.connected?chooseRound():openFriends();
-$('cancelVote').onclick=()=>{
- if(room.ballot?.picks[room.id]){endOnline();$('courseVote').close()}else room.cancelVote();
+$('inviteFriend').onclick=()=>{if(room.canInvite)inviteMethod.showModal();else openFriends()};
+$('startFriendRound').onclick=()=>room.beginRound();
+$('inviteViaFriends').onclick=()=>{
+ inviteMethod.close();
+ openFriends();
+ hostParty();
 };
-$('courseVote').addEventListener('cancel',event=>{event.preventDefault();$('cancelVote').click()});
-for(const button of document.querySelectorAll('[data-vote]'))button.onclick=()=>room.vote(button.dataset.vote);
+$('inviteViaCode').onclick=()=>{
+ inviteMethod.close();
+ openPartyPanel('code');
+ hostParty();
+};
 $('leaveParty').onclick=()=>{endOnline();refreshTags()};
 $('createParty').onclick=()=>hostParty();
 $('onlineJoin').onclick=()=>room.join($('onlineJoinCode').value);
 $('onlineCopy').onclick=async()=>{const url=new URL(location.href);url.search='';url.searchParams.set('party',room.room);try{await navigator.clipboard.writeText(url.href);onlineStatus.textContent='Invite link copied'}catch{onlineStatus.textContent=url.href}};
 const inviteCode=new URL(location.href).searchParams.get('party');
-if(/^[A-Z0-9]{6}$/i.test(inviteCode||'')){$('inviteOptions').open=true;$('onlineJoinCode').value=inviteCode;onlinePanel.classList.remove('hidden');onlineStatus.textContent='You have a clubhouse invitation. Select Join Party.'}
+if(/^[A-Z0-9]{6}$/i.test(inviteCode||'')){openPartyPanel('code');$('onlineJoinCode').value=inviteCode;onlineStatus.textContent='You have a clubhouse invitation. Select Join Party.'}
 const sunOffset=new THREE.Vector3(-39,53,27);
 function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelta(),.05);if(page==='home'){lobby.draw(renderer,dt);return}if(match)match.update(dt);else game.update(dt);const course=game.world.current;
  if(sun.userData.course!==course){
@@ -433,7 +439,10 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelt
   sunOffset.set(settings[0],settings[1],settings[2]);sun.color.setHex(settings[3]);sun.intensity=settings[4];
  }
  holeMap.update(game,page==='playing');
- if(game.world.puttGrid)game.world.puttGrid.visible=page==='playing'&&game.started&&!game.spectating&&game.club==='putter'&&!game.swinging&&!game.bagPhase&&!game.modal;
- sun.target.position.copy(game.position);sun.position.copy(game.position).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();
+ if(game.world.puttGrid)game.world.puttGrid.visible=page==='playing'&&game.started&&(game.spectating
+  ? match?.frame?.putting===true
+  : game.club==='putter'&&!game.swinging&&!game.bagPhase&&!game.modal);
+ const lightTarget=game.spectating?game.ball.position:game.position;
+ sun.target.position.copy(lightTarget);sun.position.copy(lightTarget).add(sunOffset);renderer.render(scene,camera)}window.addEventListener('resize',sizeCanvas);showPage('home');connectFriends().catch(()=>{});loop();
 window.dispatchEvent(new Event('pcc-game-ready'));
 (async()=>{$('loader').classList.add('hidden');const account=readAccount();if(account){activeUser=account;$('accountBtn').textContent=account.username.toUpperCase()}$('accountGate').classList.add('hidden');document.body.classList.remove('gated');refreshTags();try{await equip()}catch(e){console.warn('Golfer preview unavailable:',e);$('modelSource').textContent='MODEL WILL LOAD WHEN ASSETS ARE AVAILABLE'}})();

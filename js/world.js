@@ -103,7 +103,7 @@ export class World{
    object.geometry?.dispose();
    object.material?.dispose();
    if(object.isInstancedMesh)object.dispose();
-  });this.root=new THREE.Group();this.scene.add(this.root);this.treeContact=new TreeContact();this.current=name;this.holeIndex=idx;const c=COURSES[name], h=c.holes[idx],finish=finishes[name]||finishes.royal;this.hole=h;this.length=h.route.at(-1)[0];this.scene.background=new THREE.Color(c.sky);
+  });this.root=new THREE.Group();this.scene.add(this.root);this.treeContact=new TreeContact();this.current=name;this.holeIndex=idx;const c=COURSES[name], h=c.holes[idx],finish=finishes[name]||finishes.royal;this.hole=h;this.windStrength=c.wind;this.length=h.route.at(-1)[0];this.scene.background=new THREE.Color(c.sky);
  const dome=new THREE.Mesh(new THREE.SphereGeometry(820,40,20),new THREE.ShaderMaterial({
   side:THREE.BackSide,depthWrite:false,uniforms:{dusk:{value:name==='misty'?1:0},horizon:{value:new THREE.Color(c.sky).lerp(new THREE.Color(0xffecc9),.42)},zenith:{value:new THREE.Color(0x518ac0)}},
   vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',

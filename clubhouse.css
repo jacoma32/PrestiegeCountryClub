@@ -97,3 +97,25 @@ body:not(.touch-golf) .game-hud .game-bottom{bottom:38px}
 
 .map-prediction{margin:4px 0 0;color:#fff;font:600 10px/1.3 Outfit,sans-serif}
 @media(max-width:700px),(max-height:500px){.map-prediction{font-size:8px}}
+
+#inviteMethod,#partyPrompt{
+ position:fixed;inset:0;margin:auto;width:min(440px,calc(100% - 32px));padding:24px;
+ border:1px solid #738578;border-radius:6px;background:#112824;color:#fff4db;
+}
+#inviteMethod::backdrop,#partyPrompt::backdrop{background:#04100de6}
+#inviteMethod h2,#partyPrompt h2{font-size:clamp(26px,5vw,36px);margin:0 0 16px}
+#inviteMethod .play-mode-actions,#partyPrompt .play-mode-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+#inviteMethod button,#partyPrompt button{width:auto;margin:0;padding:8px 14px}
+#onlinePanel[data-mode="friends"] #inviteOptions,
+#onlinePanel[data-mode="code"] :is(#friendsLogin,#friendsContent){display:none}
+#onlinePanel[data-mode="code"] .social-heading{display:none}
+.friend-round .rival-stats{right:auto;left:max(12px,env(safe-area-inset-left));top:86px;width:min(200px,46vw)}
+.rival-stats table{width:100%;border-collapse:collapse;text-align:right}
+.rival-stats th:first-child{text-align:left;overflow-wrap:anywhere}
+.rival-stats :is(th,td){padding:2px 4px}
+.rival-stats .hitting{color:#ffe1a0;background:#ffffff13}
+.friend-round .hole-map{top:252px}
+@media(max-width:700px),(max-height:500px){
+ .friend-round .rival-stats{top:max(66px,calc(env(safe-area-inset-top) + 54px));padding:5px 7px}
+ .friend-round .hole-map{left:auto;right:max(8px,env(safe-area-inset-right));top:90px}
+}
