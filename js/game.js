@@ -1,7 +1,8 @@
 import {clubChoice} from './locker.js?v=clubs1';
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
-import {WEDGES,wedgeLaunch} from './wedges.js';
+import {WEDGES,wedgeLaunch} from './wedges.js?v=sand1';
+import {SandBurst} from './sand-burst.js';
 import {makeGolfBall} from './golf-ball.js?v=brands1';
 import {buildBag} from './golf-bag.js?v=clubs1';
 import {contactTime} from './shot-pose.js?v=approach2';
@@ -25,7 +26,7 @@ function puttRollSpeed(speed,lie,dt){
 const CLUBS={driver:{name:'DRIVER',speed:43,loft:.395,range:255},wood:{name:'3 WOOD',speed:39.8,loft:.42,range:228},hybrid:{name:'4 HYBRID',speed:42.2,loft:.315,range:191},...CLUB_IRONS,
  ...WEDGES,putter:{name:'PUTTER',speed:11,loft:.015,range:25}};
 export class GolfGame{
- constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.baseCameraFov=camera.fov;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.roundLength=18;this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
+ constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.baseCameraFov=camera.fov;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.sandBurst=new SandBurst(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.roundLength=18;this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
  this.bagPhase=null;this.listeners();this.enterMenu()}
  makeContactShadow() {
   const material=new THREE.ShaderMaterial({
@@ -90,7 +91,7 @@ export class GolfGame{
    velocity.y=vertical;
    return velocity;
   }
-  const surface = lie === 'BUNKER' ? .68 : lie === 'ROUGH' ? .84 : 1;
+  const surface = lie === 'BUNKER' ? .52 : lie === 'ROUGH' ? .84 : 1;
   const speed = club.speed * Math.pow(power, .8) * surface;
   const velocity = this.shotDirection().multiplyScalar(speed * Math.sqrt(1 - club.loft ** 2));
   if (this.club === 'putter') velocity.multiplyScalar(.8 * (1 + .5 * THREE.MathUtils.smoothstep(power,.25,1)));
@@ -198,6 +199,7 @@ export class GolfGame{
  notify(t){$('banner').textContent=t}
  clearBag(){
   this.waterWait=0;this.impactPending=false;this.whooshPending=false;this.splash.group.visible=false;
+  if(this.sandBurst)this.sandBurst.mesh.visible=false;
   this.golfer.carrying=false;this.resetBagLift();this.bagPhase=null;this.bagLie=null;
   if(this.bag)this.bag.visible=false;
   this.bagFieldOfView=null;
@@ -416,7 +418,7 @@ export class GolfGame{
   if(this.started){this.notify('ADDRESS THE BALL');this.refresh()}
  }
  releaseShot(){if(!this.charging||this.swinging||this.modal)return;this.charging=false;const p=clamp(this.charge,this.club==='putter'?.02:.11,1);this.shots++;this.swinging=true;this.swingTimer=0;this.shotPreview.group.visible=false;this.impactPending=true;this.whooshPending=true;this.strikePower=p;this.cameraShotLine=this.shotDirection();this.shotOrigin=this.position.clone();this.carryYards=null;this.vel.copy(this.launchVelocity(p));this.flightShape=this.shotShape;this.shotShape=0;this.impactSpin=CLUBS[this.club].isIron?CLUBS[this.club].spin:0;this.biteTimer=0;this.ballLaunchDelay=contactTime[this.shotName()];this.golfer.shot(this.shotName());this.notify(p>.74&&p<.88?'PURE STRIKE':'SHOT IN PLAY');this.refresh()}
- update(dt){dt=Math.min(dt,.04);this.world.waterClock.value+=dt;this.splash.update(dt);this.golfer.update(dt);this.updatePlacement();
+ update(dt){dt=Math.min(dt,.04);this.world.waterClock.value+=dt;this.splash.update(dt);this.sandBurst?.update(dt);this.golfer.update(dt);this.updatePlacement();
   if(this.waterWait>0){
    this.waterWait=Math.max(0,this.waterWait-dt);this.moveCamera(dt);
    if(!this.waterWait){
@@ -430,7 +432,12 @@ export class GolfGame{
   if(this.whooshPending&&this.swingTimer>=this.ballLaunchDelay-.16){
    this.whooshPending=false;this.onSfx('whoosh',{club:this.club,power:this.strikePower});
   }
-  if(flightTime>=0&&this.impactPending){this.impactPending=false;this.onSfx('strike',{club:this.club,power:this.strikePower,lie:this.world.lie(this.shotOrigin.x,this.shotOrigin.z)})}
+  if(flightTime>=0&&this.impactPending){
+   this.impactPending=false;
+   const lie=this.world.lie(this.shotOrigin.x,this.shotOrigin.z);
+   this.onSfx('strike',{club:this.club,power:this.strikePower,lie});
+   if(lie==='BUNKER')this.sandBurst?.start(this.shotOrigin,this.cameraShotLine,this.strikePower);
+  }
   for(let left=flightTime;left>1e-8&&this.swinging&&!this.waterWait;left-=1/120)this.stepBall(Math.min(left,1/120))}
   if(this.swinging)this.golfer.watchFlight(this.position,this.swingTimer-this.ballLaunchDelay);
   this.moveCamera(dt)}else this.menuCamera(dt);this.updateContactShadow()}
