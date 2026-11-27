@@ -65,18 +65,18 @@ body:not(.touch-golf) .game-hud .game-bottom{bottom:38px}
 }
 
 :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf .touch-shot-controls{
- grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;margin:5px 0;
+ grid-template-columns:32px minmax(0,1fr) 32px;gap:5px;margin:4px 0;
 }
 :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf .touch-shot-controls button{
- min-height:40px;padding:4px 6px;font-size:14px;
+ min-height:32px;padding:3px 5px;font-size:12px;
 }
 :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf #openBag,
 :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf #resetAim,
 :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf .game-top button{
- min-height:38px;padding:4px 8px;
+ min-height:32px;padding:3px 6px;
 }
 @media(orientation:portrait){
  :where([data-golf-device="iphone"],[data-golf-device="phone"]).touch-golf .game-bottom .swing-zone{
-  max-width:320px;
+  max-width:260px;
  }
 }
