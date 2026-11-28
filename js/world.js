@@ -1,4 +1,4 @@
-import {makePuttingGrid} from './putting-grid.js';
+import {makePuttingGrid} from './putting-grid.js?v=equipment1';
 import {pinFlagMaterial} from './pin-flag.js';
 import {protectGreens} from './green-layout.js';
 import {finishes,mow,ridgeBackdrop,plantMargins,terrainFinish,teeBoard} from './course-finish.js?v=dunes1';
@@ -80,7 +80,12 @@ export class World{
   }
   if(this.current==='summit')landform=shoulder*(8+4.8*Math.sin(.031*z+.023*x+phase)+3.6*Math.cos(.034*x-phase));
   if(this.current==='ocean'&&x<28)landform=shoulder*(1.3+1.1*Math.cos(x*.21-z*.065+phase));
-  return landform+ridge+hills-sandDepth+ this.station(z,3)+.5*Math.sin(x*.053)*Math.sin(z*.025)+.26*Math.sin(z*.049+x*.017)}
+  const [rx,rz]=this.hole.green||[0,0];
+  const pinZ=this.getGreenZ(),pinX=this.fairwayX(pinZ);
+  const u=(x-pinX)/(rx||1),v=(z-pinZ)/(rz||1);
+  const greenFade=rx&&rz?1-THREE.MathUtils.smoothstep(Math.hypot(u,v),.75,1.6):0;
+  const contour=greenFade*(.16*u*Math.sin(v*2.4+phase)+.08*v);
+  return contour+landform+ridge+hills-sandDepth+ this.station(z,3)+.5*Math.sin(x*.053)*Math.sin(z*.025)+.26*Math.sin(z*.049+x*.017)}
  getGreenZ(){return 70-this.length}
  fairwayX(z){return this.station(z,1)}
  greenEdge(a){return 1+.06*Math.sin(2*a+.5)+.085*Math.cos(3*a-.4)+.019*Math.sin(7*a+this.holeIndex*.7)}

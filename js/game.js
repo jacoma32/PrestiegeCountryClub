@@ -1,4 +1,5 @@
-import {clubChoice} from './locker.js?v=clubs1';
+import {clubChoice} from './locker.js?v=equipment1';
+import {CLUBS,clubStats} from './club-stats.js';
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
 import {WEDGES,wedgeLaunch} from './wedges.js?v=sand1';
@@ -6,9 +7,9 @@ import {SandBurst} from './sand-burst.js';
 import {makeGolfBall} from './golf-ball.js?v=brands1';
 import {buildBag} from './golf-bag.js?v=clubs1';
 import {contactTime} from './shot-pose.js?v=approach2';
-import {CLUB_IRONS,curveAcceleration} from './irons.js?v=irons1';
+import {curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';
-import {World,COURSES} from './world.js?v=friendflow1';
+import {World,COURSES} from './world.js?v=equipment1';
 import {Golfer} from './actors.js?v=clubs1';
 const clamp=THREE.MathUtils.clamp,$=id=>document.getElementById(id);
 const SHAPES=['HOOK','DRAW','STRAIGHT','FADE','SLICE'];
@@ -23,8 +24,7 @@ function puttRollSpeed(speed,lie,dt){
  const friction=lie==='FRINGE'?3.65:lie==='FAIRWAY'?2.8:lie==='BUNKER'?10:5.5;
  return speed*Math.exp(-friction*dt);
 }
-const CLUBS={driver:{name:'DRIVER',speed:43,loft:.395,range:255},wood:{name:'3 WOOD',speed:39.8,loft:.42,range:228},hybrid:{name:'4 HYBRID',speed:42.2,loft:.315,range:191},...CLUB_IRONS,
- ...WEDGES,putter:{name:'PUTTER',speed:11,loft:.015,range:25}};
+
 export class GolfGame{
  constructor(renderer,scene,camera){this.renderer=renderer;this.scene=scene;this.camera=camera;this.baseCameraFov=camera.fov;this.world=new World(scene);this.golfer=new Golfer(scene);this.ball=this.makeBall();this.tee=this.makeTee();this.splash=new WaterSplash(scene);this.sandBurst=new SandBurst(scene);this.contactShadow=this.makeContactShadow();this.clock=new THREE.Clock();this.position=new THREE.Vector3();this.vel=new THREE.Vector3();this.swinging=false;this.swingTimer=0;this.ballLaunchDelay=.9;this.charge=0;this.charging=false;this.shots=0;this.scores=[];this.course='royal';this.roundLength=18;this.index=0;this.started=false;this.aim=0;this.club='driver';this.lastIron='iron7';this.shotShape=0;this.flightShape=0;this.impactSpin=0;this.biteTimer=0;this.wind=0;this.modal=false;this.cameraTarget=new THREE.Vector3();this.dragging=false;this.dragStart=0;this.orbit=0;this.coachActor=null;this.onSfx=()=>{};this.shotPreview=this.createShotPreview();const gear=buildBag();this.bag=gear.bag;this.bagHeads=gear.heads;this.setBagFinish=gear.setFinish;scene.add(this.bag);
  this.bagPhase=null;this.listeners();this.enterMenu()}
@@ -84,19 +84,23 @@ export class GolfGame{
  positionCoach(){if(!this.coachActor)return;const p=this.world.teePosition;this.coachActor.root.position.set(p.x+4,this.world.ground(p.x+4,p.z-1),p.z-1);this.coachActor.root.rotation.y=Math.PI-.25;}
  createShotPreview(){const group=new THREE.Group();this.scene.add(group);const mat=new THREE.LineBasicMaterial({color:0x35d4ff,transparent:true,opacity:.9,depthTest:false});const line=new THREE.Line(new THREE.BufferGeometry(),mat);line.renderOrder=50;group.add(line);const marker=new THREE.Mesh(new THREE.RingGeometry(.8,1.07,48),new THREE.MeshBasicMaterial({color:0x50e9ff,transparent:true,opacity:.9,side:THREE.DoubleSide,depthTest:false}));marker.rotation.x=-Math.PI/2;marker.renderOrder=50;group.add(marker);group.visible=false;return{group,line,marker}}
  launchVelocity(power) {
+  const stats=clubStats(this.club,clubChoice(this.equipment,this.club));
   const club = CLUBS[this.club], lie = this.world.lie(this.position.x, this.position.z);
   if(WEDGES[this.club]){
    const {horizontal,vertical}=wedgeLaunch(club,power,lie);
    const velocity=this.shotDirection().multiplyScalar(horizontal);
    velocity.y=vertical;
-   return velocity;
+   return velocity.multiplyScalar(stats.speedScale);
   }
   const surface = lie === 'BUNKER' ? .52 : lie === 'ROUGH' ? .84 : 1;
   const speed = club.speed * Math.pow(power, .8) * surface;
   const velocity = this.shotDirection().multiplyScalar(speed * Math.sqrt(1 - club.loft ** 2));
-  if (this.club === 'putter') velocity.multiplyScalar(.8 * (1 + .5 * THREE.MathUtils.smoothstep(power,.25,1)));
+  if (this.club === 'putter') {
+   const stability=1+(stats.moi-55)*.0015*(1-power);
+   velocity.multiplyScalar(stability*.8*(1+.5*THREE.MathUtils.smoothstep(power,.25,1)));
+  }
   velocity.y = this.club === 'putter' ? 0 : speed * club.loft;
-  return velocity;
+  return this.club==='putter'?velocity:velocity.multiplyScalar(stats.speedScale);
  }
  advanceFlight(position, velocity, dt, airborne, shape=this.flightShape) {
   const driving = (this.club==='driver'||this.club==='wood') && airborne;
@@ -149,7 +153,7 @@ export class GolfGame{
  }
  enterMenu(){this.charging=false;this.dragging=false;this.placing=false;this.tee.visible=false;this.clearBag();this.started=false;this.previewMode=false;this.shotPreview.group.visible=false;this.world.create('royal',0);this.ball.visible=false;this.golfer.setVisible(false);this.coachActor?.setVisible(false);this.camera.position.set(39,37,110);this.camera.lookAt(-4,3,-45)}
  enterPreview(){this.golfer.stanceGround=null;this.previewMode=true;this.golfer.club.visible=false;this.golfer.setVisible(true);this.golfer.root.position.set(0,this.world.ground(0,67),67);this.golfer.root.rotation.set(0,0,0);this.menuCamera(1);this.golfer.animate('idle',true)}
- async begin(course='royal',tutorial=false,length=18){await this.golferReady;this.tutorial=tutorial;this.course=course;this.roundLength=Math.min(length===9?9:18,COURSES[course].holes.length);this.roundId=crypto.randomUUID();this.scores=[];if(tutorial)await this.loadCoach();this.startHole(0);if(tutorial){this.coachActor?.setVisible(true);this.positionCoach()}}
+ async begin(course='royal',tutorial=false,length=18,checkpoint=null){await this.golferReady;this.tutorial=tutorial;this.course=course;this.roundLength=Math.min(length===9?9:18,COURSES[course].holes.length);this.roundId=checkpoint?.id||crypto.randomUUID();this.scores=checkpoint?[...checkpoint.scores]:[];if(tutorial)await this.loadCoach();this.startHole(this.scores.length);if(tutorial){this.coachActor?.setVisible(true);this.positionCoach()}}
  resetBallToTee() {
   this.position.copy(this.world.teePosition);
   this.position.y = this.world.ground(this.position.x, this.position.z) + BALL_RADIUS + .055;
@@ -173,7 +177,7 @@ export class GolfGame{
   let closest='driver',gap=Infinity;
   for(const [id,club] of Object.entries(CLUBS)){
    if(id==='putter'&&lie!=='FRINGE')continue;
-   const difference=Math.abs(distance-club.range);
+   const difference=Math.abs(distance-clubStats(id,clubChoice(this.equipment,id)).distance);
    if(difference<gap||(difference===gap&&club.range<CLUBS[closest].range)){
     closest=id;gap=difference;
    }
@@ -400,7 +404,7 @@ export class GolfGame{
  chooseClub(c){if(this.spectating)return;if(!CLUBS[c]||this.swinging||this.modal||this.bagPhase)return;this.applyClub(c);this.placeGolfer();this.refresh()}
  setShape(shape){if(this.spectating)return;if(this.club==='putter'||this.swinging||this.modal||this.bagPhase)return;this.shotShape=Math.max(-2,Math.min(2,Math.round(Number(shape)||0)));this.refresh()}
  aimDelta(d){if(this.spectating||this.placing)return;if(this.bagPhase||this.swinging||this.modal)return;this.aim=clamp(this.aim+d,-65,65);this.placeGolfer();this.refresh()}
- refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=this.shots+1;const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.distanceToPin())} YDS TO PIN`;if(this.club==='putter')$('distanceLabel').textContent=(this.distanceToPin()*3).toFixed(1)+' FT TO CUP';if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
+ refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=Math.max(1,this.shots);const stats=clubStats(this.club,clubChoice(this.equipment,this.club));$('clubDistance').textContent=this.club==='putter'?'PUTTER · MOI '+stats.moi+'/100':stats.distance+' YDS · CLUB RANGE';const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.distanceToPin())} YDS TO PIN`;if(this.club==='putter')$('distanceLabel').textContent=(this.distanceToPin()*3).toFixed(1)+' FT TO CUP';if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
  document.querySelectorAll('[data-shape]').forEach(button=>{
   const selected=Number(button.dataset.shape)===this.shotShape;
   button.classList.toggle('active',selected);
@@ -458,8 +462,14 @@ export class GolfGame{
   if(first)state.carryYards=this.travelYards(state);
   const sand=lie==='BUNKER',green=lie==='GREEN',fairway=lie==='FAIRWAY',club=CLUBS[this.club];
   if(this.club==='putter'){
-   const speed=Math.hypot(state.vel.x,state.vel.z);
    state.vel.y=0;
+   if(lie==='GREEN'){
+    const {x,z}=state.position;
+    const height=(x,z)=>this.world.groundHeight(x,z);
+    state.vel.x+=(height(x-.2,z)-height(x+.2,z))*15*dt;
+    state.vel.z+=(height(x,z-.2)-height(x,z+.2))*15*dt;
+   }
+   const speed=Math.hypot(state.vel.x,state.vel.z);
    if(speed>0)state.vel.multiplyScalar(puttRollSpeed(speed,lie,dt)/speed);
    return;
   }
