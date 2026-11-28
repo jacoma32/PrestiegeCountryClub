@@ -22,11 +22,14 @@ export function gearLogo(brand,dark=false){
    ctx.beginPath();ctx.moveTo(x,93);ctx.lineTo(x+43,93);
    ctx.lineTo(x+3,93-height);ctx.lineTo(x-35,109-height);ctx.closePath();ctx.fill();
   }
-  ctx.font='bold 43px Arial';ctx.fillText('adidas',256,126);
+  
  }else if(brand==='Callaway'){
-  ctx.font='bold 76px Georgia';ctx.fillText('Callaway',256,66,448);
-  ctx.beginPath();ctx.moveTo(207,109);ctx.lineTo(256,129);ctx.lineTo(305,109);
-  ctx.lineTo(256,146);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(153,48);ctx.lineTo(256,80);ctx.lineTo(359,48);
+  ctx.lineTo(256,124);ctx.closePath();ctx.fill();
+ }else if(brand==='FootJoy'){
+  ctx.font='italic 900 112px Arial';ctx.fillText('FJ',256,84);
+ }else if(brand==='PUMA'){
+  ctx.font='900 90px Arial';ctx.fillText('PUMA',256,86,430);
  }else{
   const style=brand==='Titleist'?'italic bold 103px cursive':brand==='TaylorMade'?'italic bold 80px Arial':'900 90px Arial';
   ctx.font=style;ctx.fillText(brand,256,86,470);
@@ -41,7 +44,7 @@ export function setHatFinish(material,item){
  if(material.userData.hatFinish===item.id)return;
  material.userData.hatFinish=item.id;
  const map=item.brand?gearLogo(item.brand,material.color.getHSL({}).l>.57):null;
- material.customProgramCacheKey=()=>map?'hat-embroidery':'plain-hat';
+ material.customProgramCacheKey=()=>map?'hat-embroidery:'+item.brand+':'+map.id:'plain-hat';
  material.onBeforeCompile=shader=>{
   if(!map)return;
   shader.uniforms.hatLogo={value:map};

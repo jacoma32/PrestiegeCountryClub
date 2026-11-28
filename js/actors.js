@@ -1,4 +1,4 @@
-import {clubChoice} from './locker.js?v=clubs1';
+import {clubChoice} from './locker.js?v=brandgear1';
 import {fitPalm} from './club-grip.js?v=curl2';
 import {clubModel,makeShaft,heelSocket,setClubFinish} from './club-model.js?v=proshop1';
 import {loadFittedModel,fitToRig,tintGolfer} from './tour-golfer.js?v=proshop1';

@@ -1,7 +1,7 @@
-import {setHatFinish} from './gear-logos.js';
+import {setHatFinish} from './gear-logos.js?v=brandgear1';
 import * as T from 'three';
 import {makeGolfBall,setBallFinish} from './golf-ball.js?v=equipment1';
-import {buildBag} from './golf-bag.js?v=clubshop2';
+import {buildBag} from './golf-bag.js?v=brandgear1';
 import {clubModel,heelSocket,makeShaft,setClubFinish} from './club-model.js?v=equipment1';
 
 const images=new Map();

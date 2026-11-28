@@ -286,3 +286,8 @@ brandedGear.push(
  hat('nike-ace-sand','Nike','Dri-FIT Ace · Sand',60,'#bba583'),
  hat('nike-ace-red','Nike','Dri-FIT Ace · Red',60,'#a92739')
 );
+
+brandedGear.push(
+ singleClub('scotty-super-select-newport2-plus','putter','Scotty Cameron','Super Select Newport 2 Plus',190,'#c4cace','#34414a',true),
+ singleClub('odyssey-aione-rossie','putter','Odyssey','Ai-ONE Rossie S',150,'#9ab3cc','#26364e')
+);

@@ -1,6 +1,6 @@
 import {playerSave} from './player-save.js';
 
-import {brandedGear} from './pro-shop-catalog.js?v=clubshop2';
+import {brandedGear} from './pro-shop-catalog.js?v=brandgear1';
 
 // The clubhouse supports one local member per browser, including guest play before registration.
 export const walletKey='prestiege-club-wallet-v1';
