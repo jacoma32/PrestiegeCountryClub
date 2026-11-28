@@ -92,18 +92,17 @@ import('./member-auth.js?v=developer1').then(async ({auth,developerRequest})=>{
     actions.hidden=!enabled;
   }
   show(initial.enabled);
-  panel.hidden=false;
   auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){panel.hidden=true;show(false);}});
-  gift.elements.item.replaceChildren(...brandedGear.map(item=>new Option(item.brand+' '+item.name,item.id)));
+  gift.elements.namedItem('item').replaceChildren(...brandedGear.map(item=>new Option(item.brand+' '+item.name,item.id)));
   gift.elements.kind.onchange=()=>{
     const coins=gift.elements.kind.value==='coins';
     byId('giftCoins').hidden=gift.elements.coins.disabled=!coins;
-    byId('giftItem').hidden=gift.elements.item.disabled=coins;
+    byId('giftItem').hidden=gift.elements.namedItem('item').disabled=coins;
   };
   async function run(button,action){
     if(busy)return;
     busy=button.disabled=true;
-    status.textContent='';
+    status.textContent='Working…';
     try{await action()}catch(error){
       status.textContent=error.message;
       if(error.status===403&&button!==unlock.querySelector('button[type=submit]'))show(false);
@@ -119,6 +118,7 @@ import('./member-auth.js?v=developer1').then(async ({auth,developerRequest})=>{
     });
   };
   off.onclick=()=>run(off,async()=>{await developerRequest('disable');show(false);status.textContent='Developer mode is off.';});
+  panel.hidden=false;
   let pendingGift;
   gift.onsubmit=event=>{
     event.preventDefault();
