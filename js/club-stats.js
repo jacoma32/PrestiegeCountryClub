@@ -12,7 +12,6 @@ export function clubStats(type,item){
  return {
   distance:Math.round(base.range*(1+upgrade)),
   speedScale:1+upgrade*.55,
-  forgiveness:Math.round(55+upgrade*220),
   feel:Math.round((blade?82:70)+upgrade*95),
   moi:Math.round((blade?49:72)+upgrade*115),
  };

@@ -1,10 +1,11 @@
 import {playerSave} from './player-save.js';
 
-import {brandedGear} from './pro-shop-catalog.js?v=equipment1';
+import {brandedGear} from './pro-shop-catalog.js?v=clubshop2';
 
 // The clubhouse supports one local member per browser, including guest play before registration.
 export const walletKey='prestiege-club-wallet-v1';
-export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Club sets',driver:'Drivers',wood:'Fairway woods',hybrid:'Hybrids',irons:'Irons',wedges:'Wedges',putter:'Putters'};
+export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Golf Clubs'};
+export const clubTypes={clubs:'Complete sets',driver:'Drivers',wood:'Fairway woods',hybrid:'Hybrids',irons:'Irons',wedges:'Wedges',putter:'Putters'};
 const legacyDefaults={shirt:'custom',ball:'white',hat:'club-cap',bag:'club-bag',clubs:'club-set'};
 const defaults=Object.fromEntries(brandedGear.filter(item=>item.price===0).map(item=>[item.slot,item.id]));
 export const catalog=[
@@ -47,7 +48,7 @@ export const catalog=[
  {id:'club-bag',slot:'bag',name:'Club cart bag',price:0,color:'#202824',trim:'#3c4541'},
  {id:'coastal-bag',slot:'bag',name:'Coastal cart bag',price:95,color:'#235880',trim:'#d9eaf0'},
  {id:'saddle-bag',slot:'bag',name:'Saddle leather cart bag',price:125,color:'#844b2c',trim:'#dab276'},
- {id:'club-set',slot:'clubs',name:'Club steel set',price:0},
+ {id:'club-set',slot:'clubs',name:'Starter complete set',price:0},
  {id:'smoke-set',slot:'clubs',name:'Smoked chrome set',price:145,color:'#505d75',accent:'#567fde'},
  {id:'copper-set',slot:'clubs',name:'Brushed copper set',price:170,color:'#ce8b60',accent:'#773b26'}
 ];
@@ -76,11 +77,15 @@ function normalizeWallet(saved, readSlot){
  const state=saved??{credits:0,owned:[],equipped:{},rounds:{}};
  const legacy=state.owned.includes('white');
  state.owned=[...new Set([...state.owned,'custom',...Object.values(defaults),...(legacy?Object.values(legacyDefaults):[])])];
+ const previousSet=itemById(state.equipped.clubs);
  state.equipped={...defaults,...state.equipped};
+ if(previousSet?.slot==='irons')state.equipped.clubs=defaults.clubs;
  for(const slot of Object.keys(gearSections)){
   if(clubSlots.includes(slot)&&slot!=='clubs')delete state.equipped[slot];
   const choice=readSlot(slot);
   if(state.owned.includes(choice)&&itemById(choice)?.slot===slot)state.equipped[slot]=choice;
+  if(slot==='clubs'&&itemById(choice)?.slot==='irons'&&state.owned.includes(choice))state.equipped.irons=choice;
+  if(slot==='irons'&&!state.equipped.irons&&previousSet?.slot==='irons'&&state.owned.includes(previousSet.id))state.equipped.irons=previousSet.id;
  }
  return state;
 }
@@ -133,6 +138,12 @@ export function wear(id){
 export function unequip(slot){
  if(!clubSlots.includes(slot)||slot==='clubs')return;
  const cloud = playerSave();
- if (cloud) return cloud.update(save => { if (save.slots) delete save.slots[slot]; });
+ if (cloud) return cloud.update(save => {
+  if (save.slots) {
+   delete save.slots[slot];
+   if(slot==='irons'&&itemById(save.slots.clubs)?.slot==='irons')delete save.slots.clubs;
+  }
+  if(slot==='irons'&&itemById(save.wallet?.equipped?.clubs)?.slot==='irons')delete save.wallet.equipped.clubs;
+ });
  localStorage.removeItem(walletKey+'-'+slot);
 }

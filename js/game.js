@@ -1,11 +1,11 @@
-import {clubChoice} from './locker.js?v=equipment1';
+import {clubChoice} from './locker.js?v=clubshop2';
 import {CLUBS,clubStats} from './club-stats.js';
 import {reachForClub,carryClub} from './club-grip.js?v=curl2';
 import {WaterSplash} from './water.js?v=coast2';
 import {WEDGES,wedgeLaunch} from './wedges.js?v=sand1';
 import {SandBurst} from './sand-burst.js';
 import {makeGolfBall} from './golf-ball.js?v=brands1';
-import {buildBag} from './golf-bag.js?v=clubs1';
+import {buildBag} from './golf-bag.js?v=clubshop2';
 import {contactTime} from './shot-pose.js?v=approach2';
 import {curveAcceleration} from './irons.js?v=irons1';
 import * as THREE from 'three';

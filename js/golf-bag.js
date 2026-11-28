@@ -1,5 +1,5 @@
 import {gearLogo} from './gear-logos.js';
-import {clubChoice} from './locker.js?v=clubs1';
+import {clubChoice} from './locker.js?v=clubshop2';
 import {clubModel,heelSocket,setClubFinish} from './club-model.js?v=proshop1';
 import * as T from 'three';
 

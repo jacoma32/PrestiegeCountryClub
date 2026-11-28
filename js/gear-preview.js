@@ -1,7 +1,7 @@
 import {setHatFinish} from './gear-logos.js';
 import * as T from 'three';
 import {makeGolfBall,setBallFinish} from './golf-ball.js?v=equipment1';
-import {buildBag} from './golf-bag.js?v=clubs1';
+import {buildBag} from './golf-bag.js?v=clubshop2';
 import {clubModel,heelSocket,makeShaft,setClubFinish} from './club-model.js?v=equipment1';
 
 const images=new Map();
@@ -114,19 +114,7 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
  camera.position.copy(center).add(new T.Vector3(angle,.22,1).normalize().multiplyScalar(distance));
  camera.lookAt(center);
  scene.add(model);renderer.render(scene,camera);model.removeFromParent();
- let image=renderer.domElement.toDataURL('image/webp',.9);
- if(item.slot==='ball'){
-  const canvas=document.createElement('canvas');
-  canvas.width=360;canvas.height=240;
-  const context=canvas.getContext('2d');
-  context.fillStyle='#f3f0e8';context.fillRect(0,0,360,240);
-  context.drawImage(renderer.domElement,112,0,248,240);
-  context.fillStyle='#192b22';context.font='bold 17px Arial';
-  context.fillText(item.brand||'Prestige',16,100,125);
-  context.font='14px Arial';context.fillText(item.name,16,123,125);
-  context.font='11px Arial';context.fillText('GOLF BALL',16,146);
-  image=canvas.toDataURL('image/webp',.9);
- }
+ const image=renderer.domElement.toDataURL('image/webp',.9);
  if(item.slot==='ball')model.material.dispose();
  if(images.size>=100)images.delete(images.keys().next().value);
  images.set(key,image);

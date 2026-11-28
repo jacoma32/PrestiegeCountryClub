@@ -1,5 +1,5 @@
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {itemById,clubLoadout} from './locker.js?v=clubs1';
+import {itemById,clubLoadout} from './locker.js?v=clubshop2';
 
 // Golfers rotate after each stroke and advance to the next hole together.
 const $=id=>document.getElementById(id);

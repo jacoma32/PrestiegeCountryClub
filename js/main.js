@@ -1,18 +1,18 @@
 import {CLUBS,clubStats,equipmentTypes} from './club-stats.js';
 import {setHatFinish} from './gear-logos.js';
-import {gearImage} from './gear-preview.js?v=equipment1';
+import {gearImage} from './gear-preview.js?v=clubshop2';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=equipment1';
+import {Match} from './match.js?v=clubshop2';
 import {Clubhouse} from './clubhouse.js?v=party4';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=equipment1';
+import {GolfGame} from './game.js?v=clubshop2';
 import {SoundEngine} from './sound.js?v=settings1';
 import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=equipment1';
+import {walletKey,wallet,catalog,gearSections,clubTypes,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=clubshop2';
 import {HoleMap} from './hole-map.js?v=shotpath2';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
 import {loadPlayerSave,playerSave} from './player-save.js';
@@ -251,7 +251,7 @@ function showClubStats(item,types){
   const stats=clubStats(type,item),row=document.createElement('tr');
   const title=document.createElement('th');title.scope='row';title.textContent=CLUBS[type].name;
   row.append(title);
-  for(const value of type==='putter'?['—',stats.moi,stats.feel]:[stats.distance+' yd',stats.forgiveness,'—']){
+  for(const value of type==='putter'?['—',stats.moi,stats.feel]:[stats.distance+' yd','—','—']){
    const cell=document.createElement('td');cell.textContent=value;row.append(cell);
   }
   return row;
@@ -271,14 +271,24 @@ function renderGear(){
   for(const [category,label] of Object.entries(gearSections)){
    const button=document.createElement('button');
    button.type='button';button.className='glass';button.dataset.category=category;button.textContent=label;
-   button.onclick=()=>{Object.assign(filter,{slot:category,brand:''});$(view+'Status').textContent='';renderGear()};
+   button.onclick=()=>{Object.assign(filter,{slot:category,brand:'',clubType:''});$(view+'Status').textContent='';renderGear()};
    filters.append(button);
   }
  }
  for(const button of filters.children)button.setAttribute('aria-pressed',String(button.dataset.category===slot));
  gearPreviews.disconnect();
  list.replaceChildren();
- const items=catalog.filter(item=>item.slot===slot&&(view==='locker'?state.owned.includes(item.id):item.brand));
+ const typeSelect=$(view+'ClubType');
+ typeSelect.parentElement.hidden=slot!=='clubs';
+ typeSelect.replaceChildren(new Option('All club types',''),...Object.entries(clubTypes).map(([value,label])=>new Option(label,value)));
+ typeSelect.value=filter.clubType||'';
+ typeSelect.onchange=()=>{
+  Object.assign(filter,{clubType:typeSelect.value,brand:''});renderGear();
+ };
+ const items=catalog.filter(item=>{
+  const matches=slot==='clubs'?Object.hasOwn(clubTypes,item.slot)&&(!filter.clubType||item.slot===filter.clubType):item.slot===slot;
+  return matches&&(view==='locker'?state.owned.includes(item.id):item.brand);
+ });
  const brandSelect=$(view+'Brand');
  const brands=[...new Set(items.map(item=>item.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  brandSelect.replaceChildren(new Option('All brands',''),...brands.map(brand=>new Option(brand,brand)));
@@ -294,7 +304,7 @@ function renderGear(){
   list.append(message);
  }
  for(const item of results){
-  const owned=state.owned.includes(item.id),wearing=state.equipped[slot]===item.id;
+  const owned=state.owned.includes(item.id),wearing=state.equipped[item.slot]===item.id;
   const card=document.createElement('article'),preview=document.createElement('div');
   const name=document.createElement('strong'),brand=document.createElement('small'),action=document.createElement('button');
   card.className='gear-card';preview.className='gear-preview';
@@ -302,7 +312,7 @@ function renderGear(){
   brand.textContent=item.brand||'Prestiege';
   name.append(brand,document.createTextNode(item.name));
   action.className='glass';action.type='button';
-  const canReset=wearing&&['driver','wood','hybrid','irons','wedges','putter'].includes(slot);
+  const canReset=wearing&&['driver','wood','hybrid','irons','wedges','putter'].includes(item.slot);
   if(canReset){
    const equippedTag=document.createElement('small');
    equippedTag.textContent='Equipped';
@@ -312,7 +322,7 @@ function renderGear(){
   action.disabled=view==='locker'?wearing&&!canReset:owned||state.credits<item.price;
   action.setAttribute('aria-label',action.textContent+' · '+[item.brand,item.name].filter(Boolean).join(' '));
   action.onclick=async()=>{try{
-   if(canReset)await unequip(slot);else if(view==='locker')await wear(item.id);else await buy(item.id);
+   if(canReset)await unequip(item.slot);else if(view==='locker')await wear(item.id);else await buy(item.id);
    applyGear();
    if(view==='locker'&&room.connected)room.send({type:'appearance',profile:playerCard()});
    renderGear();$(view+'Status').textContent=canReset?'Using clubs from your equipped set.':[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
@@ -330,7 +340,7 @@ function renderGear(){
     line.className='club-card-stat';
     line.textContent=type==='putter'
      ? (item.blade?'Blade':'Mallet')+' · Feel '+stats.feel+'/100 · MOI '+stats.moi+'/100'
-     : stats.distance+' yds · Forgiveness '+stats.forgiveness+'/100';
+     : stats.distance+' yds';
     name.append(line);
    }
    card.append(preview,name,action);

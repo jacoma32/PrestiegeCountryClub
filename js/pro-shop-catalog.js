@@ -5,6 +5,8 @@ const hat=(id,brand,name,price,color)=>({id,brand,name,slot:'hat',price,color});
 const bag=(id,brand,name,price,color,trim,stand=true)=>({id,brand,name,slot:'bag',price,color,trim,stand});
 const clubs=(id,brand,name,price,color,accent)=>({id,brand,name,slot:'clubs',price,color,accent});
 
+const ironCollection=(id,brand,name,price,color,accent)=>({id,brand,name,slot:'irons',price,color,accent});
+
 export const brandedGear=[
  polo('nike-victory','Nike','Dri-FIT Victory',0,'#edf0ef'),
  polo('nike-tour','Nike','Dri-FIT Tour',85,'#457199','dot'),
@@ -82,22 +84,22 @@ export const brandedGear=[
  bag('vessel-player-v','VESSEL','Player V Stand Bag',195,'#e0ded5','#383835'),
  bag('jones-trouper','Jones','Trouper',155,'#5b6248','#bfb394'),
 
- clubs('titleist-t100','Titleist','T100 Irons',235,'#c1c7cc','#2f333a'),
- clubs('titleist-t150','Titleist','T150 Irons',225,'#b9c2c8','#5a3036'),
- clubs('titleist-t250','Titleist','T250 Irons',215,'#aab6c2','#39484f'),
- clubs('callaway-ai200','Callaway','Apex Ai200 Irons',210,'#b3c5cf','#375662'),
- clubs('callaway-ai300','Callaway','Apex Ai300 Irons',220,'#bfcbca','#2e5c58'),
- clubs('callaway-elyte','Callaway','Elyte Irons',185,'#aeb9c1','#316348'),
- clubs('taylormade-p790','TaylorMade','P·790 Irons',230,'#c2c7cc','#262c39'),
- clubs('taylormade-p770','TaylorMade','P·770 Irons',245,'#c2c9cf','#303f54'),
- clubs('taylormade-qi','TaylorMade','Qi Irons',180,'#abb4bd','#365068'),
- clubs('ping-g440','PING','G440 Irons',195,'#b4bfc7','#295b78'),
- clubs('ping-i530','PING','i530 Irons',220,'#b5bec6','#50505a'),
- clubs('ping-blueprint-s','PING','Blueprint S Irons',245,'#c1c5c7','#2f3c4c'),
- clubs('mizuno-jpx925','Mizuno','JPX 925 Hot Metal Irons',205,'#a8b7c1','#3b5e94'),
- clubs('srixon-zxi5','Srixon','ZXi5 Irons',215,'#b2c0c7','#624146'),
- clubs('cobra-king','Cobra','KING TEC Irons',220,'#aab6bc','#365343'),
- clubs('wilson-dynapower','Wilson','Dynapower Irons',175,'#b5c1c6','#603639'),
+ ironCollection('titleist-t100','Titleist','T100 Irons',235,'#c1c7cc','#2f333a'),
+ ironCollection('titleist-t150','Titleist','T150 Irons',225,'#b9c2c8','#5a3036'),
+ ironCollection('titleist-t250','Titleist','T250 Irons',215,'#aab6c2','#39484f'),
+ ironCollection('callaway-ai200','Callaway','Apex Ai200 Irons',210,'#b3c5cf','#375662'),
+ ironCollection('callaway-ai300','Callaway','Apex Ai300 Irons',220,'#bfcbca','#2e5c58'),
+ ironCollection('callaway-elyte','Callaway','Elyte Irons',185,'#aeb9c1','#316348'),
+ ironCollection('taylormade-p790','TaylorMade','P·790 Irons',230,'#c2c7cc','#262c39'),
+ ironCollection('taylormade-p770','TaylorMade','P·770 Irons',245,'#c2c9cf','#303f54'),
+ ironCollection('taylormade-qi','TaylorMade','Qi Irons',180,'#abb4bd','#365068'),
+ ironCollection('ping-g440','PING','G440 Irons',195,'#b4bfc7','#295b78'),
+ ironCollection('ping-i530','PING','i530 Irons',220,'#b5bec6','#50505a'),
+ ironCollection('ping-blueprint-s','PING','Blueprint S Irons',245,'#c1c5c7','#2f3c4c'),
+ ironCollection('mizuno-jpx925','Mizuno','JPX 925 Hot Metal Irons',205,'#a8b7c1','#3b5e94'),
+ ironCollection('srixon-zxi5','Srixon','ZXi5 Irons',215,'#b2c0c7','#624146'),
+ ironCollection('cobra-king','Cobra','KING TEC Irons',220,'#aab6bc','#365343'),
+ ironCollection('wilson-dynapower','Wilson','Dynapower Irons',175,'#b5c1c6','#603639'),
  clubs('wilson-profile','Wilson','Profile SGI Complete Set',0,'#b8c2ca','#393e4b')
 ];
 
@@ -119,8 +121,8 @@ brandedGear.push(
  singleClub('taylormade-qi35-rescue','hybrid','TaylorMade','Qi35 Rescue',130,'#aeb8c2','#485269'),
  singleClub('ping-g440-hybrid','hybrid','PING','G440 Hybrid',125,'#c2ced8','#376e9c'),
 
- singleClub('prestige-cavity-iron','irons','Prestige','Cavity Back Irons',145,'#bdc5c8','#294a39'),
- singleClub('prestige-tour-iron','irons','Prestige','Tour Forged Irons',185,'#d4d5cb','#574628'),
+ singleClub('prestige-cavity-iron','irons','Callaway','Paradym Ai Smoke Irons',145,'#bdc5c8','#294a39'),
+ singleClub('prestige-tour-iron','irons','Wilson','Staff Model CB Irons',185,'#d4d5cb','#574628'),
  singleClub('vokey-sm10','wedges','Titleist','Vokey SM10 Tour Chrome',115,'#c6c9c8','#555761'),
  singleClub('callaway-opus','wedges','Callaway','Opus Brushed Chrome',105,'#bcc5cb','#475a64'),
  singleClub('taylormade-mg4','wedges','TaylorMade','Milled Grind 4',110,'#b7c1c7','#63646b'),
@@ -131,6 +133,114 @@ brandedGear.push(
  singleClub('odyssey-aione-seven','putter','Odyssey','Ai-ONE #7',145,'#afd0e6','#2a4b73'),
  singleClub('taylormade-spider-tour','putter','TaylorMade','Spider Tour',155,'#aeb5c0','#484c52'),
  singleClub('ping-anser','putter','PING','Anser',135,'#c4cdcf','#343e4c',true),
- singleClub('prestige-classic-blade','putter','Prestige','Classic Blade',125,'#b9bdc2','#293733',true),
- singleClub('prestige-forged-blade','putter','Prestige','Forged Blade',195,'#dedbd0','#605032',true)
+ singleClub('prestige-classic-blade','putter','Odyssey','White Hot OG #1',125,'#b9bdc2','#293733',true),
+ singleClub('prestige-forged-blade','putter','Bettinardi','Studio Stock 14',195,'#dedbd0','#605032',true)
+);
+
+
+brandedGear.push(
+ singleClub("shop-callaway-strata-plus-complete-set","clubs","Callaway","Strata Plus Complete Set",180,"#bdc5ca","#343e4c",false),
+ singleClub("shop-callaway-edge-complete-set","clubs","Callaway","Edge Complete Set",191,"#aab6c2","#25484a",false),
+ singleClub("shop-taylormade-rbz-speedlite-complete-set","clubs","TaylorMade","RBZ SpeedLite Complete Set",202,"#d2cec5","#4c3740",false),
+ singleClub("shop-cobra-fly-xl-complete-set","clubs","Cobra","FLY-XL Complete Set",213,"#bdc5ca","#343e4c",false),
+ singleClub("shop-tour-edge-bazooka-370-complete-set","clubs","Tour Edge","Bazooka 370 Complete Set",224,"#aab6c2","#25484a",false),
+ singleClub("shop-tour-edge-te-300-complete-set","clubs","Tour Edge","TE-300 Complete Set",235,"#d2cec5","#4c3740",false),
+ singleClub("shop-wilson-ultra-complete-set","clubs","Wilson","Ultra Complete Set",246,"#bdc5ca","#343e4c",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-callaway-paradym-ai-smoke-hl-irons","irons","Callaway","Paradym Ai Smoke HL Irons",130,"#bdc5ca","#343e4c",false),
+ singleClub("shop-callaway-apex-pro-irons","irons","Callaway","Apex Pro Irons",141,"#aab6c2","#25484a",false),
+ singleClub("shop-callaway-apex-cb-irons","irons","Callaway","Apex CB Irons",152,"#d2cec5","#4c3740",false),
+ singleClub("shop-wilson-staff-model-blade-irons","irons","Wilson","Staff Model Blade Irons",163,"#bdc5ca","#343e4c",false),
+ singleClub("shop-wilson-dynapwr-forged-irons","irons","Wilson","DYNAPWR Forged Irons",174,"#aab6c2","#25484a",false),
+ singleClub("shop-wilson-dynapwr-max-irons","irons","Wilson","DYNAPWR Max Irons",185,"#d2cec5","#4c3740",false),
+ singleClub("shop-titleist-t200-irons","irons","Titleist","T200 Irons",196,"#bdc5ca","#343e4c",false),
+ singleClub("shop-titleist-t350-irons","irons","Titleist","T350 Irons",207,"#aab6c2","#25484a",false),
+ singleClub("shop-titleist-620-mb-irons","irons","Titleist","620 MB Irons",218,"#d2cec5","#4c3740",false),
+ singleClub("shop-titleist-620-cb-irons","irons","Titleist","620 CB Irons",229,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-qi-hl-irons","irons","TaylorMade","Qi HL Irons",240,"#aab6c2","#25484a",false),
+ singleClub("shop-taylormade-p-7mc-irons","irons","TaylorMade","P·7MC Irons",131,"#d2cec5","#4c3740",false),
+ singleClub("shop-taylormade-p-7cb-irons","irons","TaylorMade","P·7CB Irons",142,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-p-7mb-irons","irons","TaylorMade","P·7MB Irons",153,"#aab6c2","#25484a",false),
+ singleClub("shop-ping-g430-irons","irons","PING","G430 Irons",164,"#d2cec5","#4c3740",false),
+ singleClub("shop-ping-i230-irons","irons","PING","i230 Irons",175,"#bdc5ca","#343e4c",false),
+ singleClub("shop-ping-blueprint-t-irons","irons","PING","Blueprint T Irons",186,"#aab6c2","#25484a",false),
+ singleClub("shop-mizuno-jpx-925-forged-irons","irons","Mizuno","JPX 925 Forged Irons",197,"#d2cec5","#4c3740",false),
+ singleClub("shop-mizuno-mizuno-pro-243-irons","irons","Mizuno","Mizuno Pro 243 Irons",208,"#bdc5ca","#343e4c",false),
+ singleClub("shop-srixon-zxi4-irons","irons","Srixon","ZXi4 Irons",219,"#aab6c2","#25484a",false),
+ singleClub("shop-srixon-zxi7-irons","irons","Srixon","ZXi7 Irons",230,"#d2cec5","#4c3740",false),
+ singleClub("shop-cleveland-golf-launcher-xl-halo-irons","irons","Cleveland Golf","Launcher XL Halo Irons",241,"#bdc5ca","#343e4c",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-callaway-paradym-ai-smoke-max-driver","driver","Callaway","Paradym Ai Smoke Max Driver",165,"#bdc5ca","#343e4c",false),
+ singleClub("shop-callaway-paradym-ai-smoke-triple-diamond-driver","driver","Callaway","Paradym Ai Smoke Triple Diamond Driver",176,"#aab6c2","#25484a",false),
+ singleClub("shop-titleist-gt3-driver","driver","Titleist","GT3 Driver",187,"#d2cec5","#4c3740",false),
+ singleClub("shop-titleist-gt4-driver","driver","Titleist","GT4 Driver",198,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-qi10-driver","driver","TaylorMade","Qi10 Driver",209,"#aab6c2","#25484a",false),
+ singleClub("shop-taylormade-qi35-max-driver","driver","TaylorMade","Qi35 Max Driver",220,"#d2cec5","#4c3740",false),
+ singleClub("shop-taylormade-stealth-2-plus-driver","driver","TaylorMade","Stealth 2 Plus Driver",231,"#bdc5ca","#343e4c",false),
+ singleClub("shop-ping-g430-lst-driver","driver","PING","G430 LST Driver",242,"#aab6c2","#25484a",false),
+ singleClub("shop-wilson-dynapwr-carbon-driver","driver","Wilson","DYNAPWR Carbon Driver",253,"#d2cec5","#4c3740",false),
+ singleClub("shop-wilson-dynapwr-max-driver","driver","Wilson","DYNAPWR Max Driver",264,"#bdc5ca","#343e4c",false),
+ singleClub("shop-cobra-ds-adapt-ls-driver","driver","Cobra","DS-ADAPT LS Driver",275,"#aab6c2","#25484a",false),
+ singleClub("shop-srixon-zxi-driver","driver","Srixon","ZXi Driver",166,"#d2cec5","#4c3740",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-callaway-paradym-ai-smoke-max-fairway","wood","Callaway","Paradym Ai Smoke Max Fairway",105,"#bdc5ca","#343e4c",false),
+ singleClub("shop-callaway-elyte-triple-diamond-fairway","wood","Callaway","Elyte Triple Diamond Fairway",116,"#aab6c2","#25484a",false),
+ singleClub("shop-titleist-gt3-fairway","wood","Titleist","GT3 Fairway",127,"#d2cec5","#4c3740",false),
+ singleClub("shop-taylormade-qi10-fairway","wood","TaylorMade","Qi10 Fairway",138,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-qi35-max-fairway","wood","TaylorMade","Qi35 Max Fairway",149,"#aab6c2","#25484a",false),
+ singleClub("shop-ping-g430-max-fairway","wood","PING","G430 MAX Fairway",160,"#d2cec5","#4c3740",false),
+ singleClub("shop-cobra-ds-adapt-max-fairway","wood","Cobra","DS-ADAPT MAX Fairway",171,"#bdc5ca","#343e4c",false),
+ singleClub("shop-wilson-dynapwr-fairway","wood","Wilson","DYNAPWR Fairway",182,"#aab6c2","#25484a",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-callaway-paradym-ai-smoke-hybrid","hybrid","Callaway","Paradym Ai Smoke Hybrid",90,"#bdc5ca","#343e4c",false),
+ singleClub("shop-titleist-gt1-hybrid","hybrid","Titleist","GT1 Hybrid",101,"#aab6c2","#25484a",false),
+ singleClub("shop-titleist-gt3-hybrid","hybrid","Titleist","GT3 Hybrid",112,"#d2cec5","#4c3740",false),
+ singleClub("shop-taylormade-qi10-rescue","hybrid","TaylorMade","Qi10 Rescue",123,"#bdc5ca","#343e4c",false),
+ singleClub("shop-ping-g430-hybrid","hybrid","PING","G430 Hybrid",134,"#aab6c2","#25484a",false),
+ singleClub("shop-cobra-ds-adapt-hybrid","hybrid","Cobra","DS-ADAPT Hybrid",145,"#d2cec5","#4c3740",false),
+ singleClub("shop-wilson-dynapwr-hybrid","hybrid","Wilson","DYNAPWR Hybrid",156,"#bdc5ca","#343e4c",false),
+ singleClub("shop-mizuno-st-z-230-hybrid","hybrid","Mizuno","ST-Z 230 Hybrid",167,"#aab6c2","#25484a",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-titleist-vokey-sm9-tour-chrome","wedges","Titleist","Vokey SM9 Tour Chrome",85,"#bdc5ca","#343e4c",false),
+ singleClub("shop-titleist-vokey-sm10-jet-black","wedges","Titleist","Vokey SM10 Jet Black",96,"#aab6c2","#25484a",false),
+ singleClub("shop-callaway-jaws-raw","wedges","Callaway","Jaws Raw",107,"#d2cec5","#4c3740",false),
+ singleClub("shop-callaway-opus-platinum","wedges","Callaway","Opus Platinum",118,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-hi-toe-4","wedges","TaylorMade","Hi-Toe 4",129,"#aab6c2","#25484a",false),
+ singleClub("shop-cleveland-golf-rtx-6-zipcore","wedges","Cleveland Golf","RTX 6 ZipCore",140,"#d2cec5","#4c3740",false),
+ singleClub("shop-cleveland-golf-cbx-4-zipcore","wedges","Cleveland Golf","CBX 4 ZipCore",151,"#bdc5ca","#343e4c",false),
+ singleClub("shop-cleveland-golf-smart-sole-full-face","wedges","Cleveland Golf","Smart Sole Full-Face",162,"#aab6c2","#25484a",false),
+ singleClub("shop-mizuno-t24-denim-copper","wedges","Mizuno","T24 Denim Copper",173,"#d2cec5","#4c3740",false),
+ singleClub("shop-ping-glide-4-0","wedges","PING","Glide 4.0",184,"#bdc5ca","#343e4c",false)
+);
+
+
+brandedGear.push(
+ singleClub("shop-odyssey-ai-one-double-wide","putter","Odyssey","Ai-ONE Double Wide",105,"#bdc5ca","#343e4c",true),
+ singleClub("shop-odyssey-ai-one-jailbird-mini","putter","Odyssey","Ai-ONE Jailbird Mini",116,"#aab6c2","#25484a",false),
+ singleClub("shop-scotty-cameron-super-select-newport","putter","Scotty Cameron","Super Select Newport",127,"#d2cec5","#4c3740",true),
+ singleClub("shop-scotty-cameron-phantom-5","putter","Scotty Cameron","Phantom 5",138,"#bdc5ca","#343e4c",false),
+ singleClub("shop-taylormade-spider-gt","putter","TaylorMade","Spider GT",149,"#aab6c2","#25484a",false),
+ singleClub("shop-taylormade-tp-reserve-b11","putter","TaylorMade","TP Reserve B11",160,"#d2cec5","#4c3740",true),
+ singleClub("shop-ping-pld-milled-anser","putter","PING","PLD Milled Anser",171,"#bdc5ca","#343e4c",true),
+ singleClub("shop-ping-ds72","putter","PING","DS72",182,"#aab6c2","#25484a",false),
+ singleClub("shop-bettinardi-queen-b-6","putter","Bettinardi","Queen B 6",193,"#d2cec5","#4c3740",true),
+ singleClub("shop-bettinardi-inovai-6-0","putter","Bettinardi","Inovai 6.0",204,"#bdc5ca","#343e4c",false),
+ singleClub("shop-cleveland-golf-hb-soft-2-model-1","putter","Cleveland Golf","HB SOFT 2 Model 1",215,"#aab6c2","#25484a",true),
+ singleClub("shop-l-a-b-golf-df3","putter","L.A.B. Golf","DF3",106,"#d2cec5","#4c3740",false),
+ singleClub("shop-l-a-b-golf-link-1","putter","L.A.B. Golf","LINK.1",117,"#bdc5ca","#343e4c",true)
 );
