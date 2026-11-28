@@ -86,6 +86,7 @@ const start=async(name='royal',tutorial=false,length=18,checkpoint=null)=>{
   try{await saveSoloCheckpoint(game.roundId,[],true)}catch(error){game.notify(error.message)}
  }$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
 document.querySelectorAll('[data-page]:not(#playGolf)').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
+$('settingsTab').onclick=()=>location.assign('./settings.html?from=clubhouse');
 const playMode=$('playMode');
 let selectedCourse='',selectedLength=18;
 function chooseRound(button){

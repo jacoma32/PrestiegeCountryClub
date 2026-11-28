@@ -79,7 +79,7 @@
   <span><kbd>X</kbd> Straight</span>
   <span>Drag mouse to rotate camera</span>
 </div></div><aside id="bagPanel" aria-label="Choose a club" hidden><button id="closeBag">Return to ball</button><div id="bagContents"></div></aside><div id="roundModal" class="modal hidden"><div><div id="roundEyebrow" class="eyebrow">HOLE COMPLETE</div><h2 id="roundTitle">PAR</h2><p id="roundDescription"></p><div id="scorecard"></div><div class="modal-actions"><button id="nextHole" class="cta">NEXT HOLE <b>→</b></button><button id="toClubhouse" class="glass">CLUBHOUSE</button></div></div></div><div id="tutorialOverlay" class="tutorial-overlay hidden"><div class="coach-panel"><div class="coach-kicker">PCC GOLF ACADEMY · COACH TIMMY</div><h2 id="coachTitle">WELCOME TO YOUR FIRST LESSON</h2><p id="coachText">I’ll show you how the game works.</p><div class="coach-progress" id="coachProgress">LESSON 1 / 7</div><div class="coach-actions"><button id="coachSkip" class="glass">SKIP TUTORIAL</button><button id="coachNext" class="cta">NEXT →</button></div></div></div></section>
-<nav id="bottomNav" aria-label="Main menu"><button data-page="home" class="selected"><span>⌂</span>HOME</button><button id="playGolf" data-page="courses"><span>⚑</span>PLAY GOLF</button><button id="rangeTab"><span>⚑</span>DRIVING RANGE</button><button data-page="store"><span>◇</span>PRO SHOP</button><button data-page="locker"><span>▤</span>LOCKER</button><button data-page="about"><span>≡</span>ABOUT</button></nav><div id="loader" class="hidden"><div class="loader-mark">PCC</div><div class="loader-line"><div></div></div><p>PREPARING YOUR EXPERIENCE</p></div><div id="error" class="hidden" role="alert"></div><script>
+<nav id="bottomNav" aria-label="Main menu"><button data-page="home" class="selected"><span>⌂</span>HOME</button><button id="playGolf" data-page="courses"><span>⚑</span>PLAY GOLF</button><button id="rangeTab"><span>⚑</span>DRIVING RANGE</button><button data-page="store"><span>◇</span>PRO SHOP</button><button data-page="locker"><span>▤</span>LOCKER</button><button type="button" id="settingsTab"><span aria-hidden="true">⚙</span>SETTINGS</button><button data-page="about"><span>≡</span>ABOUT</button></nav><div id="loader" class="hidden"><div class="loader-mark">PCC</div><div class="loader-line"><div></div></div><p>PREPARING YOUR EXPERIENCE</p></div><div id="error" class="hidden" role="alert"></div><script>
 /* Boot watchdog: the menu must remain accessible if the 3D module fails. */
 (function(){
   const loader=document.getElementById('loader');
@@ -101,4 +101,4 @@
     if(!ready)issue('The 3D engine did not finish starting. You can still use the menu; the game needs a startup repair.');
   },10000);
 })();
-</script><script type="module" src="./js/main.js?v=brandgear1"></script></body></html>
+</script><script type="module" src="./js/main.js?v=settings-tab1"></script></body></html>
