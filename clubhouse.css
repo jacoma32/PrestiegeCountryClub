@@ -106,9 +106,7 @@ body:not(.touch-golf) .game-hud .game-bottom{bottom:38px}
 #inviteMethod h2,#partyPrompt h2{font-size:clamp(26px,5vw,36px);margin:0 0 16px}
 #inviteMethod .play-mode-actions,#partyPrompt .play-mode-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 #inviteMethod button,#partyPrompt button{width:auto;margin:0;padding:8px 14px}
-#onlinePanel[data-mode="friends"] #inviteOptions,
-#onlinePanel[data-mode="code"] :is(#friendsLogin,#friendsContent){display:none}
-#onlinePanel[data-mode="code"] .social-heading{display:none}
+
 .friend-round .rival-stats{right:auto;left:max(12px,env(safe-area-inset-left));top:86px;width:min(200px,46vw)}
 .rival-stats table{width:100%;border-collapse:collapse;text-align:right}
 .rival-stats th:first-child{text-align:left;overflow-wrap:anywhere}
@@ -129,19 +127,4 @@ html[data-text-size] .game-footer {
   zoom: var(--game-text-scale, 1);
 }
 
-#friendRequestBadge {
- display:inline-flex;align-items:center;justify-content:center;min-width:1.25rem;height:1.25rem;
- padding-inline:.2rem;border-radius:999px;background:#c52232;color:#fff;font:700 .75rem Outfit,sans-serif;
-}
-#friendRequestBadge[hidden] { display:none; }
-#friendsList { max-height: min(40dvh, 22rem); overflow-y:auto; overscroll-behavior:contain; }
-#addFriendDialog {
- width:min(26rem,calc(100% - 2rem));padding:1.25rem;border:1px solid #d6bc7c;
- border-radius:.5rem;color:#f5f0e3;background:#142a20;
-}
-#addFriendDialog::backdrop { background:#04100bd9; }
-#addFriendDialog input {
- display:block;width:100%;box-sizing:border-box;padding:.65rem;margin:.4rem 0;
- font:inherit;color:inherit;background:#0a1915;border:1px solid #9aac9f;border-radius:.25rem;
-}
 .game-banner { max-width:calc(100vw - 20px); white-space:normal; text-align:center; }
