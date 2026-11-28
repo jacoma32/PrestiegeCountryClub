@@ -113,14 +113,7 @@ export class GolfGame{
   velocity.y -= (driving ? 6.4 : 9.81) * dt;
   if(!this.world.treeContact?.deflect(position,velocity,dt))position.addScaledVector(velocity,dt);
  }
- updateShotPreview() {
-  const {group, line, marker} = this.shotPreview;
-  group.visible = this.started && !this.swinging && !this.modal;
-  if (!group.visible) return;
-  const putting=this.club==='putter';
-  const power=this.charging?clamp(this.charge,putting?.02:.11,1):1;
-  const key=[this.club,power,this.aim,this.shotShape,this.wind,this.position.x,this.position.y,this.position.z].join(',');
-  if(this.previewKey===key&&this.previewHole===this.world.hole)return;
+ simulateShot(power) {
   const state={
    position:this.position.clone(),vel:this.launchVelocity(power),flightShape:this.shotShape,
    carryYards:null,shotOrigin:this.position,biteTimer:0,impactSpin:CLUBS[this.club].spin??0,
@@ -136,6 +129,25 @@ export class GolfGame{
    if(outcome==='water'||outcome==='cup'||outcome==='rest')break;
   }
   points.push(state.position.clone());
+  return {state,points,carryPoint,carryIndex,outcome};
+ }
+ updateShotPreview() {
+  const {group, line, marker} = this.shotPreview;
+  group.visible = this.started && !this.swinging && !this.modal;
+  if (!group.visible) return;
+  const putting=this.club==='putter';
+  const power=this.charging?clamp(this.charge,putting?.02:.11,1):1;
+  const fullPowerKey=[this.club,clubChoice(this.equipment,this.club)?.id,this.aim,this.shotShape,this.wind,this.position.x,this.position.y,this.position.z].join(',');
+  const key=fullPowerKey+','+power;
+  if(this.previewKey===key&&this.previewHole===this.world.hole)return;
+  const {state,points,carryPoint,carryIndex,outcome}=this.simulateShot(power);
+  if(this.fullPowerKey!==fullPowerKey||this.fullPowerHole!==this.world.hole){
+   const full=power===1?{state,outcome}:this.simulateShot(1);
+   const length=Math.hypot(full.state.position.x-this.position.x,full.state.position.z-this.position.z);
+   const distance=putting?Math.round(length*5.25)+' FT':this.travelYards(full.state)+' YDS';
+   $('clubDistance').textContent=distance+' · FULL POWER'+(full.outcome==='water'?' · WATER':full.outcome==='cup'?' · CUP':'');
+   this.fullPowerKey=fullPowerKey;this.fullPowerHole=this.world.hole;
+  }
   this.predictedPath=points;
   const distance=this.travelYards(state);
   const shape=putting?'PUTT':SHAPES[this.shotShape+2];
@@ -404,7 +416,7 @@ export class GolfGame{
  chooseClub(c){if(this.spectating)return;if(!CLUBS[c]||this.swinging||this.modal||this.bagPhase)return;this.applyClub(c);this.placeGolfer();this.refresh()}
  setShape(shape){if(this.spectating)return;if(this.club==='putter'||this.swinging||this.modal||this.bagPhase)return;this.shotShape=Math.max(-2,Math.min(2,Math.round(Number(shape)||0)));this.refresh()}
  aimDelta(d){if(this.spectating||this.placing)return;if(this.bagPhase||this.swinging||this.modal)return;this.aim=clamp(this.aim+d,-65,65);this.placeGolfer();this.refresh()}
- refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=Math.max(1,this.shots);const stats=clubStats(this.club,clubChoice(this.equipment,this.club));$('clubDistance').textContent=this.club==='putter'?'PUTTER · MOI '+stats.moi+'/100':stats.distance+' YDS · CLUB RANGE';const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.distanceToPin())} YDS TO PIN`;if(this.club==='putter')$('distanceLabel').textContent=(this.distanceToPin()*3).toFixed(1)+' FT TO CUP';if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
+ refresh(){const c=CLUBS[this.club];$('clubLabel').textContent=c.name;$('windLabel').textContent=`${this.wind>0?'↗':'↖'} ${Math.abs(this.wind*2.2).toFixed(0)} MPH`;$('strokeLabel').textContent=Math.max(1,this.shots);const equippedClub=clubChoice(this.equipment,this.club);$('distanceClubName').textContent=equippedClub?.slot===this.club?equippedClub.name:c.name;const completedScore=this.scores.reduce((sum,strokes,i)=>sum+strokes-COURSES[this.course].holes[i].par,0);$('scoreLabel').textContent=completedScore===0?'E':completedScore>0?'+'+completedScore:String(completedScore);$('aimLabel').textContent=`${Math.round(this.aim)}°`;$('lieLabel').textContent=this.world.lie(this.position.x,this.position.z);$('distanceLabel').textContent=`${Math.round(this.distanceToPin())} YDS TO PIN`;if(this.club==='putter')$('distanceLabel').textContent=(this.distanceToPin()*3).toFixed(1)+' FT TO CUP';if(this.course==='range')$('distanceLabel').textContent='50–250 YD TARGETS';$('powerLabel').textContent=`${Math.round(this.charge*100)}%`;$('meterBar').style.width=`${this.charge*100}%`;const shapes=document.querySelector('.iron-shape');if(shapes)shapes.hidden=this.club==='putter';
  document.querySelectorAll('[data-shape]').forEach(button=>{
   const selected=Number(button.dataset.shape)===this.shotShape;
   button.classList.toggle('active',selected);
@@ -438,7 +450,7 @@ export class GolfGame{
    this.waterWait=Math.max(0,this.waterWait-dt);this.moveCamera(dt);
    if(!this.waterWait){
     this.shots++;this.position.copy(this.shotOrigin);this.ball.position.copy(this.position);
-    this.swinging=false;this.ball.visible=true;this.placeGolfer();this.refresh();this.moveCamera(0,true);
+    this.swinging=false;this.ball.visible=true;this.aim=0;this.placeGolfer();this.refresh();this.moveCamera(0,true);
     this.shotFeedback('WATER · +1 PENALTY · REPLAY FROM LAST SPOT');
     this.onShotSettled?.(this.shots);
    }
@@ -522,13 +534,14 @@ export class GolfGame{
   if(outcome!=='rest')return;
   this.vel.set(0,0,0);this.swinging=false;this.onSfx('land');
  if(this.course==='range'){
-  const total=this.travelYards();this.resetBallToTee();this.charge=0;
+  const total=this.travelYards();this.resetBallToTee();this.charge=0;this.aim=0;
   this.placeGolfer();this.refresh();this.moveCamera(0,true);
   this.shotFeedback('BALL '+this.shots+' · '+this.carryYards+' YDS CARRY · '+total+' YDS TOTAL');return;
  }
  const lie=this.world.lie(this.position.x,this.position.z);
  const message=this.club!=='putter'&&this.carryYards!==null?this.carryYards+' YDS CARRY · '+this.travelYards()+' YDS TOTAL · '+lie:
   lie==='BUNKER'?'SAND TRAP · PLAY IT WHERE IT LIES':lie==='GREEN'?'ON THE GREEN':`BALL AT REST · ${lie}`;
+ this.aim=0;
  this.applyClub(this.suggestClub(lie));
  this.placeGolfer();this.refresh();this.shotFeedback(message);
  this.onShotSettled?.(this.shots);
