@@ -10,25 +10,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
-  <link rel="stylesheet" href="./homepage.css?v=spectator1">
-  <script>
-    // Forward party invitations that were copied before the homepage moved.
-    const party = new URLSearchParams(location.search).get('party');
-    if (party) location.replace('./game.html?party=' + encodeURIComponent(party));
-  </script>
+  <link rel="stylesheet" href="./homepage.css?v=members1">
   <script src="./js/background-video.js" defer></script>
-  <script type="module" src="./js/homepage.js?v=username1"></script>
+  <script type="module" src="./js/homepage.js?v=members1"></script>
   <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header" id="memberHeader" hidden>
     <a href="./" class="site-brand" aria-label="Prestige Country Club homepage">
       <img src="./assets/prestige-crest.webp" width="52" height="52" alt="">
       <span>Prestige</span>
     </a>
     <div class="member-actions">
-      <button type="button" class="button" id="signIn">Sign in</button>
-      <button type="button" class="button gold" id="signUp">Sign up</button>
       <button type="button" class="button" id="signOut" hidden>Sign out</button>
     </div>
   </header>
@@ -37,13 +30,24 @@
       <source src="./assets/prestige-montage.webm?v=spectator1" type="video/webm">
       <source src="./assets/prestige-montage.mp4?v=spectator1" type="video/mp4">
     </video>
-    <div class="hero-content">
+    <section class="hero-content welcome-content" id="welcomeHome">
+      <img class="hero-crest" src="./assets/prestige-crest.webp" width="160" height="160" alt="">
+      <h1>Prestige Country Club</h1>
+      <p>Play a round on handcrafted courses, practice your swing, or tee off with friends.</p>
+      <div class="welcome-actions">
+        <button type="button" class="button gold play" id="signIn">Sign in</button>
+        <button type="button" class="button play" id="signUp">Sign up</button>
+        <a class="button play" href="./merch.html">Merch</a>
+      </div>
+      <p id="welcomeStatus" class="status" role="status"></p>
+    </section>
+    <div class="hero-content" id="memberHome" hidden>
       <img class="hero-crest" src="./assets/prestige-crest.webp" width="160" height="160" alt="Prestige Country Club">
       <h1>Membership has its <em>privileges.</em></h1>
       <p>Prestige Country Club is the golf game for players who expect more. Elegant courses, real physics, and a club worth joining.</p>
       <a class="button gold play" href="./game.html">Play golf</a>
       <a class="button play" href="./merch.html">Merch</a>
-      <a class="button play" id="homeSettings" href="./settings.html" hidden>Settings</a>
+      <a class="button play" href="./settings.html">Settings</a>
       <p id="memberStatus" class="status" role="status"></p>
     </div>
   </main>

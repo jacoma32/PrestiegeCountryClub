@@ -3,7 +3,6 @@ import './preferences.js';
 const byId = (id) => document.getElementById(id);
 const dialog = byId('memberDialog');
 const form = byId('memberForm');
-const mainStatus = byId('memberStatus');
 const formError = byId('memberError');
 const signIn = byId('signIn');
 const signUp = byId('signUp');
@@ -12,16 +11,25 @@ const submit = byId('memberSubmit');
 const password = byId('memberPassword');
 let creating = false;
 
+const party = new URLSearchParams(location.search).get('party');
+const validParty = /^[A-Z0-9]{6}$/i.test(party || '');
+if (validParty) byId('welcomeStatus').textContent = 'Sign in to join your friend’s round.';
+else if (new URLSearchParams(location.search).has('play')) {
+  byId('welcomeStatus').textContent = 'Sign in to play golf.';
+}
+
 let membership;
 function loadMembership() {
   membership ??= import('./member-auth.js?v=username1').then(({ auth, signInPlayer, registerPlayer }) => {
     auth.onAuthStateChange((event, session) => {
-      signIn.hidden = signUp.hidden = Boolean(session);
-      signOut.hidden = byId('homeSettings').hidden = !session;
-      if (session) {
-        mainStatus.textContent = 'Signed in. You’re ready to play.';
+      const signedIn = Boolean(session?.user?.user_metadata?.username);
+      byId('welcomeHome').hidden = signedIn;
+      byId('memberHeader').hidden = byId('memberHome').hidden = signOut.hidden = !signedIn;
+      if (signedIn && validParty) {
+        location.replace('./game.html?party=' + encodeURIComponent(party));
+      } else if (event === 'SIGNED_OUT') {
+        byId('welcomeStatus').textContent = 'Signed out.';
       }
-      else if (event === 'SIGNED_OUT') mainStatus.textContent = 'Signed out.';
     });
     return { auth, signInPlayer, registerPlayer };
   }).catch(error => {
@@ -82,9 +90,8 @@ signOut.addEventListener('click', async () => {
     const { auth } = await loadMembership();
     const { error } = await auth.signOut({ scope: 'local' });
     if (error) throw error;
-    mainStatus.textContent = 'Signed out.';
   } catch {
-    mainStatus.textContent = 'Couldn’t sign out. Please try again.';
+    byId('memberStatus').textContent = 'Couldn’t sign out. Please try again.';
   } finally {
     signOut.disabled = false;
   }

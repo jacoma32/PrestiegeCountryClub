@@ -87,3 +87,14 @@ input { width: 100%; border: 1px solid #e3c47d65; border-radius: .25rem; padding
 .password-toggle { min-inline-size: 2.75rem; min-block-size: 2.75rem; padding: .45rem; }
 .password-toggle svg { width: 1.25rem; height: 1.25rem; pointer-events: none; }
 .password-field { display: grid; gap: .35rem; }
+
+body:has(#memberHeader[hidden]) { grid-template-rows: 1fr; }
+.welcome-content { align-self: center; text-align: center; padding-block: 2rem; }
+.welcome-content .hero-crest,
+.welcome-content h1,
+.welcome-content > p { margin-inline: auto; }
+.welcome-content .hero-crest { margin-bottom: 1rem; }
+.welcome-content h1 { text-shadow: 0 2px 16px #04100b; }
+.welcome-content > p:not(:empty) { text-shadow: 0 1px 8px #04100b; }
+.welcome-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: .65rem; }
+.welcome-actions .button { min-width: 7rem; font-size: 1rem; }

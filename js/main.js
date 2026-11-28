@@ -27,7 +27,22 @@ try {
  $('error').classList.remove('hidden');
  throw error;
 }
+function returnToSignIn() {
+ document.body.inert = true;
+ const partyCode = new URLSearchParams(location.search).get('party');
+ const destination = /^[A-Z0-9]{6}$/i.test(partyCode || '') ? '?party=' + encodeURIComponent(partyCode) : '?play=1';
+ location.replace('./' + destination);
+}
+if (!account) {
+ returnToSignIn();
+ throw new Error('Sign-in required');
+}
+const { auth } = await import('./member-auth.js?v=username1');
+auth.onAuthStateChange((_event, session) => {
+ if (!session?.user?.user_metadata?.username) returnToSignIn();
+});
 window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
+document.body.inert = false;
 const device=golfDevice();
 const holeMap=new HoleMap($('holeMap'),$('holeMapCanvas'));
 document.body.dataset.golfDevice=device.name;
