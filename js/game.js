@@ -417,14 +417,25 @@ export class GolfGame{
   this.charging=false;this.charge=0;
   if(this.started){this.notify('ADDRESS THE BALL');this.refresh()}
  }
- releaseShot(){if(!this.charging||this.swinging||this.modal)return;this.charging=false;const p=clamp(this.charge,this.club==='putter'?.02:.11,1);this.shots++;this.swinging=true;this.swingTimer=0;this.shotPreview.group.visible=false;this.impactPending=true;this.whooshPending=true;this.strikePower=p;this.cameraShotLine=this.shotDirection();this.shotOrigin=this.position.clone();this.carryYards=null;this.vel.copy(this.launchVelocity(p));this.flightShape=this.shotShape;this.shotShape=0;this.impactSpin=CLUBS[this.club].isIron?CLUBS[this.club].spin:0;this.biteTimer=0;this.ballLaunchDelay=contactTime[this.shotName()];this.golfer.shot(this.shotName());this.notify(p>.74&&p<.88?'PURE STRIKE':'SHOT IN PLAY');this.refresh()}
+ shotFeedback(message) {
+  this.notify([message,...(this.lastShotFactors||[])].join(' · '));
+ }
+ releaseShot(){if(!this.charging||this.swinging||this.modal)return;this.charging=false;const p=clamp(this.charge,this.club==='putter'?.02:.11,1);this.shots++;this.swinging=true;this.swingTimer=0;this.shotPreview.group.visible=false;this.impactPending=true;this.whooshPending=true;this.strikePower=p;
+  const lie=this.world.lie(this.position.x,this.position.z);
+  this.lastShotFactors=[];
+  if(lie==='BUNKER')this.lastShotFactors.push('Sand reduced shot speed');
+  else if(lie==='ROUGH')this.lastShotFactors.push('Rough reduced shot speed');
+  if(this.club!=='putter'&&Math.abs(this.wind*2.2)>=1){
+   this.lastShotFactors.push(`Wind pushed ${this.wind>0?'right':'left'} on the map`);
+  }
+  this.cameraShotLine=this.shotDirection();this.shotOrigin=this.position.clone();this.carryYards=null;this.vel.copy(this.launchVelocity(p));this.flightShape=this.shotShape;this.shotShape=0;this.impactSpin=CLUBS[this.club].isIron?CLUBS[this.club].spin:0;this.biteTimer=0;this.ballLaunchDelay=contactTime[this.shotName()];this.golfer.shot(this.shotName());this.notify(p>.74&&p<.88?'PURE STRIKE':'SHOT IN PLAY');this.refresh()}
  update(dt){dt=Math.min(dt,.04);this.world.waterClock.value+=dt;this.splash.update(dt);this.sandBurst?.update(dt);this.golfer.update(dt);this.updatePlacement();
   if(this.waterWait>0){
    this.waterWait=Math.max(0,this.waterWait-dt);this.moveCamera(dt);
    if(!this.waterWait){
     this.shots++;this.position.copy(this.shotOrigin);this.ball.position.copy(this.position);
     this.swinging=false;this.ball.visible=true;this.placeGolfer();this.refresh();this.moveCamera(0,true);
-    this.notify('WATER · +1 PENALTY · REPLAY FROM LAST SPOT');
+    this.shotFeedback('WATER · +1 PENALTY · REPLAY FROM LAST SPOT');
     this.onShotSettled?.(this.shots);
    }
    return;
@@ -497,19 +508,19 @@ export class GolfGame{
    return;
   }
   this.ball.rotation.x+=this.vel.z*dt*1.6;this.ball.rotation.z+=this.vel.x*dt*1.6;
-  if(outcome==='cup'){this.finishHole();return}
+  if(outcome==='cup'){this.shotFeedback('IN THE CUP');this.finishHole();return}
   if(outcome!=='rest')return;
   this.vel.set(0,0,0);this.swinging=false;this.onSfx('land');
  if(this.course==='range'){
   const total=this.travelYards();this.resetBallToTee();this.charge=0;
   this.placeGolfer();this.refresh();this.moveCamera(0,true);
-  this.notify('BALL '+this.shots+' · '+this.carryYards+' YDS CARRY · '+total+' YDS TOTAL');return;
+  this.shotFeedback('BALL '+this.shots+' · '+this.carryYards+' YDS CARRY · '+total+' YDS TOTAL');return;
  }
  const lie=this.world.lie(this.position.x,this.position.z);
- const message=this.club==='driver'?this.carryYards+' YDS CARRY · '+this.travelYards()+' YDS TOTAL · '+lie:
+ const message=this.club!=='putter'&&this.carryYards!==null?this.carryYards+' YDS CARRY · '+this.travelYards()+' YDS TOTAL · '+lie:
   lie==='BUNKER'?'SAND TRAP · PLAY IT WHERE IT LIES':lie==='GREEN'?'ON THE GREEN':`BALL AT REST · ${lie}`;
  this.applyClub(this.suggestClub(lie));
- this.placeGolfer();this.refresh();this.notify(message);
+ this.placeGolfer();this.refresh();this.shotFeedback(message);
  this.onShotSettled?.(this.shots);
  }
  travelYards(state=this){return Math.round(Math.hypot(state.position.x-state.shotOrigin.x,state.position.z-state.shotOrigin.z)*1.75)}

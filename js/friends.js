@@ -57,10 +57,10 @@ export class FriendsService {
   await this.api.updateDoc(this.api.doc(this.db,'players',this.user.uid),{lastSeen:this.api.serverTimestamp()});
  }
  async search(name){
-  const key=safeName(name).toLowerCase();
-  if(key.length<3)throw Error('Enter at least three username characters.');
+  const key=String(name||'').trim().toLowerCase();
+  if(!/^[a-z0-9_]{3,20}$/.test(key))throw Error('Invalid username.');
   const a=this.api,snap=await a.getDoc(a.doc(this.db,'handles',key));
-  if(!snap.exists())throw Error('No player with that username.');
+  if(!snap.exists())throw Error('Invalid username.');
   const other=snap.data();if(other.uid===this.user.uid)throw Error('You cannot friend yourself.');
   return other;
  }
@@ -68,6 +68,7 @@ export class FriendsService {
   if(!this.profile?.username)throw Error('Choose your online username first.');
   const other=await this.search(name);
   if((this.profile.friends||[]).includes(other.uid))throw Error('Already friends.');
+  if(this.sent.some(request=>request.toUid===other.uid&&request.status==='pending'))throw Error('Request already sent.');
   const a=this.api,id=other.uid+'_'+this.user.uid;
   await a.setDoc(a.doc(this.db,'requests',id),{fromUid:this.user.uid,fromName:this.profile.username,toUid:other.uid,status:'pending',createdAt:a.serverTimestamp()});
   return other.username;

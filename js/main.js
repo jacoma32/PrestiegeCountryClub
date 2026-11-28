@@ -7,11 +7,11 @@ import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=friendflow1';
+import {GolfGame} from './game.js?v=friend-feedback1';
 import {SoundEngine} from './sound.js?v=settings1';
 import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
-import {FriendsService,isOnline} from './friends.js?v=friendflow1';
+import {FriendsService,isOnline} from './friends.js?v=friend-feedback1';
 import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=username1';
 import {HoleMap} from './hole-map.js?v=shotpath2';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
@@ -407,6 +407,11 @@ const room=new OnlineRoom({
 });
 function endOnline(){onlineActive=false;match?.stop();match=null;rivalStats.hidden=true;document.body.classList.remove('friend-round');room.close();friends.unhost().catch(()=>{})}
 function renderFriends(){
+ const count=friends.requests.length;
+ const badge=$('friendRequestBadge');
+ badge.textContent=count>99?'99+':String(count);
+ badge.hidden=!count;
+ $('onlineOpen').setAttribute('aria-label',count?`Friends, ${count} pending friend ${count===1?'request':'requests'}`:'Friends');
  $('friendCount').textContent=friendsReady?' / '+friends.friends.length:'';refreshTags();const login=$('friendsLogin'),content=$('friendsContent'),status=$('onlineStatus'),list=$('friendsList'),inbox=$('friendsInbox');
  if(!friendsReady){login.hidden=false;content.hidden=true;return}
  if(!friends.profile?.username){login.hidden=false;content.hidden=true;status.textContent='Choose a unique online username for this browser.';return}
@@ -452,12 +457,39 @@ async function openFriends(){
  try{
   await connectFriends()
   renderFriends();if(onlinePanel.dataset.mode!=='friends')return;
-  onlineStatus.textContent=friends.profile?.username?'Search for a gamertag or invite a friend.':'Choose your online username';
+  onlineStatus.textContent=friends.profile?.username?'Add friends by username or invite a friend to play.':'Choose your online username';
  }catch(error){if(onlinePanel.dataset.mode==='friends')onlineStatus.textContent='Friends list unavailable. You can use a party code from Play Golf.';friendsReady=false}
 }
 $('friendsRegister').onclick=async()=>{try{await friends.register($('friendsUsername').value);renderFriends();onlineStatus.textContent='Username registered — add your first friend!'}catch(error){showFriendsError(error)}};
-$('friendsSearch').addEventListener('keydown',event=>{if(event.key==='Enter')$('friendsAdd').click()});
-$('friendsAdd').onclick=async()=>{try{const name=await friends.sendRequest($('friendsSearch').value);onlineStatus.textContent='Friend request sent to @'+name}catch(error){showFriendsError(error)}};
+const addFriendDialog=$('addFriendDialog');
+const addFriendForm=$('addFriendForm');
+const sendFriendRequest=$('friendsAdd');
+const cancelAddFriend=$('cancelAddFriend');
+const addFriendStatus=$('addFriendStatus');
+$('openAddFriend').onclick=()=>{
+ addFriendForm.reset();
+ addFriendStatus.textContent='';
+ addFriendDialog.showModal();
+};
+cancelAddFriend.onclick=()=>addFriendDialog.close();
+addFriendDialog.addEventListener('cancel',event=>{
+ if(sendFriendRequest.disabled)event.preventDefault();
+});
+addFriendForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ if(sendFriendRequest.disabled)return;
+ sendFriendRequest.disabled=cancelAddFriend.disabled=true;
+ addFriendStatus.textContent='';
+ try{
+  const name=await friends.sendRequest($('friendsSearch').value);
+  onlineStatus.textContent='Friend request sent to @'+name+'.';
+  addFriendDialog.close();
+ }catch(error){
+  addFriendStatus.textContent=error.message||'Could not send the request. Try again.';
+ }finally{
+  sendFriendRequest.disabled=cancelAddFriend.disabled=false;
+ }
+});
 $('onlineOpen').onclick=()=>{showPage('home');openFriends()};
 $('onlineClose').onclick=()=>onlinePanel.classList.add('hidden');
 function connectFriends(){

@@ -1,11 +1,24 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081713"><link rel="icon" href="./assets/prestige-crest.webp" type="image/webp"><title>PRESTIGE COUNTRY CLUB — Where Legends Tee Off</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=prestige"><link rel="stylesheet" href="./style-v4.css?v=whiteflag1"><link rel="stylesheet" href="./clubhouse.css?v=settings1"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","jszip":"https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"}}</script><style>.watching-golf .game-bottom,.watching-golf .game-footer,.watching-golf .shot-indicator,.watching-golf #banner,.watching-golf #exitRound,.watching-golf #bagPanel{visibility:hidden}#nextHole[hidden],#toClubhouse[hidden]{display:none}</style></head><body inert><div id="viewport"></div><section id="onlinePanel" class="online-panel hidden" aria-label="Friends and online matches for up to four golfers"><div class="online-card"><button id="onlineClose" class="glass" type="button">✕ CLOSE</button><div class="social-heading"><small>CLUBHOUSE SOCIAL</small><h2>Friends<span id="friendCount"></span></h2></div>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081713"><link rel="icon" href="./assets/prestige-crest.webp" type="image/webp"><title>PRESTIGE COUNTRY CLUB — Where Legends Tee Off</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=prestige"><link rel="stylesheet" href="./style-v4.css?v=whiteflag1"><link rel="stylesheet" href="./clubhouse.css?v=friend-feedback1"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","jszip":"https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"}}</script><style>.watching-golf .game-bottom,.watching-golf .game-footer,.watching-golf .shot-indicator,.watching-golf #banner,.watching-golf #exitRound,.watching-golf #bagPanel{visibility:hidden}#nextHole[hidden],#toClubhouse[hidden]{display:none}</style></head><body inert><div id="viewport"></div><section id="onlinePanel" class="online-panel hidden" aria-label="Friends and online matches for up to four golfers"><div class="online-card"><button id="onlineClose" class="glass" type="button">✕ CLOSE</button><div class="social-heading"><small>CLUBHOUSE SOCIAL</small><h2>Friends<span id="friendCount"></span></h2></div>
 <div id="friendsLogin"><p>Create a unique online username once. This browser remembers your online identity.</p><label>YOUR USERNAME<input id="friendsUsername" maxlength="20" placeholder="YourGolfName" autocomplete="off"></label><button id="friendsRegister" class="cta" type="button">CLAIM USERNAME</button></div>
-<div id="friendsContent" hidden><p id="friendsMe"></p><h3>Add a friend</h3><label>Gamertag<input id="friendsSearch" placeholder="FriendUsername" maxlength="20" autocomplete="off"></label><button id="friendsAdd" class="cta" type="button">SEND FRIEND REQUEST</button>
-<h3>Requests</h3><div id="friendsInbox" aria-live="polite"></div><h3>My friends</h3><div id="friendsList" aria-live="polite"></div>
+<div id="friendsContent" hidden><p id="friendsMe"></p><button id="openAddFriend" class="cta" type="button">＋ Add Friends</button>
+<h3>My friends</h3><div id="friendsList" tabindex="0" role="region" aria-label="My friends" aria-live="polite"></div>
+<h3>Requests</h3><div id="friendsInbox" aria-live="polite"></div>
 </div>
 <details id="inviteOptions"><summary>Party code</summary><p id="onlineCode" class="online-code" hidden></p><button id="onlineCopy" class="glass" type="button" hidden>COPY INVITE LINK</button>
 <div class="party-tools"><button id="createParty" class="glass" hidden>CREATE PARTY CODE</button><label>INVITE CODE<input id="onlineJoinCode" maxlength="6" placeholder="6 letters or digits"></label><button id="onlineJoin" class="glass">JOIN PARTY</button></div></details>
 <p id="onlineStatus" role="status" aria-live="polite">Connecting to online friends…</p></div></section><div class="grain"></div>
+<dialog id="addFriendDialog" aria-labelledby="addFriendTitle">
+ <form id="addFriendForm">
+  <h2 id="addFriendTitle">Add Friends</h2>
+  <label for="friendsSearch">Username</label>
+  <input id="friendsSearch" maxlength="20" autocomplete="off" required autofocus>
+  <p id="addFriendStatus" role="status"></p>
+  <div class="play-mode-actions">
+   <button id="friendsAdd" class="cta" type="submit">Send Request</button>
+   <button id="cancelAddFriend" class="glass" type="button">Cancel</button>
+  </div>
+ </form>
+</dialog>
 <dialog id="partyPrompt" aria-labelledby="partyMessage">
   <h2 id="partyMessage"></h2>
   <div class="play-mode-actions">
@@ -34,7 +47,7 @@
   </div>
   <form method="dialog"><button type="submit" class="glass">Cancel</button></form>
 </dialog>
-<div id="topbar"><div class="player-menu"><button id="onlineOpen" class="smallbtn">Friends <span id="inviteDot" hidden>●</span></button><button class="smallbtn" id="myPlay" data-page="golfer">My Player</button><a class="game-brand" href="./" aria-label="Prestige Country Club homepage"><img src="./assets/prestige-crest.webp" alt=""></a></div><div class="topmeta">EST. 2026 <span class="dot"></span> THE WORLD IS YOUR FAIRWAY</div><div class="top-actions"><span id="headerTag"></span><button class="smallbtn" id="creditBalance" data-page="store" aria-label="Open Pro Shop">0 COINS</button><button id="soundBtn" class="smallbtn">SOUND OFF</button></div></div>
+<div id="topbar"><div class="player-menu"><button id="onlineOpen" class="smallbtn">Friends <span id="friendRequestBadge" hidden></span> <span id="inviteDot" hidden>●</span></button><button class="smallbtn" id="myPlay" data-page="golfer">My Player</button><a class="game-brand" href="./" aria-label="Prestige Country Club homepage"><img src="./assets/prestige-crest.webp" alt=""></a></div><div class="topmeta">EST. 2026 <span class="dot"></span> THE WORLD IS YOUR FAIRWAY</div><div class="top-actions"><span id="headerTag"></span><button class="smallbtn" id="creditBalance" data-page="store" aria-label="Open Pro Shop">0 COINS</button><button id="soundBtn" class="smallbtn">SOUND OFF</button></div></div>
 <section id="home" class="page active" aria-label="Clubhouse">
 <div class="home-actions"><div class="club-title"><img src="./assets/prestige-crest.webp" alt=""><div><span>PRESTIGE COUNTRY CLUB</span><h1>The Clubhouse</h1></div></div>
 <button id="heroPlay" class="round-feature"><small>CHAMPIONSHIP GOLF</small><strong>Play Now</strong><span>5 courses &nbsp; / &nbsp; 90 holes</span><b aria-hidden="true" class="play-arrow"></b></button>
@@ -84,4 +97,4 @@
     if(!ready)issue('The 3D engine did not finish starting. You can still use the menu; the game needs a startup repair.');
   },10000);
 })();
-</script><script type="module" src="./js/main.js?v=members1"></script></body></html>
+</script><script type="module" src="./js/main.js?v=friend-feedback1"></script></body></html>
