@@ -244,3 +244,33 @@ brandedGear.push(
  singleClub("shop-l-a-b-golf-df3","putter","L.A.B. Golf","DF3",106,"#d2cec5","#4c3740",false),
  singleClub("shop-l-a-b-golf-link-1","putter","L.A.B. Golf","LINK.1",117,"#bdc5ca","#343e4c",true)
 );
+
+
+brandedGear.push(
+ polo("nike-victory-sky", "Nike", "Dri-FIT Victory · Sky Blue", 45, "#75aecb"),
+ polo("nike-tour-plum", "Nike", "Dri-FIT Tour · Plum", 85, "#78426b", "dot"),
+ polo("adidas-365-sand", "adidas", "Ultimate365 · Sand Stripe", 65, "#bc9e72", "pinstripe"),
+ polo("ua-playoff-forest", "Under Armour", "Playoff 3.0 · Forest Check", 65, "#355b47", "windowpane"),
+ polo("fj-lisle-coral", "FootJoy", "ProDry Lisle · Coral", 90, "#d57868", "twin"),
+ polo("puma-cloudspun-lilac", "PUMA", "CLOUDSPUN · Lilac", 60, "#ab97ce"),
+ polo("tm-zinna-lake", "TravisMathew", "The Zinna · Lake Blue", 110, "#547889", "pinstripe"),
+ polo("pm-coastline-mint", "Peter Millar", "Coastline Performance Jersey · Mint", 145, "#90bda8", "wave"),
+ polo("callaway-optidri-yellow", "Callaway", "Opti-Dri Solid · Butter Yellow", 55, "#d9c66a"),
+ polo("rl-airflow-navy", "RLX Ralph Lauren", "Airflow Jersey · Navy", 125, "#273957", "dot"),
+ hat("titleist-tour-rope-forest", "Titleist", "Tour Rope · Forest", 65, "#244936"),
+ hat("titleist-tour-performance-stone", "Titleist", "Tour Performance · Stone", 55, "#b6aea0"),
+ hat("callaway-performance-pro-coral", "Callaway", "Performance Pro · Coral", 55, "#bc6658"),
+ hat("taylormade-tour-radar-ice", "TaylorMade", "Tour Radar · Ice Blue", 55, "#93b6d1"),
+ hat("ping-tour-classic-black", "PING", "Tour Classic · Black", 60, "#171d22"),
+ hat("nike-club-lilac", "Nike", "Dri-FIT Club · Lilac", 45, "#9e8cb6"),
+ hat("adidas-tour-snapback-navy", "adidas", "Tour Snapback · Navy", 50, "#24375d"),
+ hat("puma-p-mint", "PUMA", "P Cap · Mint", 55, "#85b7a4"),
+ bag("titleist-players4-burgundy", "Titleist", "Players 4 Stand Bag · Burgundy", 90, "#6f293b", "#dfc4aa"),
+ bag("titleist-cart14-forest", "Titleist", "Cart 14 · Forest", 115, "#254938", "#aea58c", false),
+ bag("callaway-fairway-c-blue", "Callaway", "Fairway C Stand Bag · Sky Blue", 95, "#638cae", "#e2e4e1"),
+ bag("callaway-org14-blackgold", "Callaway", "ORG 14 Cart Bag · Black and Gold", 145, "#24282d", "#c4a35b", false),
+ bag("taylormade-flextech-sand", "TaylorMade", "FlexTech Crossover · Sand", 120, "#b39a7a", "#393b42"),
+ bag("ping-hoofer-lite-plum", "PING", "Hoofer Lite Stand Bag · Plum", 115, "#605070", "#d8cbe0"),
+ bag("sun-mountain-45-navy", "Sun Mountain", "4.5 LS Stand Bag · Navy", 140, "#293c5b", "#a5bed0"),
+ bag("vessel-player-v-sage", "VESSEL", "Player V Stand Bag · Sage", 195, "#7a8e77", "#e3d4b4")
+);
