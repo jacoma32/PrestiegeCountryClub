@@ -113,7 +113,7 @@ $('playSolo').onclick=()=>{
 };
 $('playWithFriend').onclick=()=>{
  playMode.close();
- openPartyPanel();
+ openPartyPanel('role');
 };
 for(const button of document.querySelectorAll('[data-course]')){
  button.onclick=()=>chooseRound(button);
@@ -316,8 +316,8 @@ function refreshTags(){
  $('inviteFriend').hidden=!room.canInvite;$('leaveParty').hidden=!room.room;
  $('heroPlay').hidden=party;
  $('startFriendRound').hidden=room.role!=='host'||!party||room.inMatch;
- $('onlineJoin').disabled=party;
- $('createParty').hidden=!selectedCourse||Boolean(room.room);
+ $('onlineJoin').disabled=Boolean(room.room);
+ $('startLobbyRound').disabled=room.role!=='host'||room.playerIds.length<2||room.inMatch;
 
 }
 const room=new OnlineRoom({
@@ -330,16 +330,21 @@ const room=new OnlineRoom({
    profiles[id]={name:profile.name,frame:profile.frame==='female'?'female':'male',colors,pattern:profile.pattern,hat:profile.hat,clubs:clubLoadout({...profile.clubStyles,clubs:profile.clubs})};
   }
   lobby.setMembers(profiles,showPartyError);
-  if(joined){
-   onlinePanel.classList.add('hidden');if(page!=='home')showPage('home');
+  if(joined&&room.role==='guest'){
+   onlinePanel.close();if(page!=='home')showPage('home');
   }
+  renderPartyPlayers();
   refreshTags();
  },
- onHosted:()=>refreshTags(),
- onStatus:message=>{refreshTags();onlineCode.hidden=$('onlineCopy').hidden=room.role!=='host'||!room.room;onlineStatus.textContent=message;onlineCode.textContent=room.role==='host'&&room.room?'ROOM CODE: '+room.room:'';},
+ onHosted:code=>{onlineCode.textContent=code;$('onlineCopy').disabled=false;refreshTags()},
+ onStatus:message=>{
+  refreshTags();
+  onlineStatus.textContent=message;
+  if(!room.room){onlineCode.textContent='';$('onlineCopy').disabled=true;}
+ },
  onStart:async (course,length,order,wind)=>{
   selectedCourse='';
-  onlineActive=true;onlinePanel.classList.add('hidden');
+  onlineActive=true;onlinePanel.close();
   $('rivalName').textContent='FRIEND ROUND';rivalStats.hidden=false;document.body.classList.add('friend-round');
   const session=match=new Match(game,room,lobby,length,order,wind);
   await start(course,false,length);
@@ -349,32 +354,54 @@ const room=new OnlineRoom({
  onDisconnect:()=>{
   if(match?.complete){return}
   const wasPlaying=onlineActive;
-  onlineActive=false;match?.stop();match=null;lobby.setMembers({},showPartyError);refreshTags();
+  onlineActive=false;match?.stop();match=null;lobby.setMembers({},showPartyError);renderPartyPlayers();refreshTags();
   rivalStats.hidden=true;document.body.classList.remove('friend-round');
-  if(wasPlaying){showPage('home');onlinePanel.classList.remove('hidden');onlineStatus.textContent='Your friend disconnected. The match has ended.'}
+  if(wasPlaying){showPage('home');openPartyPanel('guest');onlineStatus.textContent='Your friend disconnected. The match has ended.'}
  }
 });
 function endOnline(){onlineActive=false;match?.stop();match=null;rivalStats.hidden=true;document.body.classList.remove('friend-round');room.close()}
 function showPartyError(error){onlineStatus.textContent=error.message||String(error)}
-function openPartyPanel(){
- $('createParty').hidden=!selectedCourse||Boolean(room.room);
- onlinePanel.classList.remove('hidden');
- $('inviteOptions').open=true;
+function renderPartyPlayers(){
+ $('partyPlayers').replaceChildren(...Object.entries(room.players).map(([id,profile])=>{
+  const item=document.createElement('li');
+  item.textContent=profile.name+(id==='host'?' (Host)':'');
+  return item;
+ }));
 }
-$('onlineClose').onclick=()=>onlinePanel.classList.add('hidden');
-async function hostParty(){
- if(room.role==='host'&&room.room){room.configure(selectedCourse,selectedLength);return}
- if(selectedCourse)await room.host(selectedCourse,selectedLength);
+function openPartyPanel(mode){
+ $('onlineTitle').textContent=mode==='host'?'Host lobby':mode==='guest'?'Join a game':'Are you the host?';
+ $('createParty').parentElement.hidden=mode!=='role';
+ $('partyJoinForm').hidden=mode!=='guest';
+ $('partyHost').hidden=mode!=='host';
+ $('onlineClose').textContent=mode==='host'?'Close game':'Cancel';
+ onlineStatus.textContent='';
+ if(!onlinePanel.open)onlinePanel.showModal();
+ if(mode==='guest')$('onlineJoinCode').focus();
+ renderPartyPlayers();
 }
+function closePartyPanel(){
+ if(room.room)endOnline();
+ onlinePanel.close();
+}
+$('onlineClose').onclick=closePartyPanel;
+onlinePanel.addEventListener('cancel',event=>{event.preventDefault();closePartyPanel()});
 $('homeRange').onclick=()=>$('rangeTab').click();
-$('inviteFriend').onclick=openPartyPanel;
-$('startFriendRound').onclick=()=>room.beginRound();
+$('inviteFriend').onclick=()=>openPartyPanel('host');
+$('startFriendRound').onclick=$('startLobbyRound').onclick=()=>room.beginRound();
 $('leaveParty').onclick=()=>{endOnline();refreshTags()};
-$('createParty').onclick=()=>hostParty();
-$('onlineJoin').onclick=()=>room.join($('onlineJoinCode').value);
+$('createParty').onclick=()=>{
+ openPartyPanel('host');
+ room.host(selectedCourse,selectedLength);
+ renderPartyPlayers();
+};
+$('chooseGuest').onclick=()=>openPartyPanel('guest');
+$('partyJoinForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ if(!$('onlineJoin').disabled)room.join($('onlineJoinCode').value);
+});
 $('onlineCopy').onclick=async()=>{const url=new URL(location.href);url.search='';url.searchParams.set('party',room.room);try{await navigator.clipboard.writeText(url.href);onlineStatus.textContent='Invite link copied'}catch{onlineStatus.textContent=url.href}};
 const inviteCode=new URL(location.href).searchParams.get('party');
-if(/^[A-Z0-9]{6}$/i.test(inviteCode||'')){openPartyPanel();$('onlineJoinCode').value=inviteCode;onlineStatus.textContent='You have a clubhouse invitation. Select Join Party.'}
+if(/^[A-Z0-9]{6}$/i.test(inviteCode||'')){openPartyPanel('guest');$('onlineJoinCode').value=inviteCode;onlineStatus.textContent='You have a clubhouse invitation. Select Join game.'}
 const sunOffset=new THREE.Vector3(-39,53,27);
 function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelta(),.05);if(page==='home'){lobby.draw(renderer,dt);return}if(match)match.update(dt);else game.update(dt);const course=game.world.current;
  if(sun.userData.course!==course){

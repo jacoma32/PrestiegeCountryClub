@@ -1,7 +1,28 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081713"><link rel="icon" href="./assets/prestige-crest.webp" type="image/webp"><title>PRESTIGE COUNTRY CLUB — Where Legends Tee Off</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=prestige"><link rel="stylesheet" href="./style-v4.css?v=whiteflag1"><link rel="stylesheet" href="./clubhouse.css?v=party-code1"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","jszip":"https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"}}</script><style>.watching-golf .game-bottom,.watching-golf .game-footer,.watching-golf .shot-indicator,.watching-golf #banner,.watching-golf #exitRound,.watching-golf #bagPanel{visibility:hidden}#nextHole[hidden],#toClubhouse[hidden]{display:none}</style></head><body inert><div id="viewport"></div><section id="onlinePanel" class="online-panel hidden" aria-label="Multiplayer for up to four golfers"><div class="online-card"><button id="onlineClose" class="glass" type="button">✕ CLOSE</button><div class="social-heading"><small>CLUBHOUSE SOCIAL</small><h2>Party code</h2></div>
-<details id="inviteOptions"><summary>Party code</summary><p id="onlineCode" class="online-code" hidden></p><button id="onlineCopy" class="glass" type="button" hidden>COPY INVITE LINK</button>
-<div class="party-tools"><button id="createParty" class="glass" hidden>CREATE PARTY CODE</button><label>INVITE CODE<input id="onlineJoinCode" maxlength="6" placeholder="6 letters or digits"></label><button id="onlineJoin" class="glass">JOIN PARTY</button></div></details>
-<p id="onlineStatus" role="status" aria-live="polite">Share your code or enter a code to join.</p></div></section><div class="grain"></div>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081713"><link rel="icon" href="./assets/prestige-crest.webp" type="image/webp"><title>PRESTIGE COUNTRY CLUB — Where Legends Tee Off</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=prestige"><link rel="stylesheet" href="./style-v4.css?v=whiteflag1"><link rel="stylesheet" href="./clubhouse.css?v=host-lobby1"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","jszip":"https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"}}</script><style>.watching-golf .game-bottom,.watching-golf .game-footer,.watching-golf .shot-indicator,.watching-golf #banner,.watching-golf #exitRound,.watching-golf #bagPanel{visibility:hidden}#nextHole[hidden],#toClubhouse[hidden]{display:none}</style></head><body inert><div id="viewport"></div><dialog id="onlinePanel" aria-labelledby="onlineTitle">
+ <div id="partyRole">
+  <h2 id="onlineTitle">Are you the host?</h2>
+  <div class="play-mode-actions">
+   <button id="createParty" class="cta" type="button">Yes, host</button>
+   <button id="chooseGuest" class="glass" type="button">No, join</button>
+  </div>
+ </div>
+ <form id="partyJoinForm" hidden>
+  <label for="onlineJoinCode">Enter the host’s code</label>
+  <input id="onlineJoinCode" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off" required>
+  <button id="onlineJoin" class="cta" type="submit">Join game</button>
+ </form>
+ <div id="partyHost" hidden>
+  <p id="onlineCode" class="online-code"></p>
+  <h3>Golfers in the lobby</h3>
+  <ul id="partyPlayers" aria-live="polite"></ul>
+  <div class="play-mode-actions">
+   <button id="startLobbyRound" class="cta" type="button" disabled>Start round</button>
+   <button id="onlineCopy" class="glass" type="button" disabled>Copy invite link</button>
+  </div>
+ </div>
+ <p id="onlineStatus" role="status"></p>
+ <button id="onlineClose" class="glass" type="button">Cancel</button>
+</dialog><div class="grain"></div>
 <dialog id="playMode" aria-labelledby="playModeTitle">
   <p id="playModeCourse"></p>
   <h2 id="playModeTitle">How many holes do you want to play?</h2>
@@ -65,4 +86,4 @@
     if(!ready)issue('The 3D engine did not finish starting. You can still use the menu; the game needs a startup repair.');
   },10000);
 })();
-</script><script type="module" src="./js/main.js?v=party-code1"></script></body></html>
+</script><script type="module" src="./js/main.js?v=host-lobby1"></script></body></html>

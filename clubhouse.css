@@ -128,3 +128,10 @@ html[data-text-size] .game-footer {
 }
 
 .game-banner { max-width:calc(100vw - 20px); white-space:normal; text-align:center; }
+
+#onlinePanel { position:fixed; inset:0; margin:auto; width:min(28rem,calc(100% - 2rem)); max-height:90dvh; padding:1.5rem; color:#f5f0e3; background:#142a20; border:1px solid #d6bc7c; border-radius:.5rem; }
+#onlinePanel::backdrop { background:#04100bd9; }
+#onlinePanel [hidden] { display:none !important; }
+#onlineCode { text-align:center; font-size:clamp(2rem,9vw,3.5rem); letter-spacing:.2em; }
+#partyJoinForm { display:grid; gap:.6rem; margin-block:1rem; }
+#onlineJoinCode { padding:.65rem; font:inherit; color:inherit; background:#0a1915; border:1px solid #9aac9f; }
