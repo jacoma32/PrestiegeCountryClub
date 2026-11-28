@@ -7,7 +7,7 @@ import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=friend-feedback1';
+import {GolfGame} from './game.js?v=solo-save1';
 import {SoundEngine} from './sound.js?v=settings1';
 import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
@@ -79,8 +79,11 @@ const renderLesson=()=>{const [title,body,action]=lessons[lessonIndex];$('coachT
 const closeTutorial=()=>{$('tutorialOverlay').classList.add('hidden');try{localStorage.setItem('prestiege-v4-tutorial-done','yes')}catch{}};
 const openTutorial=()=>{lessonIndex=0;$('tutorialOverlay').classList.remove('hidden');renderLesson()};
 $('coachNext').onclick=()=>{if(++lessonIndex>=lessons.length)closeTutorial();else renderLesson()};$('coachSkip').onclick=closeTutorial;
-const start=async(name='royal',tutorial=false,length=18)=>{
- showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial,length);$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
+const start=async(name='royal',tutorial=false,length=18,checkpoint=null)=>{
+ showPage('playing');$('loader').classList.remove('hidden');try{await game.begin(name,tutorial,length,checkpoint);
+ if(!onlineActive&&name!=='range'&&!checkpoint){
+  try{await saveSoloCheckpoint(game.roundId,[],true)}catch(error){game.notify(error.message)}
+ }$('loader').classList.add('hidden');if(tutorial)openTutorial()}catch(e){$('loader').classList.add('hidden');$('error').textContent='Could not start round: '+e.message;$('error').classList.remove('hidden')}};
 document.querySelectorAll('[data-page]:not(#playGolf)').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page)));
 const playMode=$('playMode');
 let selectedCourse='',selectedLength=18;
@@ -95,7 +98,57 @@ function chooseRound(button){
 function openPlayGolf(){
  if(playMode.open)return;
  showPage(room.connected?'home':'courses');
+ if(!room.connected)showSoloPrompt();
 }
+const soloDialog=$('soloRoundDialog');
+const soloStatus=$('soloRoundStatus');
+
+function saveSoloCheckpoint(id,scores,create=false){
+ const {course,roundLength:length}=game;
+ return playerSave().update(state=>{
+  if(create&&state.soloRound)throw Error('End or finish your saved round before starting another.');
+  if(!create&&(state.soloRound?.id!==id||state.soloRound.scores.length>=scores.length))return;
+  if(scores.length>=length)delete state.soloRound;
+  else state.soloRound={id,course,length,scores};
+ });
+}
+
+function showSoloPrompt(leaving=false){
+ const saved=playerSave().state.soloRound;
+ if(!saved||soloDialog.open)return;
+ const course=[...document.querySelectorAll('[data-course]')].find(button=>button.dataset.course===saved.course);
+ if(!course)return;
+ $('soloRoundTitle').textContent=leaving?'Leave your round?':'Continue your round?';
+ $('soloRoundDetails').textContent=course.querySelector('h3').textContent+' · Hole '+(saved.scores.length+1)+' of '+saved.length+' · Saved between holes';
+ $('resumeSolo').hidden=leaving;
+ $('keepSolo').textContent=leaving?'Save and leave':'Keep for later';
+ soloStatus.textContent='';
+ soloDialog.showModal();
+}
+$('resumeSolo').onclick=()=>{
+ const saved=playerSave().state.soloRound;
+ soloDialog.close();
+ if(saved)start(saved.course,false,saved.length,saved);
+};
+$('keepSolo').onclick=()=>{
+ soloDialog.close();
+ if(game.started&&page==='playing')showPage('courses');
+};
+$('endSolo').onclick=async()=>{
+ const id=playerSave().state.soloRound?.id;
+ if(!id)return;
+ const button=$('endSolo');
+ button.disabled=$('keepSolo').disabled=$('resumeSolo').disabled=true;
+ try{
+  await playerSave().update(state=>{if(state.soloRound?.id===id)delete state.soloRound});
+  soloDialog.close();
+  showPage('courses');
+ }catch{
+  soloStatus.textContent='Could not end the saved round. Try again.';
+ }finally{
+  button.disabled=$('keepSolo').disabled=$('resumeSolo').disabled=false;
+ }
+};
 $('heroPlay').onclick=$('playGolf').onclick=openPlayGolf;
 for(const button of document.querySelectorAll('[data-round-length]')){
  button.onclick=()=>{
@@ -108,6 +161,7 @@ for(const button of document.querySelectorAll('[data-round-length]')){
 }
 $('playSolo').onclick=()=>{
  playMode.close();
+ if(playerSave().state.soloRound){showSoloPrompt();return}
  if(room.room)endOnline();
  start(selectedCourse,!localStorage.getItem('prestiege-v4-tutorial-done'),selectedLength);
 };
@@ -118,7 +172,10 @@ $('playWithFriend').onclick=()=>{
 for(const button of document.querySelectorAll('[data-course]')){
  button.onclick=()=>chooseRound(button);
 }
-$('rangeTab').onclick=()=>{if(room.room)endOnline();start('range',false)};$('exitRound').onclick=()=>showPage('courses');$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match)game.actionNext();else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
+$('rangeTab').onclick=()=>{if(room.room)endOnline();start('range',false)};$('exitRound').onclick=()=>{
+ if(!onlineActive&&playerSave().state.soloRound?.id===game.roundId)showSoloPrompt(true);
+ else showPage('courses');
+};$('toClubhouse').onclick=()=>showPage('courses');$('nextHole').onclick=()=>{if(!match){if(game.index===game.roundLength)start(game.course,false,game.roundLength);else game.actionNext();}else if(match.complete)showPage('home');else match.nextHole()};$('resetAim').onclick=()=>{game.aimDelta(-game.aim)};$('openBag').onclick=()=>{game.cancelCharge();game.openBag()};
 $('closeBag').onclick=()=>game.returnFromBag(game.club);
 $('bagContents').addEventListener('click',event=>{
  const button=event.target.closest('[data-pick]');
@@ -253,6 +310,12 @@ game.onShotSettled=()=>{
 };
 game.onHoleComplete=async(round,hole,shots)=>{
  const session=match;if(session)queueMicrotask(()=>{if(match===session)session.holed(shots)});
+ if(!session){
+  const scores=game.scores.slice();
+  $('nextHole').disabled=true;
+  try{await saveSoloCheckpoint(round,scores)}catch{if(game.roundId===round&&game.index===hole)$('roundDescription').append(' · Round progress could not be saved.')}
+  finally{$('nextHole').disabled=false}
+ }
  const sameHole=()=>game.roundId===round&&game.index===hole&&game.modal;
  try{
   const coins=await award(round,hole,shots);

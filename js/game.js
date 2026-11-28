@@ -149,7 +149,7 @@ export class GolfGame{
  }
  enterMenu(){this.charging=false;this.dragging=false;this.placing=false;this.tee.visible=false;this.clearBag();this.started=false;this.previewMode=false;this.shotPreview.group.visible=false;this.world.create('royal',0);this.ball.visible=false;this.golfer.setVisible(false);this.coachActor?.setVisible(false);this.camera.position.set(39,37,110);this.camera.lookAt(-4,3,-45)}
  enterPreview(){this.golfer.stanceGround=null;this.previewMode=true;this.golfer.club.visible=false;this.golfer.setVisible(true);this.golfer.root.position.set(0,this.world.ground(0,67),67);this.golfer.root.rotation.set(0,0,0);this.menuCamera(1);this.golfer.animate('idle',true)}
- async begin(course='royal',tutorial=false,length=18){await this.golferReady;this.tutorial=tutorial;this.course=course;this.roundLength=Math.min(length===9?9:18,COURSES[course].holes.length);this.roundId=crypto.randomUUID();this.scores=[];if(tutorial)await this.loadCoach();this.startHole(0);if(tutorial){this.coachActor?.setVisible(true);this.positionCoach()}}
+ async begin(course='royal',tutorial=false,length=18,checkpoint=null){await this.golferReady;this.tutorial=tutorial;this.course=course;this.roundLength=Math.min(length===9?9:18,COURSES[course].holes.length);this.roundId=checkpoint?.id||crypto.randomUUID();this.scores=checkpoint?[...checkpoint.scores]:[];if(tutorial)await this.loadCoach();this.startHole(this.scores.length);if(tutorial){this.coachActor?.setVisible(true);this.positionCoach()}}
  resetBallToTee() {
   this.position.copy(this.world.teePosition);
   this.position.y = this.world.ground(this.position.x, this.position.z) + BALL_RADIUS + .055;

@@ -135,3 +135,9 @@ html[data-text-size] .game-footer {
 #onlineCode { text-align:center; font-size:clamp(2rem,9vw,3.5rem); letter-spacing:.2em; }
 #partyJoinForm { display:grid; gap:.6rem; margin-block:1rem; }
 #onlineJoinCode { padding:.65rem; font:inherit; color:inherit; background:#0a1915; border:1px solid #9aac9f; }
+
+#soloRoundDialog {
+ width:min(30rem,calc(100% - 2rem)); padding:1.5rem; color:#f5f0e3;
+ background:#142a20; border:1px solid #d6bc7c; border-radius:.5rem;
+}
+#soloRoundDialog::backdrop { background:#04100b88; }
