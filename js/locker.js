@@ -1,10 +1,10 @@
 import {playerSave} from './player-save.js';
 
-import {brandedGear} from './pro-shop-catalog.js?v=clubs1';
+import {brandedGear} from './pro-shop-catalog.js?v=equipment1';
 
 // The clubhouse supports one local member per browser, including guest play before registration.
 export const walletKey='prestiege-club-wallet-v1';
-export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Club sets',driver:'Drivers',wood:'Fairway woods',hybrid:'Hybrids',wedges:'Wedges',putter:'Putters'};
+export const gearSections={shirt:'Polos',ball:'Golf balls',hat:'Hats',bag:'Golf bags',clubs:'Club sets',driver:'Drivers',wood:'Fairway woods',hybrid:'Hybrids',irons:'Irons',wedges:'Wedges',putter:'Putters'};
 const legacyDefaults={shirt:'custom',ball:'white',hat:'club-cap',bag:'club-bag',clubs:'club-set'};
 const defaults=Object.fromEntries(brandedGear.filter(item=>item.price===0).map(item=>[item.slot,item.id]));
 export const catalog=[
@@ -53,7 +53,7 @@ export const catalog=[
 ];
 const products=new Map(catalog.map(item=>[item.id,item]));
 export const itemById=id=>products.get(id);
-const clubSlots=['clubs','driver','wood','hybrid','wedges','putter'];
+const clubSlots=['clubs','driver','wood','hybrid','irons','wedges','putter'];
 export function clubLoadout(equipped){
  const loadout={clubs:'club-set'};
  for(const slot of clubSlots){
@@ -63,7 +63,7 @@ export function clubLoadout(equipped){
  return loadout;
 }
 export function clubChoice(loadout,type){
- const slot=typeof type==='string'&&type.startsWith('iron')?'clubs':['pitching','approach','wedge','lob'].includes(type)?'wedges':type;
+ const slot=typeof type==='string'&&type.startsWith('iron')?'irons':['pitching','approach','wedge','lob'].includes(type)?'wedges':type;
  return itemById(loadout?.[slot])??itemById(loadout?.clubs)??itemById('club-set');
 }
 export function wallet(){

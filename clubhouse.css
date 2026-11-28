@@ -141,3 +141,10 @@ html[data-text-size] .game-footer {
  background:#142a20; border:1px solid #d6bc7c; border-radius:.5rem;
 }
 #soloRoundDialog::backdrop { background:#04100b88; }
+
+#clubStatsDialog { width:min(36rem,calc(100% - 1rem)); max-height:85dvh; padding:1rem; color:#f5f0e3; background:#142a20; border:1px solid #d6bc7c; border-radius:.5rem; }
+#clubStatsDialog::backdrop { background:#04100bcc; }
+#clubStatsDialog table { width:100%; border-collapse:collapse; margin-block:1rem; font-size:.86rem; }
+#clubStatsDialog th,#clubStatsDialog td { padding:.45rem; text-align:start; border-bottom:1px solid #d6bc7c55; }
+.club-card-stat { display:block; margin-top:.4rem; color:#e7d19c; }
+#clubDistance { display:block; margin-top:.3em; }

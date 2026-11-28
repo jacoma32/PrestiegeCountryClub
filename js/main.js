@@ -1,17 +1,18 @@
+import {CLUBS,clubStats,equipmentTypes} from './club-stats.js';
 import {setHatFinish} from './gear-logos.js';
-import {gearImage} from './gear-preview.js?v=putts1';
+import {gearImage} from './gear-preview.js?v=equipment1';
 import {setBallFinish} from './golf-ball.js?v=brands1';
-import {Match} from './match.js?v=friendflow1';
+import {Match} from './match.js?v=equipment1';
 import {Clubhouse} from './clubhouse.js?v=party4';
 import {poloTile} from './polo-patterns.js?v=playergear1';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
-import {GolfGame} from './game.js?v=solo-save1';
+import {GolfGame} from './game.js?v=equipment1';
 import {SoundEngine} from './sound.js?v=settings1';
 import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
-import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=username1';
+import {walletKey,wallet,catalog,gearSections,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=equipment1';
 import {HoleMap} from './hole-map.js?v=shotpath2';
 import {golfDevice,bindTouchGolf} from './device-controls.js?v=phonehud1';
 import {loadPlayerSave,playerSave} from './player-save.js';
@@ -244,6 +245,21 @@ const gearView={
  store:{slot:'shirt',brand:''},
  locker:{slot:'shirt',brand:''}
 };
+function showClubStats(item,types){
+ $('clubStatsTitle').textContent=item.name;
+ const rows=types.map(type=>{
+  const stats=clubStats(type,item),row=document.createElement('tr');
+  const title=document.createElement('th');title.scope='row';title.textContent=CLUBS[type].name;
+  row.append(title);
+  for(const value of type==='putter'?['—',stats.moi,stats.feel]:[stats.distance+' yd',stats.forgiveness,'—']){
+   const cell=document.createElement('td');cell.textContent=value;row.append(cell);
+  }
+  return row;
+ });
+ $('clubStatsRows').replaceChildren(...rows);
+ $('clubStatsDialog').showModal();
+}
+
 function renderGear(){
  const state=wallet();
  $('creditBalance').textContent=state.credits+' COINS';
@@ -286,7 +302,7 @@ function renderGear(){
   brand.textContent=item.brand||'Prestiege';
   name.append(brand,document.createTextNode(item.name));
   action.className='glass';action.type='button';
-  const canReset=wearing&&['driver','wood','hybrid','wedges','putter'].includes(slot);
+  const canReset=wearing&&['driver','wood','hybrid','irons','wedges','putter'].includes(slot);
   if(canReset){
    const equippedTag=document.createElement('small');
    equippedTag.textContent='Equipped';
@@ -301,7 +317,24 @@ function renderGear(){
    if(view==='locker'&&room.connected)room.send({type:'appearance',profile:playerCard()});
    renderGear();$(view+'Status').textContent=canReset?'Using clubs from your equipped set.':[item.brand,item.name].filter(Boolean).join(' ')+(view==='locker'?' equipped.':' is in your Locker.');
   }catch(error){$(view+'Status').textContent=error.message}};
-  card.append(preview,name,action);list.append(card);gearPreviews.observe(preview);
+  const types=equipmentTypes(item);
+  if(types.length>1){
+   const statsButton=document.createElement('button');
+   statsButton.className='glass';statsButton.type='button';statsButton.textContent='View stats';
+   statsButton.onclick=()=>showClubStats(item,types);
+   card.append(preview,name,statsButton,action);
+  }else{
+   if(types.length){
+    const type=types[0],stats=clubStats(type,item);
+    const line=document.createElement('small');
+    line.className='club-card-stat';
+    line.textContent=type==='putter'
+     ? (item.blade?'Blade':'Mallet')+' · Feel '+stats.feel+'/100 · MOI '+stats.moi+'/100'
+     : stats.distance+' yds · Forgiveness '+stats.forgiveness+'/100';
+    name.append(line);
+   }
+   card.append(preview,name,action);
+  }list.append(card);gearPreviews.observe(preview);
  }
 }
 game.onShotSettled=()=>{

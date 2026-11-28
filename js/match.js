@@ -138,7 +138,7 @@ export class Match {
    if(!this.frame)this.snap=true;
    this.frame=m;
    if(Number.isInteger(m.shots)&&m.shots>=this.strokes[this.turn]&&m.shots<10000){
-    this.strokes[this.turn]=m.shots;$('strokeLabel').textContent=String(m.shots+1);this.renderScores();
+    this.strokes[this.turn]=m.shots;$('strokeLabel').textContent=String(Math.max(1,m.shots));this.renderScores();
    }
   }
  }

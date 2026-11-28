@@ -49,8 +49,9 @@ export function setBallFinish(ball,item){
    ink.fillStyle='#fff';ink.fillRect(0,0,1024,512);
    ink.fillStyle='#161c23';ink.textAlign='center';
    for(const x of [188,700]){
-    ink.font='bold 23px Arial';ink.fillText(item.brand,x,241,125);
-    ink.font='17px Arial';ink.fillText(item.name,x,265,125);
+    ink.font='bold 31px Arial';ink.fillText(item.brand,x,241,125);
+    ink.font='21px Arial';ink.fillText(item.name,x,268,125);
+    ink.fillStyle='#9c2632';ink.fillText('1',x,293);ink.fillStyle='#161c23';
    }
    map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
    markings.set(item.id,map);

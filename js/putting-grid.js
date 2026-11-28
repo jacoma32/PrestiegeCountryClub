@@ -15,12 +15,11 @@ export function makePuttingGrid(world){
     mark(lines,px+t,pz,px+t+.25,pz);
     mark(lines,px,pz+t,px,pz+t+.25);
    }
-   if(u%2||v%2)continue;
    const dx=world.groundHeight(px-.25,pz)-world.groundHeight(px+.25,pz);
    const dz=world.groundHeight(px,pz-.25)-world.groundHeight(px,pz+.25);
    const slope=Math.hypot(dx,dz);
-   if(slope<.007)continue;
-   const length=Math.min(.62,.32+slope*3);
+   if(slope<.002)continue;
+   const length=Math.min(.55,.24+slope*4);
    const vx=dx/slope,vz=dz/slope,tx=px+vx*length,tz=pz+vz*length;
    mark(arrows,px,pz,tx,tz);
    mark(arrows,tx,tz,tx-.17*vx+.10*vz,tz-.17*vz-.10*vx);

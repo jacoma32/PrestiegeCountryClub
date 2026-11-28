@@ -101,7 +101,7 @@ export const brandedGear=[
  clubs('wilson-profile','Wilson','Profile SGI Complete Set',0,'#b8c2ca','#393e4b')
 ];
 
-const singleClub=(id,slot,brand,name,price,color,accent)=>({id,slot,brand,name,price,color,accent});
+const singleClub=(id,slot,brand,name,price,color,accent,blade=false)=>({id,slot,brand,name,price,color,accent,blade});
 brandedGear.push(
  singleClub('titleist-gt2-driver','driver','Titleist','GT2 Driver',210,'#aeb6be','#252936'),
  singleClub('callaway-elyte-driver','driver','Callaway','Elyte Driver',205,'#bbc5c8','#397d56'),
@@ -119,14 +119,18 @@ brandedGear.push(
  singleClub('taylormade-qi35-rescue','hybrid','TaylorMade','Qi35 Rescue',130,'#aeb8c2','#485269'),
  singleClub('ping-g440-hybrid','hybrid','PING','G440 Hybrid',125,'#c2ced8','#376e9c'),
 
+ singleClub('prestige-cavity-iron','irons','Prestige','Cavity Back Irons',145,'#bdc5c8','#294a39'),
+ singleClub('prestige-tour-iron','irons','Prestige','Tour Forged Irons',185,'#d4d5cb','#574628'),
  singleClub('vokey-sm10','wedges','Titleist','Vokey SM10 Tour Chrome',115,'#c6c9c8','#555761'),
  singleClub('callaway-opus','wedges','Callaway','Opus Brushed Chrome',105,'#bcc5cb','#475a64'),
  singleClub('taylormade-mg4','wedges','TaylorMade','Milled Grind 4',110,'#b7c1c7','#63646b'),
  singleClub('ping-s159','wedges','PING','s159 Chrome',105,'#c2cbcf','#425668'),
  singleClub('cleveland-rtz','wedges','Cleveland Golf','RTZ Tour Satin',110,'#cad0d2','#545c64'),
 
- singleClub('scotty-newport2','putter','Scotty Cameron','Studio Style Newport 2',175,'#c6cbca','#25484a'),
+ singleClub('scotty-newport2','putter','Scotty Cameron','Studio Style Newport 2',175,'#c6cbca','#25484a',true),
  singleClub('odyssey-aione-seven','putter','Odyssey','Ai-ONE #7',145,'#afd0e6','#2a4b73'),
  singleClub('taylormade-spider-tour','putter','TaylorMade','Spider Tour',155,'#aeb5c0','#484c52'),
- singleClub('ping-anser','putter','PING','Anser',135,'#c4cdcf','#343e4c')
+ singleClub('ping-anser','putter','PING','Anser',135,'#c4cdcf','#343e4c',true),
+ singleClub('prestige-classic-blade','putter','Prestige','Classic Blade',125,'#b9bdc2','#293733',true),
+ singleClub('prestige-forged-blade','putter','Prestige','Forged Blade',195,'#dedbd0','#605032',true)
 );
