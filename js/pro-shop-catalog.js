@@ -274,3 +274,15 @@ brandedGear.push(
  bag("sun-mountain-45-navy", "Sun Mountain", "4.5 LS Stand Bag · Navy", 140, "#293c5b", "#a5bed0"),
  bag("vessel-player-v-sage", "VESSEL", "Player V Stand Bag · Sage", 195, "#7a8e77", "#e3d4b4")
 );
+
+brandedGear.push(
+ bag('nike-sport-lite-black','Nike','Sport Lite Stand Bag · Black',95,'#20242b','#e9edf1'),
+ bag('nike-sport-lite-blue','Nike','Sport Lite Stand Bag · Blue',95,'#28518a','#e4ebf5'),
+ bag('nike-air-hybrid-navy','Nike','Air Hybrid Stand Bag · Navy',130,'#233753','#b9c6d3'),
+ bag('nike-performance-cart-red','Nike','Performance Cart Bag · Black and Red',140,'#22252b','#b62e3c',false),
+ hat('nike-club-white','Nike','Dri-FIT Club · White',45,'#f0eee7'),
+ hat('nike-club-forest','Nike','Dri-FIT Club · Forest',45,'#294e39'),
+ hat('nike-ace-black','Nike','Dri-FIT Ace · Black',60,'#202329'),
+ hat('nike-ace-sand','Nike','Dri-FIT Ace · Sand',60,'#bba583'),
+ hat('nike-ace-red','Nike','Dri-FIT Ace · Red',60,'#a92739')
+);
