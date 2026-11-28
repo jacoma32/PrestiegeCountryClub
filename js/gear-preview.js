@@ -1,8 +1,8 @@
 import {setHatFinish} from './gear-logos.js';
 import * as T from 'three';
-import {makeGolfBall,setBallFinish} from './golf-ball.js?v=brands1';
+import {makeGolfBall,setBallFinish} from './golf-ball.js?v=equipment1';
 import {buildBag} from './golf-bag.js?v=clubs1';
-import {clubModel,heelSocket,makeShaft,setClubFinish} from './club-model.js?v=proshop1';
+import {clubModel,heelSocket,makeShaft,setClubFinish} from './club-model.js?v=equipment1';
 
 const images=new Map();
 const garments=new Map();
@@ -45,11 +45,11 @@ function garment(actor,slot,frame){
 let displayBag;
 let displaySet;
 const individualClubs=new Map();
-function previewClub(type,length,lean=0){
+function previewClub(type,length,lean=0,down=false){
  const club=new T.Group(),head=clubModel(type),shaft=makeShaft();
  head.rotation.set(-.16,2.55,-.12);
  const socket=heelSocket(type).applyQuaternion(head.quaternion);
- const axis=new T.Vector3(lean,1,0).normalize();
+ const axis=new T.Vector3(lean,down?-1:1,0).normalize();
  shaft.position.copy(socket).addScaledVector(axis,length);
  shaft.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis);
  shaft.scale.y=length;
@@ -84,6 +84,7 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
    break;
   case 'ball':
    model=makeGolfBall(color);setBallFinish(model,item);
+   model.rotation.y=Math.PI*.84;
    break;
   case 'bag':
    displayBag??=buildBag();
@@ -95,10 +96,10 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
    setClubFinish(model,item);
    break;
   default: {
-   const type=item.slot==='wedges'?'wedge':item.slot;
+   const type=item.blade?'blade':item.slot==='wedges'?'wedge':item.slot==='irons'?'iron7':item.slot;
    if(!individualClubs.has(type)){
-    const length={driver:1.12,wood:1.06,hybrid:1,wedge:.88,putter:.86}[type];
-    individualClubs.set(type,previewClub(type,length,.65));
+    const down=type!=='putter'&&type!=='blade';
+    individualClubs.set(type,previewClub(type,.105,.32,down));
    }
    model=individualClubs.get(type);
    setClubFinish(model,item);
@@ -108,12 +109,24 @@ export function gearImage(item,actor,shirtColor,frame,finishShirt){
  const box=new T.Box3().setFromObject(model),center=box.getCenter(new T.Vector3());
  const size=box.getSize(new T.Vector3());
  const height=Math.max(size.y,size.x/1.5,size.z*.8);
- const angle=item.slot==='shirt'?.16:.52;
+ const angle=item.slot==='shirt'?.16:item.slot==='ball'?0:.52;
  const distance=height*2.65;
  camera.position.copy(center).add(new T.Vector3(angle,.22,1).normalize().multiplyScalar(distance));
  camera.lookAt(center);
  scene.add(model);renderer.render(scene,camera);model.removeFromParent();
- const image=renderer.domElement.toDataURL('image/webp',.9);
+ let image=renderer.domElement.toDataURL('image/webp',.9);
+ if(item.slot==='ball'){
+  const canvas=document.createElement('canvas');
+  canvas.width=360;canvas.height=240;
+  const context=canvas.getContext('2d');
+  context.fillStyle='#f3f0e8';context.fillRect(0,0,360,240);
+  context.drawImage(renderer.domElement,112,0,248,240);
+  context.fillStyle='#192b22';context.font='bold 17px Arial';
+  context.fillText(item.brand||'Prestige',16,100,125);
+  context.font='14px Arial';context.fillText(item.name,16,123,125);
+  context.font='11px Arial';context.fillText('GOLF BALL',16,146);
+  image=canvas.toDataURL('image/webp',.9);
+ }
  if(item.slot==='ball')model.material.dispose();
  if(images.size>=100)images.delete(images.keys().next().value);
  images.set(key,image);

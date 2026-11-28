@@ -88,7 +88,7 @@ function forgedIron(head,id){
 }
 export function clubModel(id){
  if(templates.has(id))return templates.get(id).clone();
- const head=new T.Group(),wood=['driver','wood','hybrid'].includes(id),putt=id==='putter';
+ const head=new T.Group(),wood=['driver','wood','hybrid'].includes(id),putt=id==='putter'||id==='blade';
  if(wood){
   const corners=[[-.052,-.014],[-.035,-.024],[.021,-.027],[.052,-.014],[.060,-.002],[.059,.011],[.046,.022],[.006,.029],[-.033,.025],[-.054,.011]];
   const profile=roundedOutline(corners).getSpacedPoints(54).slice(0,-1).map(p=>[p.x,p.y]);
@@ -109,8 +109,8 @@ export function clubModel(id){
   plate(head,profile,.002,face);stripes(head,5,-.037,.041,-.014,.006,.004,sole);
   const size=id==='driver'?1:id==='wood'?.84:.72;head.scale.set(size,id==='driver'?1:size*.88,size);
  }else if(putt){
-  plate(head,[[-.057,-.014],[.056,-.014],[.057,.010],[.049,.016],[-.051,.016]],.025,nickel,-.023);
-  for(const x of [-.042,.042]){
+  plate(head,[[-.057,-.014],[.056,-.014],[.057,.010],[.049,.016],[-.051,.016]],.025,nickel,id==='blade'?-.014:-.023);
+  for(const x of id==='blade'?[]:[-.042,.042]){
    const rail=new T.Mesh(new T.BoxGeometry(.024,.025,.056),sole);
    rail.position.set(x,-.001,-.042);head.add(rail);
   }
@@ -145,7 +145,7 @@ export function heelSocket(id){
  const size=id==='wood'?.84:id==='hybrid'?.72:1;
  if(['driver','wood','hybrid'].includes(id))return new T.Vector3(.055*size,.006*(id==='driver'?1:size*.88),-.010*size);
  if(IRONS[id]||WEDGES[id])return new T.Vector3(.056,.036,-.005);
- return id==='putter'?new T.Vector3(.044,.012,-.013):new T.Vector3(-.039,0,-.004);
+ return (id==='putter'||id==='blade')?new T.Vector3(.044,.012,-.013):new T.Vector3(-.039,0,-.004);
 }
 export function makeShaft(){
  const shaft=new T.Group();
