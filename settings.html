@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
   <link rel="stylesheet" href="./homepage.css?v=password-eye1">
   <link rel="stylesheet" href="./settings.css">
-  <script type="module" src="./js/settings.js?v=username1"></script>
+  <script type="module" src="./js/settings.js?v=developer1"></script>
   <script type="module" src="./js/password-visibility.js"></script>
 </head>
 <body>
@@ -24,7 +24,7 @@
     <h1>Settings</h1>
     <section aria-labelledby="preferencesTitle">
       <h2 id="preferencesTitle">Game preferences</h2>
-      <p>Sound and text size are saved in this browser.</p>
+      <p>Game preferences are saved in this browser.</p>
       <label class="sound-option"><input id="soundPreference" type="checkbox"> Play game sounds</label>
       <label>Text size
         <select id="textSize">
@@ -33,6 +33,8 @@
           <option value="extra-large">Extra large</option>
         </select>
       </label>
+      <label class="sound-option"><input id="minimapPreference" type="checkbox"> Show minimap</label>
+      <label class="sound-option"><input id="gridPreference" type="checkbox"> Show putting grid</label>
       <p id="preferencesStatus" class="status" role="status"></p>
     </section>
     <section aria-labelledby="passwordTitle">
@@ -52,6 +54,26 @@
         <button class="button gold" type="submit">Change password</button>
       </form>
       <p id="passwordStatus" class="status" role="status"></p>
+    </section>
+    <section id="developerSettings" aria-labelledby="developerTitle" hidden>
+      <h2 id="developerTitle">Developer mode</h2>
+      <form id="developerUnlock">
+        <label>Developer PIN
+          <input id="developerPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required autocomplete="off">
+        </label>
+        <button class="button gold" type="submit">Turn on</button>
+      </form>
+      <div id="developerActions" hidden>
+        <button class="button" id="developerOff" type="button">Turn off</button>
+        <form id="developerGift">
+          <label>Recipient username<input name="username" required pattern="[A-Za-z0-9_]{3,20}"></label>
+          <label>Gift<select name="kind"><option value="coins">Coins</option><option value="item">Locker item</option></select></label>
+          <label id="giftCoins">Coins<input name="coins" type="number" value="100" min="1" max="100000" required></label>
+          <label id="giftItem" hidden>Item<select name="item" disabled></select></label>
+          <button class="button gold" type="submit">Send gift</button>
+        </form>
+      </div>
+      <p id="developerStatus" class="status" role="status"></p>
     </section>
   </main>
 </body>

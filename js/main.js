@@ -10,7 +10,7 @@ import {lightClubs} from './club-model.js?v=proshop1';
 import * as THREE from 'three';
 import {GolfGame} from './game.js?v=brandgear1';
 import {SoundEngine} from './sound.js?v=settings1';
-import {applyTextSize,readPreferences,savePreferences} from './preferences.js';
+import {applyTextSize,readPreferences,savePreferences} from './preferences.js?v=developer1';
 import {OnlineRoom,partyLimit} from './online.js?v=friendflow1';
 import {walletKey,wallet,catalog,gearSections,clubTypes,itemById,award,buy,wear,unequip,clubLoadout} from './locker.js?v=brandgear1';
 import {HoleMap} from './hole-map.js?v=shotpath2';
@@ -378,8 +378,9 @@ function showSoundPreference(enabled) {
  soundButton.textContent = enabled ? 'SOUND ON' : 'SOUND OFF';
  soundButton.setAttribute('aria-pressed', String(enabled));
 }
+let gameplayPreferences=readPreferences();
 function refreshPreferences() {
- const preferences = readPreferences();
+ const preferences = gameplayPreferences = readPreferences();
  applyTextSize(preferences.textSize);
  if (!preferences.sound) sound.setEnabled(false);
  showSoundPreference(preferences.sound);
@@ -516,8 +517,8 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(game.clock.getDelt
   const settings=course==='dunes'?[-45,38,26,0xffddaa,2.14]:course==='misty'?[-24,12,-64,0xffbb85,1.75]:course==='ocean'?[-48,34,16,0xffe4bc,2.15]:course==='summit'?[29,55,-38,0xfff2df,2.02]:[-39,43,27,0xffdfb3,2.08];
   sunOffset.set(settings[0],settings[1],settings[2]);sun.color.setHex(settings[3]);sun.intensity=settings[4];
  }
- holeMap.update(game,page==='playing');
- if(game.world.puttGrid)game.world.puttGrid.visible=page==='playing'&&game.started&&(game.spectating
+ holeMap.update(game,page==='playing'&&gameplayPreferences.minimap);
+ if(game.world.puttGrid)game.world.puttGrid.visible=gameplayPreferences.puttingGrid&&page==='playing'&&game.started&&(game.spectating
   ? match?.frame?.putting===true
   : game.club==='putter'&&!game.swinging&&!game.bagPhase&&!game.modal);
  const lightTarget=game.spectating?game.ball.position:game.position;

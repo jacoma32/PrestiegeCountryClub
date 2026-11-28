@@ -59,3 +59,10 @@ export async function changePassword(currentPassword, password) {
     await verifier.signOut({ scope: 'local' }).catch(() => {});
   }
 }
+
+export async function developerRequest(action, fields) {
+  const {data,error}=await auth.getSession();
+  if(error)throw error;
+  if(!data.session)throw Error('Sign in first.');
+  return callPlayerService({...fields,operation:'developer-'+action},data.session.access_token);
+}

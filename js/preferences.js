@@ -7,6 +7,8 @@ export function readPreferences() {
     saved = JSON.parse(localStorage.getItem(key));
   } catch {}
   return {
+    minimap: saved?.minimap !== false,
+    puttingGrid: saved?.puttingGrid !== false,
     sound: saved?.sound === true,
     textSize: Object.hasOwn(sizes, saved?.textSize) ? saved.textSize : 'standard',
   };
